@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block content %}
+{% include 'header1.html' %}
+<style>
+    body {
+        background-color: #f2f6ff;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        color: #1a1a1a;
+    }
+
+    /* Main page wrapper */
+    .quiz-page {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 20px;
+    }
+
+    /* Card container */
+    .quiz-card {
+        background: #ffffff;
+        border-radius: 14px;
+        padding: 35px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Heading */
+    .quiz-card h2 {
+        text-align: center;
+        color: #0d6efd;
+        font-size: 28px;
+        margin-bottom: 30px;
+        font-weight: 700;
+    }
+
+    .quiz-card h2::after {
+        content: "";
+        width: 60px;
+        height: 4px;
+        background: #0d6efd;
+        display: block;
+        margin: 10px auto 0;
+        border-radius: 2px;
+    }
+
+    /* Quiz list */
+    .quiz-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .quiz-item {
+        border: 1px solid #e1ebff;
+        background: #f9fbff;
+        border-radius: 10px;
+        padding: 18px 22px;
+        margin-bottom: 16px;
+        transition: 0.25s ease;
+    }
+
+    .quiz-item:hover {
+        background: #eef4ff;
+        transform: translateY(-2px);
+    }
+
+    .quiz-title {
+        font-size: 19px;
+        font-weight: 600;
+        color: #0d6efd;
+        text-decoration: none;
+    }
+
+    .quiz-title:hover {
+        text-decoration: underline;
+    }
+
+    .quiz-expiry {
+        display: block;
+        margin-top: 6px;
+        font-size: 14px;
+        color: #6c757d;
+    }
+
+    /* Dashboard button */
+    .dashboard-btn {
+        display: inline-block;
+        margin: 30px auto 0;
+        padding: 10px 26px;
+        background: #0d6efd;
+        color: #ffffff;
+        border-radius: 6px;
+        font-size: 15px;
+        text-decoration: none;
+        transition: 0.3s;
+    }
+
+    .dashboard-btn:hover {
+        background: #084298;
+    }
+
+    .btn-wrapper {
+        text-align: center;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+        .quiz-card {
+            padding: 22px;
+        }
+
+        .quiz-title {
+            font-size: 17px;
+        }
+    }
+</style>
+
+<br><br><br><br><div class="quiz-page">
+    <div class="quiz-card">
+        <h2>Available Quizzes</h2>
+
+        <ul class="quiz-list">
+            {% for q in quizzes %}
+            <li class="quiz-item">
+                <a href="{% url 'attempt_quiz' q.id %}" class="quiz-title">
+                    {{ q.title }}
+                </a>
+                <span class="quiz-expiry">
+                    Expires: {{ q.expiry_time|date:"d M Y H:i" }} (IST)
+                </span>
+            </li>
+            {% empty %}
+            <li class="quiz-item">
+                No active quizzes right now.
+            </li>
+            {% endfor %}
+        </ul>
+
+        <div class="btn-wrapper">
+            <a href="{% url 'student_dashboard' %}" class="dashboard-btn">
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% include 'footer.html' %}
+{% endblock %}

@@ -1,0 +1,8 @@
+{% include 'header1.html' %}
+{% extends "base.html" %}
+{% block content %}
+  <h2>Quiz Expired</h2>
+  <p>This quiz has expired and cannot be attempted.</p>
+  <a href="{% url 'student_quiz_list' %}">Back to Quizzes</a>
+{% endblock %}
+{% include 'footer.html' %}

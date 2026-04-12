@@ -1,0 +1,462 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% include 'header1.html' %}
+    <meta charset="utf-8" />
+    <title>Create Quiz</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  
+    <style>
+      .btn {
+        display: inline-block;
+        margin: 15px 10px 0 0;
+        padding:10px;
+        background-color: #3498db;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: background-color 0.3s, transform 0.2s;
+      }
+  
+      .top-space { margin-top: 90px; }
+      .bottom-space { margin-bottom: 100px; }
+      /* Minimal, clean Google-Forms-like styling */
+      body{font-family:Arial,Helvetica,sans-serif;background:#f4f7fc;margin:0;padding:24px}
+      .container{max-width:900px;margin:0 auto;background:#fff;padding:20px;border-radius:10px;box-shadow:0 6px 18px rgba(20,40,80,.06)}
+      h1{margin-top:0;color:#24366a}
+      .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+      label{font-weight:600;margin-bottom:6px;display:block;color:#333}
+      input[type=text], textarea, select {width:100%;padding:10px;border-radius:6px;border:1px solid #d6dbe9;background:#fbfdff}
+      textarea{min-height:70px;resize:vertical}
+      .small{font-size:0.9rem;color:#666}
+      .btn{background:#4a6cf7;color:#fff;padding:10px 14px;border-radius:8px;border:0;cursor:pointer}
+      .btn-outline{background:#fff;color:#4a6cf7;border:1px solid #cdd6ff}
+      .question-card{border:1px solid #e2e8f0;padding:12px;border-radius:8px;margin-bottom:12px;background:#fcfdff;cursor:grab}
+      .question-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+      .q-meta{font-size:0.9rem;color:#444}
+      .options-list{margin-top:8px}
+      .option-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+      .grip{cursor:grab;padding:6px}
+      .muted{color:#777}
+      .danger{color:#c00}
+      .flex{display:flex;gap:8px;align-items:center}
+      .img-preview{max-width:160px;max-height:120px;display:block;margin-top:8px;border-radius:6px}
+      .controls{display:flex;gap:8px}
+    </style>
+  </head>
+  <body>
+    <div class="top-space"></div>
+    <div class="container">
+      <h1>Create Quiz</h1>
+      <form id="quizForm" method="post" enctype="multipart/form-data" action="{% url 'create_quiz' %}">
+        {% csrf_token %}
+        <div style="margin-bottom:12px">
+          <label>Quiz Title</label>
+          <input type="text" name="title" id="quizTitle" required>
+        </div>
+  
+        <div style="margin-bottom:12px">
+          <label>Student details required (teacher selects)</label>
+          <label>
+              <input type="checkbox" id="select_all" /> Select All
+          </label>
+          <div class="row">
+            <label><input type="checkbox" name="require_name" /> Full Name</label>
+            <label><input type="checkbox" name="require_roll" /> Roll Number</label>
+            <label><input type="checkbox" name="require_email" /> Email</label>
+            <label><input type="checkbox" name="require_class" /> Class/Division</label>
+          </div>
+          <p class="small muted">Students must fill required fields before attempting.</p>
+        </div>
+        <script>
+          document.getElementById("select_all").addEventListener("change", function () {
+          document.querySelectorAll('.row input[type="checkbox"]').forEach(cb => {
+          cb.checked = this.checked;
+          });
+          });
+        </script>
+
+        <hr>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <label style="font-size:1.05rem">Questions</label>
+          <div class="controls">
+            <button type="button" class="btn-outline" id="addQuestionBtn">+ Add Question</button>
+            <button type="button" class="btn-outline" id="cloneQuestionBtn">Duplicate Last</button>
+          </div>
+        </div>
+  
+        <div id="questionsContainer">
+          <!-- initial question will be inserted by JS -->
+        </div>
+  
+        <input type="hidden" name="questions_data" id="questions_data">
+        <div style="margin-top:18px;display:flex;gap:12px">
+          <!-- <button type="button" class="btn" id="previewBtn">Preview JSON</button> -->
+          <button type="submit" class="btn" id="saveQuizBtn">Save Quiz</button>
+          <a href="{% url 'faculty_dashboard' %}" class="btn">Back to Dashboard</a>
+        </div>
+        <p class="small muted" style="margin-top:12px"></p>
+      </form>
+    </div>
+  
+    <script>
+      // ---------- Utilities ----------
+      let qCounter = 0;
+      const MAX_OPTIONS = 4;
+      const MIN_OPTIONS = 2;
+    
+      function createQuestionCard(prefill) {
+        qCounter += 1;
+        const qId = 'q_' + qCounter;
+        const qDiv = document.createElement('div');
+        qDiv.className = 'question-card';
+        qDiv.draggable = true;
+        qDiv.dataset.qid = qId;
+    
+        const defaultType = (prefill && prefill.type) ? prefill.type : 'mcq_single';
+    
+        qDiv.innerHTML = `
+          <div class="question-head">
+            <div class="flex">
+              <span class="grip" title="Drag to reorder">☰</span>
+              <div>
+                <div class="q-meta">Question <span class="q-num"></span></div>
+                <input type="text" class="q-text" placeholder="Enter question text" />
+              </div>
+            </div>
+    
+            <div class="flex">
+              <select class="q-type">
+                <option value="mcq_single">MCQ (Single Correct)</option>
+                <option value="mcq_multi">Multiple Select</option>
+                <option value="short">Short Answer</option>
+                <option value="truefalse">True / False</option>
+              </select>
+              <button type="button" class="btn-outline remove-question">Remove</button>
+            </div>
+          </div>
+    
+          <div style="margin-top:10px">
+            <label class="small">Upload image (optional)</label>
+            <input type="file" accept="image/*" class="q-image" name="${qId}_image">
+            <img class="img-preview" style="display:none" />
+          </div>
+    
+          <div class="options-container" style="margin-top:10px"></div>
+    
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <button type="button" class="btn-outline add-option">+ Add Option</button>
+            <button type="button" class="btn-outline collapse-toggle">Toggle Options</button>
+          </div>
+        `;
+    
+        // apply prefill values if present
+        if (prefill) {
+          qDiv.querySelector('.q-text').value = prefill.text || '';
+          qDiv.querySelector('.q-type').value = prefill.type || defaultType;
+          // image preview handled below when file selected
+        }
+    
+        // attach events
+        const qTypeSel = qDiv.querySelector('.q-type');
+        const optionsContainer = qDiv.querySelector('.options-container');
+        const addOptBtn = qDiv.querySelector('.add-option');
+        const removeBtn = qDiv.querySelector('.remove-question');
+        const imgInput = qDiv.querySelector('.q-image');
+        const imgPreview = qDiv.querySelector('.img-preview');
+    
+        // set initial options depending on type
+        function renderOptionsForType(type) {
+          optionsContainer.innerHTML = '';
+          if (type === 'short') {
+            optionsContainer.innerHTML = `<div class="small muted">Short answer: student will type response (no options required).</div>`;
+            addOptBtn.style.display = 'none';
+          } else if (type === 'truefalse') {
+            // add two fixed options
+            addOptBtn.style.display = 'none';
+            const opts = [{text:'True', correct:false}, {text:'False', correct:false}];
+            opts.forEach((o, idx) => {
+              const row = createOptionRow(idx+1, o.text, o.correct, false);
+              optionsContainer.appendChild(row);
+            });
+          } else {
+            addOptBtn.style.display = 'inline-block';
+            // Add two options initially (min)
+            for (let i=0;i<MIN_OPTIONS;i++){
+              const row = createOptionRow(i+1,'','', true);
+              optionsContainer.appendChild(row);
+            }
+          }
+          updateOptionControls(optionsContainer);
+        }
+    
+        function createOptionRow(index, text='', isCorrect=false, allowRemove=true) {
+          const row = document.createElement('div');
+          row.className = 'option-row';
+          row.innerHTML = `
+            <input type="text" class="opt-text" placeholder="Option text" />
+            <label class="small"><input type="checkbox" class="opt-correct" /> Correct</label>
+            ${ allowRemove ? '<button type="button" class="btn-outline remove-opt">Remove</button>' : ''}
+          `;
+          row.querySelector('.opt-text').value = text;
+          row.querySelector('.opt-correct').checked = isCorrect;
+    
+          // for single-choice (radio) we will convert checkbox behavior on type change
+          return row;
+        }
+    
+        function updateOptionControls(container) {
+          // enforce 2..4 options for MCQ types
+          const current = container.querySelectorAll('.option-row').length;
+          const addBtn = qDiv.querySelector('.add-option');
+          addBtn.disabled = current >= MAX_OPTIONS;
+    
+          // disable remove if would go below MIN_OPTIONS
+          container.querySelectorAll('.option-row').forEach((r, idx) => {
+            const rem = r.querySelector('.remove-opt');
+            if (rem) rem.disabled = (current <= MIN_OPTIONS);
+          });
+    
+          // switch "correct" widget: single-choice uses radio (only one true) while multiple uses checkboxes.
+          const qtype = qTypeSel.value;
+          if (qtype === 'mcq_single') {
+            // ensure only one correct can be chosen; convert checkboxes to behave like radios
+            container.querySelectorAll('.opt-correct').forEach(cb => {
+              cb.addEventListener('change', function() {
+                if (this.checked) {
+                  container.querySelectorAll('.opt-correct').forEach(other => {
+                    if (other !== this) other.checked = false;
+                  });
+                }
+              });
+            });
+          } else if (qtype === 'mcq_multi') {
+            // no changes needed (checkboxes)
+          }
+        }
+    
+        // initial render
+        renderOptionsForType(defaultType);
+        updateNumbers();
+    
+        // events
+        qTypeSel.addEventListener('change', () => {
+          renderOptionsForType(qTypeSel.value);
+          updateNumbers();
+        });
+    
+        addOptBtn.addEventListener('click', () => {
+          const cur = optionsContainer.querySelectorAll('.option-row').length;
+          if (cur < MAX_OPTIONS) {
+            optionsContainer.appendChild(createOptionRow(cur+1,'','', true));
+          }
+          updateOptionControls(optionsContainer);
+        });
+    
+        optionsContainer.addEventListener('click', (e) => {
+          if (e.target.classList.contains('remove-opt')) {
+            const row = e.target.closest('.option-row');
+            row.remove();
+            updateOptionControls(optionsContainer);
+          }
+        });
+    
+        removeBtn.addEventListener('click', () => {
+          if (confirm('Remove this question?')) {
+            qDiv.remove();
+            updateNumbers();
+          }
+        });
+    
+        imgInput.addEventListener('change', (ev) => {
+          const f = ev.target.files[0];
+          if (f) {
+            const reader = new FileReader();
+            reader.onload = (r) => {
+              imgPreview.src = r.target.result;
+              imgPreview.style.display = 'block';
+            };
+            reader.readAsDataURL(f);
+          } else {
+            imgPreview.style.display = 'none';
+          }
+        });
+    
+        // collapse toggle
+        qDiv.querySelector('.collapse-toggle').addEventListener('click', () => {
+          optionsContainer.style.display = optionsContainer.style.display === 'none' ? 'block' : 'none';
+        });
+    
+        // drag events for reorder
+        qDiv.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', qDiv.dataset.qid);
+          qDiv.classList.add('dragging');
+        });
+        qDiv.addEventListener('dragend', () => qDiv.classList.remove('dragging'));
+    
+        return qDiv;
+      }
+    
+      // add initial question
+      const container = document.getElementById('questionsContainer');
+      function addInitialQuestion() {
+        const card = createQuestionCard({type:'mcq_single'});
+        container.appendChild(card);
+        updateNumbers();
+      }
+      addInitialQuestion();
+    
+      // add question button
+      document.getElementById('addQuestionBtn').addEventListener('click', () => {
+        const card = createQuestionCard();
+        container.appendChild(card);
+        updateNumbers();
+      });
+      document.getElementById('cloneQuestionBtn').addEventListener('click', () => {
+        // duplicate last
+        const last = container.lastElementChild;
+        if (!last) return;
+        const text = last.querySelector('.q-text').value;
+        const type = last.querySelector('.q-type').value;
+        const pre = { text: text, type: type };
+        const card = createQuestionCard(pre);
+        container.appendChild(card);
+        updateNumbers();
+      });
+    
+      // drag drop reorder handler on container
+      container.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const dragging = container.querySelector('.dragging');
+        const after = getDragAfterElement(container, e.clientY);
+        if (!after) container.appendChild(dragging);
+        else container.insertBefore(dragging, after);
+        updateNumbers();
+      });
+    
+      function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.question-card:not(.dragging)')];
+        return draggableElements.reduce((closest, child) => {
+          const box = child.getBoundingClientRect();
+          const offset = y - box.top - box.height/2;
+          if (offset < 0 && offset > closest.offset) {
+            return {offset: offset, element: child};
+          } else {
+            return closest;
+          }
+        }, {offset: Number.NEGATIVE_INFINITY}).element;
+      }
+    
+      // numbering
+      function updateNumbers() {
+        const cards = container.querySelectorAll('.question-card');
+        cards.forEach((c, i) => {
+          c.querySelector('.q-num').innerText = (i + 1);
+          // ensure file input name matches dataset id for server mapping
+          const qid = c.dataset.qid;
+          const file = c.querySelector('.q-image');
+          if (file) file.name = qid + '_image';
+        });
+      }
+    
+      // build questions_data JSON and set hidden input before submit
+      const quizForm = document.getElementById('quizForm');
+      quizForm.addEventListener('submit', (e) => {
+        // before actual submit build JSON describing questions and options & image_field_name
+        const cards = container.querySelectorAll('.question-card');
+        const questions_data = [];
+        let valid = true;
+        cards.forEach((c, idx) => {
+          const qtext = c.querySelector('.q-text').value.trim();
+          const qtype = c.querySelector('.q-type').value;
+          const qid = c.dataset.qid;
+          if (!qtext && qtype !== 'truefalse') {
+            alert(`Please enter text for question ${idx+1}`);
+            valid = false;
+            return;
+          }
+          const qobj = { text: qtext, type: qtype, is_multiple: (qtype === 'mcq_multi'), options: [] };
+    
+          if (qtype === 'short') {
+            // no options required
+          } else if (qtype === 'truefalse') {
+            // default options True/False; we won't set image_field here
+            qobj.options = [
+              {text:'True', is_correct: c.querySelectorAll('.opt-correct')[0].checked},
+              {text:'False', is_correct: c.querySelectorAll('.opt-correct')[1].checked}
+            ];
+          } else {
+            // gather options; ensure 2..4 present
+            const opts = c.querySelectorAll('.option-row');
+            if (opts.length < MIN_OPTIONS) {
+              alert(`Question ${idx+1} must have at least ${MIN_OPTIONS} options.`);
+              valid = false; return;
+            }
+            if (opts.length > MAX_OPTIONS) {
+              alert(`Question ${idx+1} can have at most ${MAX_OPTIONS} options.`);
+              valid = false; return;
+            }
+            opts.forEach((orow) => {
+              const text = orow.querySelector('.opt-text').value.trim();
+              const checked = orow.querySelector('.opt-correct').checked;
+              if (!text) {
+                alert('All options must have text.');
+                valid = false; return;
+              }
+              qobj.options.push({text: text, is_correct: checked});
+            });
+    
+            // if single-choice ensure exactly one correct checked (optional - can be zero)
+            if (qtype === 'mcq_single') {
+              const numCorrect = qobj.options.filter(o => o.is_correct).length;
+              if (numCorrect > 1) {
+                alert(`Question ${idx+1} is single-correct but has multiple correct marks. Uncheck extras or change type to Multiple Select.`);
+                valid = false; return;
+              }
+            }
+          }
+    
+          // if an image file was chosen, include the field name for server to pick from request.FILES
+          const fileInput = c.querySelector('.q-image');
+          if (fileInput && fileInput.files && fileInput.files.length > 0) {
+            qobj.image_field_name = fileInput.name; // e.g., q_2_image
+          }
+          questions_data.push(qobj);
+        });
+    
+        if (!valid) { e.preventDefault(); return; }
+    
+        // put JSON into hidden input
+        document.getElementById('questions_data').value = JSON.stringify(questions_data);
+    
+        // allow normal form submit (files will be sent because <input type="file"> elements are inside form)
+      });
+    
+      // preview JSON handler
+      document.getElementById('previewBtn').addEventListener('click', () => {
+        // build same JSON as submit but without enforcement and show in new window
+        const cards = container.querySelectorAll('.question-card');
+        const preview = [];
+        cards.forEach((c) => {
+          const qtext = c.querySelector('.q-text').value.trim();
+          const qtype = c.querySelector('.q-type').value;
+          const qobj = { text: qtext, type: qtype, is_multiple: (qtype === 'mcq_multi'), options: [] };
+          if (qtype === 'truefalse') {
+            qobj.options = [{text:'True', is_correct:false},{text:'False', is_correct:false}];
+          } else if (qtype !== 'short') {
+            const opts = c.querySelectorAll('.option-row');
+            opts.forEach((orow) => qobj.options.push({text: orow.querySelector('.opt-text').value.trim(), is_correct: orow.querySelector('.opt-correct').checked}));
+          }
+          const fileInput = c.querySelector('.q-image');
+          if (fileInput && fileInput.files && fileInput.files.length > 0) qobj.image_field_name = fileInput.name;
+          preview.push(qobj);
+        });
+        const w = window.open('', '_blank');
+        w.document.body.innerHTML = `<pre>${JSON.stringify(preview, null, 2)}</pre>`;
+      });
+    </script><br>
+    {% include 'footer.html' %}
+  </body>
+</html>

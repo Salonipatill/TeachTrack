@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+    {% include 'header1.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Director Dashboard</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        body {
+            background: #eef1f4;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        .main-wrapper {
+            margin-top: 90px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            height: calc(100vh - 90px);
+            position: fixed;
+            left: 0;
+            top: 90px;
+            background: #131c2b;
+            padding-top: 20px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar a {
+            padding: 14px 25px;
+            display: flex;
+            align-items: center;
+            font-size: 15px;
+            color: #d3d8df;
+            text-decoration: none;
+            transition: 0.25s;
+        }
+
+        .sidebar a:hover {
+            background: #1e293c;
+            color: white;
+        }
+
+        .sidebar a i {
+            width: 24px;
+            font-size: 18px;
+            margin-right: 12px;
+        }
+
+        /* Main content */
+        .main-content {
+            margin-left: 50px;
+            padding: 25px;
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: #2e2d2d;
+        }
+
+        /* Profile box */
+        .profile-box {
+            background: white;
+            padding: 20px;
+            border-radius: 14px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+        }
+
+        .profile-box img {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 2px solid #4da3ff;
+        }
+
+        .profile-box h4 {
+            font-size: 20px;
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+
+        .profile-box p {
+            font-size: 13px;
+            color: #666;
+            margin: 0;
+        }
+
+        /* Dashboard cards */
+        .dashboard-card {
+            background: white;
+            border-radius: 18px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+            transition: 0.25s ease-in-out;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .dashboard-card i {
+            font-size: 45px;
+            color: #4da3ff;
+            margin-bottom: 15px;
+        }
+
+        .dashboard-card h5 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .dashboard-card p {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .bottom-space {
+            margin-bottom: 80px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="main-wrapper">
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h2 class="section-title">Director Dashboard</h2>
+
+        <!-- Profile Box -->
+        <div class="profile-box">
+            <img src="https://cdn-icons-png.flaticon.com/512/456/456212.png" alt="">
+            <div class="ms-4">
+                <h4>Welcome {{ name }}</h4>
+                <p>Glad to have you back</p>
+            </div>
+        </div>
+
+        <!-- Dashboard Cards -->
+        <div class="row g-4">
+
+            <!-- Total Students -->
+            <div class="col-md-4">
+                <div class="dashboard-card">
+                    <i class="fa-solid fa-user-graduate"></i>
+                    <h5>Total Students</h5>
+                    <p>View total student count</p>
+                </div>
+            </div>
+
+            <!-- Student Performance -->
+            <div class="col-md-4">
+                <div class="dashboard-card">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <h5>Student Performance</h5>
+                    <p>Monitor student performance</p>
+                </div>
+            </div>
+
+            <!-- Total Teachers -->
+            <div class="col-md-4">
+                <div class="dashboard-card">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                    <h5>Total Teachers</h5>
+                    <p>View total teacher count</p>
+                </div>
+            </div>
+
+            <!-- Teacher Performance -->
+            <div class="col-md-4">
+                <div class="dashboard-card">
+                    <i class="fa-solid fa-star"></i>
+                    <h5>Teacher Performance</h5>
+                    <p>Monitor teacher performance</p>
+                </div>
+            </div>
+
+            <!-- Total Resources -->
+            <div class="col-md-4">
+                <div class="dashboard-card">
+                    <i class="fa-solid fa-book"></i>
+                    <h5>Total Resources</h5>
+                    <p>Check all resources available</p>
+                </div>
+            </div>
+
+            <!-- Quiz Participation -->
+            <div class="col-md-4">
+                <div class="dashboard-card">
+                    <i class="fa-solid fa-puzzle-piece"></i>
+                    <h5>Quiz Participation</h5>
+                    <p>View quiz participation stats</p>
+                </div>
+            </div>
+
+            <!-- Teacher Ratings -->
+            <div class="col-md-4">
+                <div class="dashboard-card">
+                    <i class="fa-solid fa-medal"></i>
+                    <h5>Teacher Ratings</h5>
+                    <p>See teacher ratings</p>
+                </div>
+            </div>
+
+            <!-- Complaints -->
+            <div class="col-md-4">
+                <div class="dashboard-card">
+                    <i class="fa-solid fa-exclamation-circle"></i>
+                    <h5>Complaints</h5>
+                    <p>Check and resolve complaints</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="bottom-space"></div>
+
+{% include 'footer.html' %}
+
+<!-- Bootstrap JS (for alert close button) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

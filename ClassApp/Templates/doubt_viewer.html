@@ -1,0 +1,163 @@
+{% load tz %}
+<!DOCTYPE html>
+<html>
+<head>
+    {% include 'header1.html' %}
+    <title>Doubt Viewer</title>
+    <style>
+        /* Make the page take full height */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #eaf2fb;
+            color: #2c3e50;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Wrapper for content */
+        .content-wrapper {
+            flex: 1; /* take remaining space */
+            padding-top: 120px;
+            padding-bottom: 40px; /* spacing for footer */
+        }
+
+        /* Heading box */
+        .heading-box {
+            max-width: 400px;
+            margin: 0 auto 40px auto;
+            padding: 15px 25px;
+            background-color: #ffffff;
+            border-left: 6px solid #1a73e8;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        .heading-box h2 {
+            margin: 0;
+            font-size: 26px;
+            color: #1a73e8;
+            font-weight: 600;
+        }
+
+        /* Container for doubt cards */
+        .doubt-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 0 20px;
+        }
+
+        .doubt-card {
+            background-color: #ffffff;
+            border-left: 6px solid #1a73e8;
+            padding: 20px 25px;
+            width: 90%;
+            max-width: 700px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-radius: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .doubt-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+
+        .student-name {
+            display: inline-block;
+            background-color: #d0e4ff;
+            color: #1a73e8;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .doubt-card p {
+            margin: 5px 0;
+            color: #333333;
+            line-height: 1.5;
+        }
+
+        .doubt-card small {
+            color: #777777;
+            display: block;
+            margin-top: 10px;
+        }
+
+        .doubt-card a {
+            color: #1a73e8;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .doubt-card a:hover {
+            text-decoration: underline;
+        }
+
+        .no-doubts {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 18px;
+            color: #555555;
+        }
+
+        @media (max-width: 600px) {
+            .doubt-card {
+                width: 95%;
+                padding: 15px 20px;
+            }
+
+            .heading-box {
+                width: 90%;
+                padding: 12px 18px;
+            }
+
+            .heading-box h2 {
+                font-size: 24px;
+            }
+
+            .student-name {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="content-wrapper">
+        <div class="heading-box">
+            <h2>Student Doubts</h2>
+        </div>
+
+        {% if doubts %}
+        <div class="doubt-container">
+            {% for doubt in doubts %}
+                <div class="doubt-card">
+                    <div class="student-name">{{ doubt.student_name }}</div>
+                    <p><b>Email:</b> {{ doubt.student_email }}</p>
+                    <p>{{ doubt.doubt }}</p>
+                    {% if doubt.attachment %}
+                        <p><a href="{{ doubt.attachment.url }}" target="_blank">View Attachment</a></p>
+                    {% endif %}
+                    <p><b>Faculty:</b> {{ doubt.faculty.fname }}</p>
+                    <small>Submitted at: {{ doubt.submitted_at|localtime }}</small>
+                </div>
+            {% endfor %}
+        </div>
+        {% else %}
+            <p class="no-doubts">No doubts submitted yet.</p>
+        {% endif %}
+    </div><br><br>
+
+    {% include 'footer.html' %}
+</body>
+</html>

@@ -1,0 +1,227 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+  <head>
+    {% include 'header1.html' %}
+   <meta charset="utf-8" />
+   <title>Attempt Quiz - {{ quiz.title }}</title>
+   <meta name="viewport" content="width=device-width,initial-scale=1"/>
+   <style>
+ 
+     .top-space { margin-top: 120px; }
+     .bottom-space { margin-bottom: 100px; }
+     /* Page background */
+     body {
+       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+       background-color: #e6ecf5; /* dark navy */
+       margin: 0;
+       padding: 20px;
+       color: #536e9e;
+     }
+ 
+     /* Centered card */
+     .card {
+       max-width: 900px;
+       margin: 40px auto;
+       background: #ffffff; /* white card */
+       color: #0f1a2b; /* text dark */
+       padding: 30px 35px;
+       border-radius: 15px;
+       box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+     }
+ 
+     h1 {
+       margin-top: 0;
+       color: #1a2b4d; /* dark navy for header */
+       text-align: center;
+     }
+ 
+     .muted {
+       color: #555;
+       font-size: 0.95rem;
+       text-align: center;
+       margin-bottom: 25px;
+     }
+ 
+     hr {
+       border: 0;
+       height: 1px;
+       background: #e0e6f0;
+       margin: 30px 0;
+     }
+ 
+     /* Student details inputs */
+     form div input[type="text"],
+     form div input[type="email"] {
+       width: 100%;
+       padding: 10px 12px;
+       margin: 6px 0 15px 0;
+       border: 1px solid #ccc;
+       border-radius: 8px;
+       font-size: 16px;
+     }
+ 
+     label {
+       font-weight: 600;
+       margin-top: 10px;
+       display: block;
+     }
+ 
+     /* Questions */
+     .question {
+       border: 1px solid #e0e6f0;
+       padding: 18px;
+       border-radius: 12px;
+       margin-bottom: 18px;
+       background: #f5f7fb;
+     }
+ 
+     .question strong {
+       color: #1a2b4d; /* dark navy for question numbers */
+     }
+ 
+     img.qimg {
+       max-width: 100%;
+       display: block;
+       margin: 10px 0;
+       border-radius: 8px;
+     }
+ 
+     /* Options */
+     .question input[type="radio"],
+     .question input[type="checkbox"] {
+       margin-right: 8px;
+       accent-color: #1a2b4d; /* navy blue check/radio */
+     }
+ 
+     .question label {
+       display: block;
+       margin-bottom: 8px;
+       font-weight: 500;
+       cursor: pointer;
+     }
+ 
+     .question input[type="text"] {
+       width: 100%;
+       padding: 10px 12px;
+       border: 1px solid #ccc;
+       border-radius: 8px;
+       font-size: 16px;
+     }
+ 
+     /* Buttons */
+     .btn {
+       background-color: #1a2b4d; /* navy blue */
+       color: #fff;
+       padding: 12px 25px;
+       border-radius: 8px;
+       border: none;
+       cursor: pointer;
+       font-size: 16px;
+       font-weight: 600;
+       transition: all 0.3s ease;
+     }
+ 
+     .btn:hover {
+       background-color: #0f1a2b; /* darker navy on hover */
+     }
+ 
+     a.cancel-btn {
+       color: #1a2b4d;
+       text-decoration: none;
+       padding: 12px 25px;
+       border: 1px solid #1a2b4d;
+       border-radius: 8px;
+       display: inline-block;
+       font-weight: 600;
+       transition: all 0.3s ease;
+       margin-left: 12px;
+     }
+ 
+     a.cancel-btn:hover {
+       background-color: #1a2b4d;
+       color: #fff;
+     }
+ 
+     /* Submit area */
+     .form-actions {
+       display: flex;
+       gap: 12px;
+       margin-top: 20px;
+     }
+ 
+     @media (max-width: 600px) {
+       .form-actions {
+         flex-direction: column;
+       }
+       a.cancel-btn {
+         margin-left: 0;
+       }
+     }
+   </style>
+  </head>
+  <body>
+    {% include 'header.html' %}
+    <div class="top-space"></div>
+    <div class="card">
+      <h1>{{ quiz.title }}</h1>
+      <p class="muted">Expires at: {{ quiz.expiry_time|date:"d M Y H:i" }} (IST)</p>
+      <form method="post" action="{% url 'submit_quiz' quiz.id %}">
+        {% csrf_token %}
+        <h3>Student Details</h3>
+        <div>
+          {% if required_flags.require_name %}
+            <label>Full Name</label><input type="text" name="student_name" required>
+          {% else %}
+            <label>Full Name</label><input type="text" name="student_name">
+          {% endif %}
+          {% if required_flags.require_roll %}
+            <label>Roll No</label><input type="text" name="roll_no" required>
+          {% else %}
+            <label>Roll No</label><input type="text" name="roll_no">
+          {% endif %}
+          {% if required_flags.require_email %}
+            <label>Email</label><input type="email" name="email" required>
+          {% else %}
+            <label>Email</label><input type="email" name="email">
+          {% endif %}
+          {% if required_flags.require_class %}
+            <label>Class/Division</label><input type="text" name="class_div" required>
+          {% else %}
+            <label>Class/Division</label><input type="text" name="class_div">
+          {% endif %}
+        </div>
+        <hr>
+        {% for q in questions %}
+          <div class="question">
+            <div><strong>Q{{ forloop.counter }}.</strong> {{ q.text }}</div>
+            {% if q.image %}
+              <img src="{{ q.image.url }}" class="qimg" alt="Question image">
+            {% endif %}
+            {% if q.is_multiple %}
+              <div>
+                {% for opt in q.options.all %}
+                  <div><label><input type="checkbox" name="question_{{ q.id }}" value="{{ opt.id }}"> {{ opt.text }}</label></div>
+                {% endfor %}
+              </div>
+            {% else %}
+              {% if q.options.count %}
+                <div>
+                  {% for opt in q.options.all %}
+                    <div><label><input type="radio" name="question_{{ q.id }}" value="{{ opt.id }}"> {{ opt.text }}</label></div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div><input type="text" name="question_{{ q.id }}" placeholder="Type your answer here"></div>
+              {% endif %}
+            {% endif %}
+          </div>
+        {% endfor %}
+        <div class="form-actions">
+          <button type="submit" class="btn">Submit</button>
+        </div>
+      </form>
+    </div>
+    {% include 'footer.html' %}
+  </body>
+</html>
