@@ -1,10 +1,7 @@
 from django.db import models
 from django.utils.timezone import now
-import json
-from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.contrib.auth.models import User
-import datetime
 import pytz
 
 # Create your models here.
@@ -46,8 +43,6 @@ class Director(models.Model):
 
     def __str__(self):
         return self.dname
-    
-from django.db import models
 
 # Contact
 class Contact(models.Model):
@@ -232,3 +227,51 @@ class Rating(models.Model):
     def __str__(self):
         return f"{self.student_name} -> {self.faculty.fname}"
     
+
+
+
+
+ 
+ 
+
+# 👨 Student linked to Django User
+class AuthenticatedStudent(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='student')
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
+# 👨‍🏫 Teacher linked to Django User
+class Teacher(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='teacher')
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
+# 📩 Complaint Model
+class Complaint(models.Model):
+
+    STATUS_CHOICES = (
+        ("Pending", "Pending"),
+        ("Replied", "Replied"),
+    )
+
+    student = models.ForeignKey(AuthenticatedStudent, on_delete=models.CASCADE)
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+
+    text = models.TextField()
+
+    teacher_reply = models.TextField(blank=True, null=True)
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pending")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    reply_time = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.student.name} → {self.teacher.name}"

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reply Complaint</title>
+</head>
+<body>
+
+<h2>Reply to Complaint</h2>
+
+<p><b>Student:</b> {{ complaint.student.name }}</p>
+<p><b>Complaint:</b> {{ complaint.text }}</p>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <textarea name="reply" rows="5" placeholder="Write reply..." required></textarea>
+
+    <br><br>
+
+    <button type="submit">Send Reply</button>
+</form>
+
+</body>
+</html>

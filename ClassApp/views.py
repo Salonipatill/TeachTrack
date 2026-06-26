@@ -21,6 +21,10 @@ import pytz
 from .models import Quiz, Question, Option, Submission, SubmissionAnswer, Faculty, Student, Director, SubmissionDetail
 from .forms import QuizCreateForm, QuestionForm, StudentInfoForm
 from django.db import transaction
+ 
+from django.contrib.auth.decorators import login_required, user_passes_test
+ 
+from django.db.models import Q
 
 # Create your views here.
 
@@ -730,3 +734,116 @@ def add_announcement(request):
         form = AnnouncementForm()
 
     return render(request, 'add_announcement.html', {'form': form})
+
+
+
+ 
+
+from .models import Complaint, Teacher
+
+
+# 🔐 Role checks
+def is_student(user):
+    return hasattr(user, "student")
+
+
+def is_teacher(user):
+    return hasattr(user, "teacher")
+
+
+def is_admin(user):
+    return user.is_superuser
+
+
+# 📊 COMPLAINT LIST (Admin/Director view)
+@login_required
+@user_passes_test(is_admin)
+def complaints_list(request):
+
+    complaints = Complaint.objects.select_related("student", "teacher").all()
+
+    # 🔍 Filters
+    search = request.GET.get("search")
+    teacher_id = request.GET.get("teacher")
+    status = request.GET.get("status")
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+
+    if search:
+        complaints = complaints.filter(
+            Q(student__name__icontains=search) |
+            Q(teacher__name__icontains=search)
+        )
+
+    if teacher_id:
+        complaints = complaints.filter(teacher_id=teacher_id)
+
+    if status:
+        complaints = complaints.filter(status=status)
+
+    if start_date and end_date:
+        complaints = complaints.filter(created_at__range=[start_date, end_date])
+
+    # 📦 grouping
+    teachers = Teacher.objects.all()
+
+    # 📊 stats
+    total = complaints.count()
+    pending = complaints.filter(status="Pending").count()
+    replied = complaints.filter(status="Replied").count()
+    teachers_involved = Teacher.objects.filter(complaint__in=complaints).distinct().count()
+
+    context = {
+        "complaints": complaints,
+        "teachers": teachers,
+        "total": total,
+        "pending": pending,
+        "replied": replied,
+        "teachers_involved": teachers_involved,
+    }
+
+    return render(request, "complaints.html", context)
+
+
+# ➕ ADD COMPLAINT (Student)
+@login_required
+@user_passes_test(is_student)
+def add_complaint(request):
+
+    student = request.user.student
+
+    if request.method == "POST":
+        teacher_id = request.POST.get("teacher")
+        text = request.POST.get("text")
+
+        teacher = Teacher.objects.get(id=teacher_id)
+
+        Complaint.objects.create(
+            student=student,
+            teacher=teacher,
+            text=text,
+            status="Pending"
+        )
+
+        return redirect("complaints_list")
+
+    teachers = Teacher.objects.all()
+    return render(request, "add_complaint.html", {"teachers": teachers})
+
+
+# 💬 TEACHER REPLY
+@login_required
+@user_passes_test(is_teacher)
+def teacher_reply(request, id):
+
+    complaint = get_object_or_404(Complaint, id=id, teacher=request.user.teacher)
+
+    if request.method == "POST":
+        complaint.teacher_reply = request.POST.get("reply")
+        complaint.status = "Replied"
+        complaint.reply_time = timezone.now()
+        complaint.save()
+
+        return redirect("complaints_list")
+
+    return render(request, "reply.html", {"complaint": complaint})

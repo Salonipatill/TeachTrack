@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complaints Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/complaints.css' %}">
+</head>
+
+<body>
+
+<div class="page-container">
+<div class="dashboard">
+
+    <!-- 📊 SUMMARY CARDS -->
+    <div class="cards">
+        <div class="card">Total Complaints <h2>{{ total }}</h2></div>
+        <div class="card red">Pending <h2>{{ pending }}</h2></div>
+        <div class="card green">Replied <h2>{{ replied }}</h2></div>
+        <div class="card">Teachers <h2>{{ teachers_involved }}</h2></div>
+    </div>
+
+    <!-- 🔍 FILTERS -->
+    <form method="GET" class="filters">
+
+        <input type="text" name="search" placeholder="Search student/teacher">
+
+        <select name="teacher">
+            <option value="">All Teachers</option>
+            {% for t in teachers %}
+                <option value="{{ t.id }}">{{ t.name }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="status">
+            <option value="">Status</option>
+            <option value="Pending">Pending</option>
+            <option value="Replied">Replied</option>
+        </select>
+
+        <input type="date" name="start_date">
+        <input type="date" name="end_date">
+
+        <button type="submit">Filter</button>
+    </form>
+
+    <!-- 📋 TABLE -->
+    <div class="table-container">
+        <table>
+            <tr>
+                <th>Student</th>
+                <th>Complaint</th>
+                <th>Teacher</th>
+                <th>Time</th>
+                <th>Reply</th>
+                <th>Reply Time</th>
+                <th>Status</th>
+            </tr>
+
+            {% for c in complaints %}
+            <tr>
+                <td data-label="Student">{{ c.student.name }}</td>
+                <td data-label="Complaint">{{ c.text }}</td>
+                <td data-label="Teacher">{{ c.teacher.name }}</td>
+                <td data-label="Time">{{ c.created_at }}</td>
+                <td data-label="Reply">{{ c.teacher_reply|default:"-" }}</td>
+                <td data-label="Reply Time">{{ c.reply_time|default:"-" }}</td>
+
+                <td data-label="Status">
+                    <span class="status {{ c.status|lower }}">
+                        {{ c.status }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+
+        </table>
+    </div>
+
+</div>
+</div>
+
+</body>
+</html>

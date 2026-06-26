@@ -34,6 +34,10 @@ urlpatterns = [
     path('rating/',views.rating, name='rating'),
     path('announcements/', views.announcement, name='announcement'),
     path('announcements/add/', views.add_announcement, name='add_announcement'),
+    path("complaints/", views.complaints_list, name="complaints_list"),
+    path("complaints/add/", views.add_complaint, name="add_complaint"),
+    path("complaints/reply/<int:id>/", views.teacher_reply, name="teacher_reply"),
+
 ]
 
 if settings.DEBUG:

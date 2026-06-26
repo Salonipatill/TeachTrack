@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Complaint</title>
+</head>
+<body>
+
+<h2>Submit Complaint</h2>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <label>Teacher:</label>
+    <select name="teacher" required>
+        {% for t in teachers %}
+            <option value="{{ t.id }}">{{ t.name }}</option>
+        {% endfor %}
+    </select>
+    <br><br>
+
+    <label>Complaint:</label><br>
+    <textarea name="text" rows="5" required></textarea>
+
+    <br><br>
+
+    <button type="submit">Submit</button>
+</form>
+
+</body>
+</html>
