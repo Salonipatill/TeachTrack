@@ -486,8 +486,8 @@ class WorkspaceTests(TestCase):
         for field, value in expected.items():
             self.assertEqual(form[field].value(), value)
         self.assertNotContains(response, 'name="class_div"')
-        self.assertContains(response, 'Launch date:')
-        self.assertContains(response, 'Last date:')
+        self.assertContains(response, 'Quiz launch date and time:')
+        self.assertContains(response, 'Submission deadline:')
         data = dict(expected)
         data[f'q_{question.pk}'] = question.options.get(is_correct=True).pk
         self.assertRedirects(self.client.post(reverse('quiz_attempt', args=[quiz.pk]), data), reverse('quiz_result', args=[quiz.pk]))
