@@ -42,13 +42,14 @@ TEMPLATES = [{'BACKEND': 'django.template.backends.django.DjangoTemplates', 'DIR
 WSGI_APPLICATION = 'Classroom.wsgi.application'
 DATABASES = {'default': dj_database_url.parse(os.getenv('DATABASE_URL') or f'sqlite:///{BASE_DIR / "db.sqlite3"}', conn_max_age=60, conn_health_checks=True)}
 if DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
+    DATABASES['default']['ENGINE'] = 'mysql.connector.django'
     DATABASES['default'].setdefault('OPTIONS', {}).update({
-        'ssl': {
-            'ca': str(BASE_DIR / 'certs' / 'aiven-ca.pem'),
-        },
-        'ssl_mode': 'VERIFY_IDENTITY',
+        'use_pure': True,
+        'ssl_ca': str(BASE_DIR / 'certs' / 'aiven-ca.pem'),
+        'ssl_verify_cert': True,
+        'ssl_verify_identity': True,
     })
-if not DEBUG and (DATABASES['default']['ENGINE'] not in {'django.db.backends.postgresql', 'django.db.backends.mysql'} or not os.getenv('GS_BUCKET_NAME')):
+if not DEBUG and (DATABASES['default']['ENGINE'] not in {'django.db.backends.postgresql', 'mysql.connector.django'} or not os.getenv('GS_BUCKET_NAME')):
     raise ImproperlyConfigured('Production requires DATABASE_URL (PostgreSQL or MySQL) and GS_BUCKET_NAME (private media).')
 AUTH_PASSWORD_VALIDATORS = [
  {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
