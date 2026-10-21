@@ -81,13 +81,6 @@ The Methods column describes verbs used by the interface. Explicit method decora
 | `/accounts/logout/` | `logout` | POST | Authenticated |
 | `/accounts/password/change/` | `password_change` | GET, POST | Authenticated |
 | `/accounts/password/change/done/` | `password_change_done` | GET | Authenticated |
-| `/accounts/password/reset/` | `password_reset` | GET, POST | Public token/email reset flow |
-| `/accounts/password/reset/done/` | `password_reset_done` | GET | Public token/email reset flow |
-| `/accounts/password/reset/<uidb64>/<token>/` | `password_reset_confirm` | GET, POST | Public token/email reset flow |
-| `/accounts/password/reset/complete/` | `password_reset_complete` | GET | Public token/email reset flow |
-| `/student-forgot_password/` | `student_forgot_password` | GET, POST | Public token/email reset flow |
-| `/faculty-forgot_password/` | `faculty_forgot_password` | GET, POST | Public token/email reset flow |
-| `/director-forgot_password/` | `director_forgot_password` | GET, POST | Public token/email reset flow |
 
 ## Duplicate paths and aliases
 

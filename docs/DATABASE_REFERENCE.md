@@ -105,7 +105,7 @@ Table: `ClassApp_imageuploader`. Default ordering: `database default`.
 
 ## PasswordResetOTP
 
-Retained historical OTP table; current password resets use Django token-based views instead.
+Retained historical OTP table; public password reset and outbound email are disabled.
 
 Table: `ClassApp_passwordresetotp`. Default ordering: `database default`.
 

@@ -1,5 +1,8 @@
 # Google Cloud Run deployment
 
+> Email password reset and SMTP delivery have been removed. Only signed-in password changes are available; EMAIL_* environment variables are no longer used.
+
+
 This is a deployment guide and container configuration, not evidence of an already deployed service. You need your own Google Cloud project, billing, gcloud CLI and permission to create resources. Use your actual project, region, service account and hostname. Review cloud costs before creating services.
 
 The intended deployment uses Cloud Run for Django, Cloud SQL PostgreSQL for records, a private Cloud Storage bucket for resources, Secret Manager for credentials and WhiteNoise for collected static files.
@@ -24,7 +27,6 @@ In Google Cloud Console:
 3. Create a Cloud SQL PostgreSQL instance with backups, a database named teachtrack and a dedicated application database user. Copy the instance connection name `PROJECT:REGION:INSTANCE`.
 4. Create a private Cloud Storage bucket with uniform bucket-level access and public access prevention. Do not grant allUsers access.
 5. Create a dedicated application service account. Give it Cloud SQL Client, Secret Manager Secret Accessor on only the required secrets and Storage Object User on only the private bucket. Use Google-managed workload identity, not downloaded credential JSON.
-6. Configure an SMTP provider and a verified sender for password reset delivery.
 
 ## 2. Create secrets
 
@@ -32,7 +34,6 @@ Store these in Secret Manager:
 
 - `teachtrack-secret-key`: a random value from `python -c "import secrets; print(secrets.token_urlsafe(64))"`.
 - `teachtrack-database-url`: `postgresql://USER:URL_ENCODED_PASSWORD@/teachtrack?host=/cloudsql/PROJECT:REGION:INSTANCE`.
-- `teachtrack-email-password`: your SMTP password or provider credential.
 
 Grant the application service account access to those individual secrets. Never put production values in the source folder or Docker image.
 
@@ -56,12 +57,6 @@ ALLOWED_HOSTS: "YOUR_SERVICE_HOST.run.app"
 CSRF_TRUSTED_ORIGINS: "https://YOUR_SERVICE_HOST.run.app"
 GS_BUCKET_NAME: "YOUR_PRIVATE_BUCKET"
 TRUST_PROXY_HEADERS: "True"
-EMAIL_BACKEND: "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST: "YOUR_SMTP_HOST"
-EMAIL_PORT: "587"
-EMAIL_USE_TLS: "True"
-EMAIL_HOST_USER: "YOUR_SMTP_USERNAME"
-DEFAULT_FROM_EMAIL: "TeachTrack <YOUR_VERIFIED_SENDER>"
 ```
 
 Cloud Run supplies PORT automatically. Do not set it manually. The app relies on the trusted Cloud Run proxy to replace HTTPS forwarding headers. Do not enable TRUST_PROXY_HEADERS on an untrusted direct internet server.
@@ -75,7 +70,7 @@ gcloud run jobs create teachtrack-migrate \
   --service-account APP_SERVICE_ACCOUNT_EMAIL \
   --set-cloudsql-instances PROJECT:REGION:INSTANCE \
   --env-vars-file cloudrun.env.yaml \
-  --set-secrets SECRET_KEY=teachtrack-secret-key:latest,DATABASE_URL=teachtrack-database-url:latest,EMAIL_HOST_PASSWORD=teachtrack-email-password:latest \
+  --set-secrets SECRET_KEY=teachtrack-secret-key:latest,DATABASE_URL=teachtrack-database-url:latest \
   --command python --args manage.py,migrate,--noinput
 
 gcloud run jobs execute teachtrack-migrate --region REGION --wait
@@ -94,7 +89,7 @@ gcloud run deploy teachtrack \
   --service-account APP_SERVICE_ACCOUNT_EMAIL \
   --add-cloudsql-instances PROJECT:REGION:INSTANCE \
   --env-vars-file cloudrun.env.yaml \
-  --set-secrets SECRET_KEY=teachtrack-secret-key:latest,DATABASE_URL=teachtrack-database-url:latest,EMAIL_HOST_PASSWORD=teachtrack-email-password:latest \
+  --set-secrets SECRET_KEY=teachtrack-secret-key:latest,DATABASE_URL=teachtrack-database-url:latest \
   --allow-unauthenticated \
   --port 8080 \
   --max-instances 3
@@ -110,7 +105,6 @@ gcloud run deploy teachtrack \
 - Test all three roles, account deactivation, CSRF forms and logout.
 - Upload a resource to the private bucket and download it through the authenticated app.
 - Confirm the raw bucket object is inaccessible anonymously.
-- Test password reset email and the final HTTPS reset link.
 - Submit a quiz, answer a doubt, resolve a complaint and export CSV reports.
 - Verify Cloud SQL backups and object retention policies.
 - Test response times/concurrent submissions at your intended classroom size.

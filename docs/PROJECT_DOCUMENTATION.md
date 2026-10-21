@@ -1,5 +1,8 @@
 # TeachTrack project handbook
 
+> Update: email password reset and SMTP delivery have been removed. Earlier reset/email descriptions below are historical. Signed-in password changes remain available.
+
+
 Documentation edition: 21 October 2026. Prepared for Zaman & Saloni. This handbook describes the implementation in this workspace, including the updated role sign-in pages, staff account forms, public header/footer, seven-photo homepage carousel and Campus Life page.
 
 The project is a server-rendered Django academic workspace. It has one shared campus workspace and three application roles: Student, Faculty and Director. Its source retains the original ClassApp/Classroom layout, academic relationships and migration history while using Django authentication for current accounts.

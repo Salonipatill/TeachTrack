@@ -18,7 +18,6 @@
       <a href="{% url 'director_login' %}"{% if login_role == 'director' %} aria-current="page"{% endif %}>Director</a>
     </nav>
     <form method="post">{% csrf_token %}{{ form.as_p }}<button class="full">Sign in →</button></form>
-    <p><a href="{% url 'password_reset' %}">Forgot your password?</a></p>
     <hr>
     {% if login_role == 'faculty' %}
     <p class="muted">Need a faculty account? Ask your director to create one in Manage accounts.</p>

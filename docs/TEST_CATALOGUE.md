@@ -12,7 +12,7 @@
 | WorkspaceTests | `test_role_login_pages_and_matching_accounts` | role login pages and matching accounts |
 | WorkspaceTests | `test_role_login_mismatch_explains_where_to_sign_in` | role login mismatch explains where to sign in |
 | WorkspaceTests | `test_csrf_and_logout_method` | csrf and logout method |
-| WorkspaceTests | `test_password_reset_email` | password reset email |
+| WorkspaceTests | `test_email_password_reset_is_removed` | email reset URLs unavailable |
 | WorkspaceTests | `test_resource_upload_search_and_notification` | resource upload search and notification |
 | WorkspaceTests | `test_reject_fake_pdf_and_html` | reject fake pdf and html |
 | WorkspaceTests | `test_oversized_and_binary_txt_rejected` | oversized and binary txt rejected |

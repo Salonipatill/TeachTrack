@@ -45,7 +45,7 @@ $env:DEBUG = 'True'
 .\.venv\Scripts\python.exe manage.py create_director --username director --email director@example.com --name "Campus Director"
 ```
 
-There is no default password. An existing director creates faculty or additional director accounts through **Manage accounts → Create account**. Public registration creates students only. Enrollment, year, semester and section belong to student forms; faculty/director forms use staff details. Django superuser administration is separate from application director access.
+Email/phone password reset is disabled. Signed-in users can change their password through the Password link. There is no default password. An existing director creates faculty or additional director accounts through **Manage accounts → Create account**. Public registration creates students only. Enrollment, year, semester and section belong to student forms; faculty/director forms use staff details. Django superuser administration is separate from application director access.
 
 ## Source map
 
@@ -67,6 +67,6 @@ $env:DEBUG = 'True'
 .\.venv\Scripts\python.exe tools/build_documentation.py
 ```
 
-Use the [isolated test procedure](docs/TESTING.md) for the 53-test suite. The project includes a [Google Cloud deployment guide](docs/DEPLOYMENT.md); cloud resources, credentials, SMTP and production acceptance remain environment-specific. [Campus image/content sources](docs/CAMPUS_CONTENT.md) and the [original README](docs/ORIGINAL_README.md) are preserved.
+Use the [isolated test procedure](docs/TESTING.md) for the 53-test suite. The project includes a [Google Cloud deployment guide](docs/DEPLOYMENT.md); cloud resources, credentials and production acceptance remain environment-specific. [Campus image/content sources](docs/CAMPUS_CONTENT.md) and the [original README](docs/ORIGINAL_README.md) are preserved.
 
 Created for the TeachTrack academic workspace by **Zaman & Saloni**.

@@ -8,7 +8,6 @@ from contextlib import closing
 from datetime import timedelta
 from pathlib import Path
 from django.contrib.auth import get_user_model
-from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -113,40 +112,17 @@ class WorkspaceTests(TestCase):
         csrf.force_login(self.student)
         self.assertEqual(csrf.post(reverse('notifications_read_all')).status_code,403)
         self.assertEqual(csrf.post(reverse('login'),{'username':'x','password':'y'}).status_code,403)
-    def test_password_reset_email(self):
-        with override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend'):
-            response=self.client.post(reverse('password_reset'),{'email':self.student.email})
-            self.assertEqual(response.status_code,302)
-            self.assertEqual(len(mail.outbox),1)
-            self.assertIn('/accounts/password/reset/',mail.outbox[0].body)
 
-    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
-    def test_password_reset_link_for_each_role_is_single_use(self):
-        import re
-        for role in ['student', 'faculty', 'director']:
-            with self.subTest(role=role):
-                self.client.logout()
-                user = self.users[role]
-                response = self.client.post(reverse(role + '_forgot_password'), {'email': user.email}, secure=True)
-                self.assertEqual(response.status_code, 302)
-                message = mail.outbox[-1]
-                self.assertEqual(message.to, [user.email])
-                link = re.search(r'https://testserver(/accounts/password/reset/[^\s]+)', message.body).group(1)
-                response = self.client.get(link, secure=True)
-                self.assertEqual(response.status_code, 302)
-                new_password = 'NewRolePassword#529'
-                response = self.client.post(response.url, {'new_password1': new_password, 'new_password2': new_password}, secure=True)
-                self.assertRedirects(response, reverse('password_reset_complete'), fetch_redirect_response=False)
-                user.refresh_from_db()
-                self.assertTrue(user.check_password(new_password))
-                self.assertFalse(user.check_password('TestingPassword#57'))
-                self.assertContains(self.client.get(link, secure=True), 'invalid or has expired')
 
-    def test_email_configuration_check_reports_missing_credentials(self):
-        with override_settings(EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend',
-                               EMAIL_HOST='', EMAIL_HOST_USER='', EMAIL_HOST_PASSWORD=''):
-            with self.assertRaisesMessage(CommandError, 'Missing settings:'):
-                call_command('check_email')
+    def test_email_password_reset_is_removed(self):
+        for path in ['/accounts/password/reset/', '/accounts/password/reset/done/',
+                     '/accounts/password/reset/complete/', '/accounts/password/reset/user/token/',
+                     '/student-forgot_password/', '/faculty-forgot_password/', '/director-forgot_password/']:
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, 404)
+                self.assertEqual(self.client.post(path, {'email': self.student.email}).status_code, 404)
+        self.assertNotContains(self.client.get(reverse('login')), 'Forgot your password?')
+
     def test_resource_upload_search_and_notification(self):
         self.login_as('faculty')
         response=self.client.post(reverse('resource_create'),{'title':'Normalization','subject':'DBMS','category':'notes','description':'Normal forms','file':SimpleUploadedFile('notes.txt',b'Database notes')})

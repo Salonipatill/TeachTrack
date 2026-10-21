@@ -103,20 +103,8 @@ if env_bool('TRUST_PROXY_HEADERS'):
 FILE_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 12 * 1024 * 1024
 DATA_UPLOAD_MAX_NUMBER_FILES = 50
-EMAIL_HOST = os.getenv('EMAIL_HOST', '')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-EMAIL_USE_SSL = env_bool('EMAIL_USE_SSL', False)
-EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', not EMAIL_USE_SSL)
-EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', '').strip() or (
-    'django.core.mail.backends.smtp.EmailBackend' if EMAIL_HOST or not DEBUG
-    else 'django.core.mail.backends.console.EmailBackend'
-)
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', '').strip() or EMAIL_HOST_USER or 'teachtrack@localhost'
-if EMAIL_USE_TLS and EMAIL_USE_SSL:
-    raise ImproperlyConfigured('Choose EMAIL_USE_TLS or EMAIL_USE_SSL, not both.')
+# Outbound email and public password reset are disabled.
+EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
 LOGGING = {'version': 1, 'disable_existing_loggers': False,
            'handlers': {'console': {'class': 'logging.StreamHandler'}},
            'root': {'handlers': ['console'], 'level': 'INFO'}}

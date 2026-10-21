@@ -10,7 +10,7 @@ The suite covers:
 
 - All role dashboards and module pages; anonymous redirects; denial of staff actions to students; correct protection on original role URLs.
 - Registration password hashing, prevention of role injection, retained student academic fields and director account bootstrap.
-- Login throttling/cooldown, CSRF, POST-only logout, password change/reset, account deactivation and revocation of existing sessions.
+- Login throttling/cooldown, CSRF, POST-only logout, password changes and removed reset routes, account deactivation and revocation of existing sessions.
 - Resource upload/search/filters, file content/size validation, authenticated downloads, counting, unavailable files and no public media route.
 - Notification privacy, mark-read actions, unsafe redirect rejection and audience restrictions.
 - Original announcement document upload, author/faculty links and authorized document download.
@@ -63,7 +63,7 @@ The most recent application-suite execution recorded during the current workspac
 6. Review director charts, resource totals, historical records and all four CSV reports.
 7. Review the migrated account-name report and any unlinked historical records against your backup.
 8. Rehearse the real MySQL database upgrade separately if using that database. Test media path preservation and backups.
-9. In Google Cloud, verify Cloud SQL connectivity, private bucket reads/writes, HTTPS cookies, CSRF origins, SMTP reset emails, static assets and the health endpoint.
+9. In Google Cloud, verify Cloud SQL connectivity, private bucket reads/writes, HTTPS cookies, CSRF origins, static assets and the health endpoint.
 10. Set ingress body/file-size enforcement, including streamed requests without Content-Length, and load-test your intended student count. Review login throttling behind the actual proxy because peer-IP limits can group several users.
 
 Expected Forbidden/Not Found log entries occur during access-denial tests and are not test failures.

@@ -51,8 +51,8 @@ the live site.
 - Keep `DEBUG=False` on Vercel and use the intended database and allowed domains.
 - Check the deployed site's theme assets, login, faculty creation, quiz attempt,
   result layout and mobile navigation after publishing.
-- Configure SMTP before relying on delivered password-reset emails; the local
-  console email backend does not deliver mail.
+- Public email password resets and SMTP delivery have been removed. Signed-in
+  users can still change their password using the Password link.
 - Configure persistent private storage before enabling uploads.
 - Recheck Safari/Firefox, real mobile devices, external campus links and production
   performance separately. Deployment protection prevented independent live inspection.

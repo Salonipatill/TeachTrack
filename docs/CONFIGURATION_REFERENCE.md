@@ -1,5 +1,8 @@
 # TeachTrack configuration reference
 
+> Email password reset and SMTP delivery have been removed. Only signed-in password changes are available; EMAIL_* environment variables are no longer used.
+
+
 This reference covers the environment variables read by Classroom/settings.py and the project’s custom management commands. Examples are placeholders. It intentionally does not reproduce the private .env file or live database/SMTP credentials.
 
 ## 1. Loading and precedence
@@ -19,13 +22,6 @@ Boolean settings treat the case-insensitive strings 1, true and yes as true. Oth
 | DATABASE_URL | Blank | Blank selects sqlite:///BASE_DIR/db.sqlite3; otherwise parsed by dj-database-url |
 | GS_BUCKET_NAME | Blank | Blank uses local FileSystemStorage; a value selects private GoogleCloudStorage |
 | TRUST_PROXY_HEADERS | False | When true, uses HTTP_X_FORWARDED_PROTO=https to recognize a trusted proxy’s HTTPS scheme |
-| EMAIL_BACKEND | django.core.mail.backends.console.EmailBackend | Development reset email is printed; use an SMTP backend for delivery |
-| EMAIL_HOST | Empty | SMTP server hostname |
-| EMAIL_PORT | 587 | Parsed as an integer; invalid numeric text prevents successful settings loading |
-| EMAIL_HOST_USER | Empty | SMTP login username |
-| EMAIL_HOST_PASSWORD | Empty | SMTP credential; keep private |
-| EMAIL_USE_TLS | True | SMTP TLS setting parsed with the boolean helper |
-| DEFAULT_FROM_EMAIL | teachtrack@localhost | Reset-email sender address/display value |
 | DEMO_PASSWORD | Empty | seed_demo-only chosen password; validated before creating sample accounts |
 | PORT | 8080 in Docker environment | Gunicorn bind port in the Docker shell command; normally supplied by Cloud Run at runtime |
 | DJANGO_SETTINGS_MODULE | Classroom.settings in entry points | Django configuration module selected by manage.py/WSGI/ASGI; standard Django entry-point behavior |
@@ -136,13 +132,6 @@ CSRF_TRUSTED_ORIGINS=
 DATABASE_URL=
 GS_BUCKET_NAME=
 TRUST_PROXY_HEADERS=False
-EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
-EMAIL_HOST=
-EMAIL_PORT=587
-EMAIL_HOST_USER=
-EMAIL_HOST_PASSWORD=
-EMAIL_USE_TLS=True
-DEFAULT_FROM_EMAIL=teachtrack@localhost
 ```
 
 The empty database URL selects the project SQLite path, so verify whether a database file already exists there. For this project’s original incomplete historical SQLite database, follow the fresh/legacy guidance in the handbook rather than forcing migrations.
@@ -159,13 +148,6 @@ CSRF_TRUSTED_ORIGINS=https://YOUR_SERVICE_HOST
 DATABASE_URL=postgresql://USER:URL_ENCODED_PASSWORD@HOST:5432/DATABASE
 GS_BUCKET_NAME=YOUR_PRIVATE_BUCKET
 TRUST_PROXY_HEADERS=True
-EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-EMAIL_HOST=YOUR_SMTP_HOST
-EMAIL_PORT=587
-EMAIL_HOST_USER=YOUR_SMTP_USERNAME
-EMAIL_HOST_PASSWORD=YOUR_PRIVATE_SMTP_CREDENTIAL
-EMAIL_USE_TLS=True
-DEFAULT_FROM_EMAIL=TeachTrack <YOUR_VERIFIED_SENDER>
 ```
 
 Enable TRUST_PROXY_HEADERS only when the actual deployment replaces and controls that forwarding header. A direct untrusted client must not be able to assert its own HTTPS scheme. The Docker image uses a Linux Gunicorn process; the Windows runserver command remains a development entry point.
