@@ -151,9 +151,20 @@ class ResourceForm(forms.ModelForm):
 class QuizForm(forms.ModelForm):
     class Meta:
         model=Quiz
-        fields=['title','subject','starts_at','expiry_time','is_active','require_name','require_roll','require_email','require_class']
+        fields=['title','subject','starts_at','expiry_time']
         labels={'expiry_time':'Closes at (IST)','starts_at':'Opens at (IST)','is_active':'Published'}
         widgets={x:forms.DateTimeInput(attrs={'type':'datetime-local'},format='%Y-%m-%dT%H:%M') for x in ['starts_at','expiry_time']}
+    def save(self, commit=True):
+        quiz = super().save(commit=False)
+        quiz.is_active = True
+        quiz.require_name = True
+        quiz.require_roll = True
+        quiz.require_email = True
+        quiz.require_class = True
+        if commit:
+            quiz.save()
+            self.save_m2m()
+        return quiz
     def clean(self):
         data=super().clean()
         if data.get('starts_at') and data.get('expiry_time') and data['expiry_time']<=data['starts_at']:self.add_error('expiry_time','Closing time must be after opening time.')

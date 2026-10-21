@@ -183,13 +183,17 @@ class WorkspaceTests(TestCase):
         self.assertEqual(Announcement.objects.count(),1)
     def test_create_quiz_formset(self):
         self.login_as('faculty')
+        page = self.client.get(reverse('quiz_create'))
+        for field in ['is_active', 'require_name', 'require_roll', 'require_email', 'require_class']:
+            self.assertNotContains(page, f'name="{field}"')
         data={'title':'New quiz','subject':'Python','starts_at':(timezone.localtime()-timedelta(hours=1)).strftime('%Y-%m-%dT%H:%M'),
-         'expiry_time':(timezone.localtime()+timedelta(hours=1)).strftime('%Y-%m-%dT%H:%M'),'is_active':'on',
+         'expiry_time':(timezone.localtime()+timedelta(hours=1)).strftime('%Y-%m-%dT%H:%M'),
          'questions-TOTAL_FORMS':'1','questions-INITIAL_FORMS':'0','questions-MIN_NUM_FORMS':'1','questions-MAX_NUM_FORMS':'50',
          'questions-0-text':'Which?','questions-0-option_a':'a','questions-0-option_b':'b','questions-0-option_c':'c','questions-0-option_d':'d','questions-0-correct':['A']}
         response=self.client.post(reverse('quiz_create'),data)
         self.assertRedirects(response,reverse('quizzes'))
         quiz=Quiz.objects.get(title='New quiz')
+        self.assertTrue(all([quiz.is_active, quiz.require_name, quiz.require_roll, quiz.require_email, quiz.require_class]))
         self.assertEqual(len(quiz.code),6);self.assertEqual(quiz.questions.count(),1)
         self.assertTrue(Notification.objects.filter(recipient=self.student,title='New quiz: New quiz').exists())
     def test_quiz_rejects_empty_questions(self):
