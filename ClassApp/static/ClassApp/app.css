@@ -133,3 +133,10 @@
 .quiz-question .option { width: 100%; min-width: 0; }
 .quiz-question .option input { flex: 0 0 auto; margin: 0; }
 .quiz-question .option span { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.result-details { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px; margin: 24px 0 0; padding-top: 20px; border-top: 1px solid var(--line); }
+.result-details > div { min-width: 0; }
+.result-details dt { font-size: 11px; color: var(--muted); margin: 0 0 6px; }
+.result-details dd { margin: 0; font-size: 14px; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+@media(max-width:900px) { .result-details { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media(max-width:480px) { .result-details { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; } }
