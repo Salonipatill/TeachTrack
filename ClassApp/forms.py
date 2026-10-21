@@ -36,9 +36,10 @@ class StudentRegistrationForm(UserCreationForm):
     year=forms.CharField(max_length=20,required=False)
     semester=forms.CharField(max_length=20,required=False)
     section=forms.CharField(max_length=5,required=False)
+    batch=forms.CharField(max_length=30,required=False)
     class Meta(UserCreationForm.Meta):
         model=get_user_model()
-        fields=['username','first_name','email','enrollment','department','phone','year','semester','section']
+        fields=['username','first_name','email','enrollment','department','phone','year','semester','section','batch']
     def clean_email(self):
         email=self.cleaned_data['email'].lower()
         if get_user_model().objects.filter(email__iexact=email).exists():raise forms.ValidationError('An account with this email already exists.')
@@ -52,7 +53,7 @@ class StudentRegistrationForm(UserCreationForm):
             if role=='student':
                 item.sen=self.cleaned_data.get('enrollment','');item.course=self.cleaned_data['department']
                 item.sphone=self.cleaned_data.get('phone','');item.year=self.cleaned_data.get('year','')
-                item.sem=self.cleaned_data.get('semester','');item.section=self.cleaned_data.get('section','');item.save()
+                item.sem=self.cleaned_data.get('semester','');item.section=self.cleaned_data.get('section','');item.batch=self.cleaned_data.get('batch','');item.save()
             elif role=='faculty':
                 item.fphone=self.cleaned_data.get('phone','');item.save(update_fields=['fphone'])
             elif role=='director':
@@ -73,7 +74,7 @@ class AccountForm(StudentRegistrationForm):
             self.fields['phone']=forms.CharField(label='Phone number',max_length=10,required=False)
         else:
             self.fields['department'].label='Department'
-            for name in ['enrollment','year','semester','section']:
+            for name in ['enrollment','year','semester','section','batch']:
                 self.fields.pop(name)
 class ProfileForm(forms.ModelForm):
     first_name = forms.CharField(label='Full name', max_length=100)
@@ -84,6 +85,7 @@ class ProfileForm(forms.ModelForm):
     year = forms.CharField(max_length=20, required=False)
     semester = forms.CharField(max_length=20, required=False)
     section = forms.CharField(max_length=5, required=False)
+    batch = forms.CharField(max_length=30, required=False)
 
     class Meta:
         model = get_user_model()
@@ -101,9 +103,9 @@ class ProfileForm(forms.ModelForm):
         if role == 'student':
             self.fields['phone'].max_length = 10
             if item:
-                self.initial.update(year=item.year, semester=item.sem, section=item.section)
+                self.initial.update(year=item.year, semester=item.sem, section=item.section, batch=item.batch)
         else:
-            for name in ['enrollment', 'year', 'semester', 'section']:
+            for name in ['enrollment', 'year', 'semester', 'section', 'batch']:
                 self.fields.pop(name)
 
     def clean_phone(self):
@@ -131,6 +133,7 @@ class ProfileForm(forms.ModelForm):
             item.sname, item.semail, item.unm = user.first_name, user.email, user.username[:50]
             item.sphone, item.sen, item.course = data['phone'], data['enrollment'], data['department']
             item.year, item.sem, item.section = data['year'], data['semester'], data['section']
+            item.batch = data['batch']
         elif profile.role == 'faculty':
             item.fname, item.femail, item.fphone = user.first_name, user.email, data['phone']
         else:
@@ -195,7 +198,11 @@ class StudentInfoForm(forms.Form):
     student_name=forms.CharField(max_length=255,required=False,label='Full name')
     roll_no=forms.CharField(max_length=50,required=False,label='Roll / enrollment number')
     email=forms.EmailField(required=False)
-    class_div=forms.CharField(max_length=50,required=False,label='Class / division')
+    course=forms.CharField(max_length=50,required=False,label='Course / class')
+    year=forms.CharField(max_length=20,required=False,label='Year')
+    semester=forms.CharField(max_length=20,required=False,label='Semester')
+    section=forms.CharField(max_length=5,required=False,label='Section')
+    batch=forms.CharField(max_length=30,required=False,label='Batch')
 class AnnouncementForm(forms.ModelForm):
     class Meta:
         model=Announcement

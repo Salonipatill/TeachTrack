@@ -261,9 +261,12 @@ def quiz_attempt(request,pk):
             messages.error(request,'This quiz is incomplete. Contact the faculty member.');return redirect('quizzes')
         questions=list(quiz.questions.prefetch_related('options').all())
         student=ensure_legacy(request.user)
-        initial={'student_name':display_name(request.user),'email':request.user.email,'roll_no':student.sen,'class_div':' '.join(x for x in [student.course,student.year,student.sem,student.section] if x)}
+        initial={'student_name':display_name(request.user),'email':request.user.email,
+                 'roll_no':request.user.profile.enrollment or student.sen,
+                 'course':request.user.profile.department or student.course,
+                 'year':student.year,'semester':student.sem,'section':student.section,'batch':student.batch}
         info=StudentInfoForm(request.POST if request.method=='POST' else None,initial=initial)
-        for field,required in [('student_name',quiz.require_name),('roll_no',quiz.require_roll),('email',quiz.require_email),('class_div',quiz.require_class)]:info.fields[field].required=required
+        for field,required in [('student_name',quiz.require_name),('roll_no',quiz.require_roll),('email',quiz.require_email),('course',quiz.require_class)]:info.fields[field].required=required
         error=None;rows=[]
         for q in questions:
             selected=request.POST.getlist(f'q_{q.pk}')
@@ -283,7 +286,9 @@ def quiz_attempt(request,pk):
                 try:
                     with transaction.atomic():
                         data=info.cleaned_data
-                        submission=Submission.objects.create(quiz=quiz,student=request.user,student_name=data['student_name'] or initial['student_name'],email=data['email'] or initial['email'],roll_no=data['roll_no'] or initial['roll_no'],class_div=data['class_div'] or initial['class_div'],score=score,total=len(questions),review=review)
+                        academic_details={field:data[field] or initial[field] for field in ['course','year','semester','section','batch']}
+                        class_div=' '.join(value for value in academic_details.values() if value)[:50]
+                        submission=Submission.objects.create(quiz=quiz,student=request.user,student_name=data['student_name'] or initial['student_name'],email=data['email'] or initial['email'],roll_no=data['roll_no'] or initial['roll_no'],class_div=class_div,academic_details=academic_details,score=score,total=len(questions),review=review)
                         for row,record in zip(rows,review):
                             answer=SubmissionAnswer.objects.create(submission=submission,question=row['question']);answer.selected_options.set(record['selected'])
                             detail=SubmissionDetail.objects.create(quiz=quiz,submission=submission,question=row['question'],student_name=submission.student_name,roll_no=submission.roll_no,email=submission.email,class_div=submission.class_div,score=int(record['selected']==record['correct']))

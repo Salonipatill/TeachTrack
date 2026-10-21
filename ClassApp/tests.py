@@ -468,9 +468,32 @@ class WorkspaceTests(TestCase):
         self.login_as('student')
         response=self.client.post(reverse('quiz_attempt',args=[quiz.pk]),{f'q_{q.pk}':q.options.get(is_correct=True).pk})
         self.assertEqual(response.status_code,200);self.assertFalse(Submission.objects.exists())
-        data={f'q_{q.pk}':q.options.get(is_correct=True).pk,'student_name':'Student','roll_no':'CS001','email':'student@example.test','class_div':'CSE A'}
+        data={f'q_{q.pk}':q.options.get(is_correct=True).pk,'student_name':'Student','roll_no':'CS001','email':'student@example.test','course':'CSE','year':'4','semester':'7','section':'B','batch':'2023–2027'}
         self.client.post(reverse('quiz_attempt',args=[quiz.pk]),data)
         self.assertEqual(Submission.objects.get().roll_no,'CS001')
+        self.assertEqual(Submission.objects.get().academic_details, {'course':'CSE','year':'4','semester':'7','section':'B','batch':'2023–2027'})
+
+    def test_quiz_attempt_autofills_separate_academic_details_and_dates(self):
+        Profile.objects.filter(user=self.student).update(enrollment='CS456', department='CSE')
+        Student.objects.filter(user=self.student).update(year='4', sem='7', section='B', batch='2023–2027')
+        quiz, question = self.make_quiz()
+        self.login_as('student')
+        response = self.client.get(reverse('quiz_attempt', args=[quiz.pk]))
+        self.assertEqual(response.status_code, 200)
+        form = response.context['info']
+        expected = {'student_name':'Student', 'email':self.student.email, 'roll_no':'CS456',
+                    'course':'CSE', 'year':'4', 'semester':'7', 'section':'B', 'batch':'2023–2027'}
+        for field, value in expected.items():
+            self.assertEqual(form[field].value(), value)
+        self.assertNotContains(response, 'name="class_div"')
+        self.assertContains(response, 'Launch date:')
+        self.assertContains(response, 'Last date:')
+        data = dict(expected)
+        data[f'q_{question.pk}'] = question.options.get(is_correct=True).pk
+        self.assertRedirects(self.client.post(reverse('quiz_attempt', args=[quiz.pk]), data), reverse('quiz_result', args=[quiz.pk]))
+        submission = Submission.objects.get(student=self.student)
+        self.assertEqual(submission.academic_details['section'], 'B')
+        self.assertEqual(submission.academic_details['batch'], '2023–2027')
     def test_invalid_legacy_quiz_cannot_be_attempted_or_published(self):
         quiz,q=self.make_quiz();q.options.update(is_correct=False)
         self.login_as('student')

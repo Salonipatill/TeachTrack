@@ -25,6 +25,7 @@ class Student(models.Model):
     year=models.CharField(max_length=20,default='')
     sem=models.CharField(max_length=20,default='')
     section=models.CharField(max_length=5,default='')
+    batch=models.CharField(max_length=30,blank=True,default='')
     user=models.OneToOneField(settings.AUTH_USER_MODEL,on_delete=models.PROTECT,null=True,blank=True,related_name='legacy_student')
     def __str__(self): return self.sname
 class Faculty(models.Model):
@@ -117,6 +118,7 @@ class Submission(models.Model):
     student=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT,null=True,blank=True,related_name='quiz_submissions')
     total=models.PositiveIntegerField(default=0)
     review=models.JSONField(default=list)
+    academic_details=models.JSONField(default=dict,blank=True)
     class Meta:
         ordering=['-score','submitted_at','id']
         constraints=[models.UniqueConstraint(fields=['quiz','student'],name='one_authenticated_quiz_attempt')]
