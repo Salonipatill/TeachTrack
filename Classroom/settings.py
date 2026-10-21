@@ -28,6 +28,14 @@ if not DEBUG and len(SECRET_KEY) < 50:
     raise ImproperlyConfigured('Production SECRET_KEY must contain at least 50 characters.')
 ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,[::1]').split(',') if h.strip()]
 CSRF_TRUSTED_ORIGINS = [h.strip() for h in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if h.strip()]
+for vercel_url_variable in ('VERCEL_URL', 'VERCEL_PROJECT_PRODUCTION_URL', 'VERCEL_BRANCH_URL'):
+    vercel_host = os.getenv(vercel_url_variable, '').strip()
+    if vercel_host and '://' not in vercel_host and '/' not in vercel_host:
+        if vercel_host not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(vercel_host)
+        vercel_origin = f'https://{vercel_host}'
+        if vercel_origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(vercel_origin)
 INSTALLED_APPS = ['django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
                   'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles', 'ClassApp.apps.ClassAppConfig']
 MIDDLEWARE = ['django.middleware.security.SecurityMiddleware', 'whitenoise.middleware.WhiteNoiseMiddleware',
