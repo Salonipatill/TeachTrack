@@ -18,7 +18,7 @@ The process below is for a **consistent populated database matching the original
 ## Configure the staging copy
 
 - SQLite: point DATABASE_URL at a copy of a consistent database, using `sqlite:///ABSOLUTE_PATH` with the appropriate extra slash for an absolute Linux path.
-- Original MySQL: install `requirements-mysql.txt`, including the platform's mysqlclient build requirements if needed. Set DATABASE_URL to your staging MySQL URL. Do not paste its credentials into settings.py.
+- Original MySQL: install `requirements-mysql.txt`, which includes the main requirements and MySQL Connector. Set DATABASE_URL to your staging MySQL URL. Do not paste its credentials into settings.py.
 - PostgreSQL: use the normal requirements and a PostgreSQL URL. Django schema migrations do not copy data automatically from MySQL to PostgreSQL; first perform and validate a separate database-engine migration if that is your chosen path.
 
 Use `DEBUG=True` for the local staging rehearsal. Production requires DEBUG=False, a strong secret, a supported production database and the private bucket settings described in DEPLOYMENT.md.
@@ -72,3 +72,16 @@ Local development uses the copied media directory with original relative paths. 
 The credential-conversion migration is intentionally irreversible. Once plaintext fields are removed, rolling back by unapplying migrations is not supported. To revert a failed rehearsal, restore the database backup and old code together. Keep backups private because pre-upgrade backups can contain plaintext passwords.
 
 Rehearse all three role logins, old quiz scores, images, documents, doubts, feedback and complaints against the staging copy. Only after that review should the equivalent backed-up production database be upgraded.
+
+## Current follow-up migration and storage modes
+
+Migration 0010 adds Student.batch and Submission.academic_details. Apply it after
+the original account/schema upgrade. Existing attempts keep their saved combined
+summary; no separate historical values are inferred. New submissions retain all
+separate academic fields in JSON. Profile edits synchronize linked current role
+records while preserving already-recorded submission snapshots.
+
+A private bucket is optional for production startup, but existing files must be
+preserved separately. Production without persistent storage deliberately disables
+uploads and cannot restore missing historical media. See VERCEL_DEPLOYMENT.md for
+the current Aiven/TLS setup. Public password reset and SMTP are removed.

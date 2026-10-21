@@ -1,42 +1,53 @@
 # TeachTrack
 
-TeachTrack is a Django academic workspace for **students, faculty and directors**. It includes a public campus website, private resource library, quizzes, announcements, notifications, doubts, faculty feedback, complaints and director reporting.
+TeachTrack is a Django academic workspace for **students, faculty and directors**.
+It brings quizzes, resources, announcements, notifications, doubts, feedback,
+complaints and director reporting into one campus website.
 
-## Complete documentation
+## Current features
 
-**[Open the project handbook](docs/PROJECT_DOCUMENTATION.md)** or **[open the offline illustrated handbook](docs/TEACHTRACK_DOCUMENTATION.html)**. A printable snapshot is available at [TEACHTRACK_DOCUMENTATION.pdf](docs/TEACHTRACK_DOCUMENTATION.pdf).
+- Public home, campus and Contact pages with shared navigation/header/footer.
+- Separate role sign-in pages; login uses a **username**, not an email address.
+- **My profile**: click the name/role in the sidebar footer to correct your own
+  account details. Students also manage enrollment, year, semester, section and batch.
+- Quiz creation automatically applies publication/identity defaults. Student
+  attempts autofill account details and show academic fields separately.
+- Explicit quiz launch/deadline and submission timestamps in IST, question numbers
+  inside cards, scoring, delayed answer reviews and responsive result details.
+- Persistent light/dark mode on shared pages, mobile navigation, keyboard skip
+  links, reduced-motion support and submit/search progress feedback.
+- Director account management/reporting and role/object authorization.
 
-| Reference | Contents |
-| --- | --- |
-| [Documentation index](docs/README.md) | Organized reading guide and all companion documents |
-| [Project handbook](docs/PROJECT_DOCUMENTATION.md) | Setup, architecture, files, roles, every workflow, security, commands, operations and troubleshooting |
-| [Design system](docs/DESIGN_SYSTEM.md) | Colour tokens/RGB, typography, spacing, component states, breakpoints and image index |
-| [Complete colour index](docs/COLOUR_INDEX.md) | Every explicit active-stylesheet colour, opacity and selector/property usage |
-| [Database reference](docs/DATABASE_REFERENCE.md) | All 24 project models, fields, defaults, relations, constraints and indexes |
-| [Forms reference](docs/FORM_REFERENCE.md) | Every active form field, role variation and validation rule |
-| [Route reference](docs/ROUTE_REFERENCE.md) | Current/original URL names, methods, access rules and query parameters |
-| [Configuration reference](docs/CONFIGURATION_REFERENCE.md) | Every project environment variable and important fixed Django settings |
-| [Testing guide](docs/TESTING.md) | Verification procedure and current test coverage |
+**Current limits:** Public password reset, email/SMS OTP and SMTP sending are
+removed. Signed-in users can still change their password using the old password.
+Production uploads are disabled without persistent private storage; text workflows
+remain available. Contact submissions are stored in the database and visible in
+Django admin, with no automatic email or director-dashboard inbox.
 
-## Run this existing Windows workspace
+## Run locally on Windows
 
-From the folder containing manage.py, keep your existing .env and virtual environment:
+From the folder containing manage.py, keep your existing private .env and environment:
 
 ```powershell
-$env:DEBUG = 'True'
-.\.venv\Scripts\python.exe manage.py check
+cd "C:\Users\Zamanuddin Khan\Downloads\Coding Area\TeachTrack"
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe manage.py runserver
 ```
 
-Open **http://127.0.0.1:8000/**. The local DEBUG override prevents an inherited IDE value from unintentionally enabling production mode. Configuration loading and precedence are explained in the handbook.
+Open http://127.0.0.1:8000/. Local runserver loads .env with override enabled. Other
+commands and deployed entry points give process environment variables precedence.
+For a new setup, copy .env.example to .env and fill private values. Never commit
+.env, passwords, private keys or database dumps.
 
-For a new installation, follow [handbook section 4](docs/PROJECT_DOCUMENTATION.md#4-installation-and-local-startup). The container baseline is Python 3.12; the existing workspace has also been exercised with Python 3.14.5. Install requirements using the same interpreter that runs manage.py. MySQL users additionally need requirements-mysql.txt.
+Blank DATABASE_URL selects local SQLite. PostgreSQL and MySQL Connector are in the
+main requirements. Aiven MySQL uses mysql.connector.django, a matching public CA
+certificate at certs/aiven-ca.pem and TLS certificate/hostname verification.
+requirements-mysql.txt is retained as a compatibility include of the main set.
+Before upgrading a populated original database, follow [UPGRADE.md](docs/UPGRADE.md).
+Migration 0010 adds batch and separate quiz academic snapshots; it does not guess
+missing historical values. Schema migrations do not transfer data between engines.
 
-Before migrating a populated original database, follow [UPGRADE.md](docs/UPGRADE.md). An existing database is not replaced by these startup commands. Blank DATABASE_URL selects db.sqlite3; a configured URL can select MySQL or PostgreSQL.
-
-## Accounts and login
-
-Login uses your **Django username**, rather than your email address. Role pages are available at `/student-login/`, `/faculty-login/` and `/director-login/`; the shared route is `/accounts/login/`.
+## Accounts
 
 Create the first director with a privately entered password:
 
@@ -45,28 +56,65 @@ $env:DEBUG = 'True'
 .\.venv\Scripts\python.exe manage.py create_director --username director --email director@example.com --name "Campus Director"
 ```
 
-Email/phone password reset is disabled. Signed-in users can change their password through the Password link. There is no default password. An existing director creates faculty or additional director accounts through **Manage accounts → Create account**. Public registration creates students only. Enrollment, year, semester and section belong to student forms; faculty/director forms use staff details. Django superuser administration is separate from application director access.
+There is no default password. Directors create faculty/additional directors through
+Manage accounts. Public registration creates students only. Application director
+access does not automatically grant Django admin access. A trusted administrator
+can use Django's interactive changepassword command for a forgotten password.
 
-## Source map
+## Verify safely
 
-- `Classroom/`: settings, root routing and WSGI/ASGI entry points.
-- `ClassApp/`: academic models, forms, views, authorization, services and tests.
-- `ClassApp/Templates/`: current shared templates and retained original templates.
-- `ClassApp/static/ClassApp/`: active CSS and vanilla JavaScript.
-- `ClassApp/static/img/`: source campus images; `staticfiles/` is generated output.
-- `docs/`: full handbook, references and operations guides.
-- `tools/build_documentation.py`: reproducible documentation/reference builder.
-
-## Verification and deployment
+Use a separate terminal for isolated tests; close it before resuming normal database work:
 
 ```powershell
 $env:DEBUG = 'True'
-.\.venv\Scripts\python.exe manage.py check
+$env:DATABASE_URL = 'sqlite:///:memory:'
+.\.venv\Scripts\python.exe manage.py test
 .\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
-.\.venv\Scripts\python.exe manage.py collectstatic --noinput
-.\.venv\Scripts\python.exe tools/build_documentation.py
+.\.venv\Scripts\python.exe -m pip check
 ```
 
-Use the [isolated test procedure](docs/TESTING.md) for the 53-test suite. The project includes a [Google Cloud deployment guide](docs/DEPLOYMENT.md); cloud resources, credentials and production acceptance remain environment-specific. [Campus image/content sources](docs/CAMPUS_CONTENT.md) and the [original README](docs/ORIGINAL_README.md) are preserved.
+The latest feature-removal run passed **57 tests**. Local Edge checks also covered
+public mobile/tablet/desktop pages, role navigation, faculty creation, quiz attempts,
+result layouts, keyboard navigation and actual dark colours. This is not a claim
+of zero bugs or independent verification of protected Vercel deployments,
+Safari/Firefox, external content or production load.
 
-Created for the TeachTrack academic workspace by **Zaman & Saloni**.
+## Deploy
+
+See [Vercel + Aiven](docs/VERCEL_DEPLOYMENT.md) for current environment variables,
+certificate/migration requirements and deployed-commit troubleshooting. The
+[Google Cloud guide](docs/DEPLOYMENT.md) covers the optional container/GCS route.
+Set DEBUG=False and a private SECRET_KEY in production. A GCS bucket is optional
+for startup; provision storage and credentials before enabling uploads.
+
+After pushing, verify Vercel's active commit and open that deployment's Visit URL.
+Test the actual site, theme assets, login, profile, quiz result and intended roles.
+Local .env edits do not configure Vercel. Email environment variables are unused.
+
+## Documentation and tools
+
+Start with the [documentation index](docs/README.md), [current changes](docs/RECENT_CHANGES.md)
+or [project handbook](docs/PROJECT_DOCUMENTATION.md). The [offline HTML handbook](docs/TEACHTRACK_DOCUMENTATION.html)
+and [PDF](docs/TEACHTRACK_DOCUMENTATION.pdf) include the current references and diagrams.
+
+```powershell
+.\.venv\Scripts\python.exe tools/build_documentation.py
+.\.venv\Scripts\python.exe tools/export_documentation_pdf.py
+.\.venv\Scripts\python.exe tools/check_documentation.py
+```
+
+The builder uses isolated metadata, not live account rows. PDF export needs the
+optional local Playwright/browser dependency. See [tools/README.md](tools/README.md)
+for installation and maintenance steps.
+
+## Source map
+
+- Classroom/: settings, routing and deployment entry points.
+- ClassApp/: models, forms, views, services, authorization, migrations and tests.
+- ClassApp/Templates/: current shared templates and retained historical pages.
+- ClassApp/static/ClassApp/: active app/theme CSS and JavaScript, favicon.
+- ClassApp/static/img/: campus images; staticfiles/ is generated output.
+- docs/: guides, generated references, diagrams and offline handbook.
+- tools/: documentation builder, PDF exporter, link checks and usage guide.
+
+Created for TeachTrack by **Zaman & Saloni**.

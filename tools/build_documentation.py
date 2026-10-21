@@ -20,13 +20,15 @@ DOCS = ROOT / 'docs'
 REVIEW_DATE = '21 October 2026'
 sys.path.insert(0, str(ROOT))
 os.environ['DEBUG'] = 'True'
+os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
+os.environ['SECRET_KEY'] = 'documentation-build-only-not-a-runtime-secret'
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Classroom.settings')
 
 import django
 django.setup()
 from django.apps import apps
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm, SetPasswordForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from django.db.models import NOT_PROVIDED
 from django import forms
 from django.urls import URLResolver
@@ -41,11 +43,11 @@ MODEL_PURPOSES = {
     'Profile': 'One profile for every Django user; stores the application role, department and enrollment.',
     'Contact': 'Messages submitted through the public TeachTrack contact form. Saving a message does not send an email.',
     'ImageUploader': 'Retained historical image model. No current public upload workflow routes to it.',
-    'PasswordResetOTP': 'Retained historical OTP table; current password resets use Django token-based views instead.',
+    'PasswordResetOTP': 'Retained historical OTP table. Public password reset and outbound email are disabled.',
     'Quiz': 'Quiz metadata, creator, availability, publication flag and student-detail requirements.',
     'Question': 'A quiz question, optional image and single-selection/multiple-selection setting.',
     'Option': 'An answer option and its correctness flag, attached to one question.',
-    'Submission': 'A recorded quiz attempt with identity details, aggregate score and a saved grading review.',
+    'Submission': 'A recorded quiz attempt with identity and academic snapshots, aggregate score and a saved grading review.',
     'SubmissionAnswer': 'Original per-question answer relationship, including the selected Option many-to-many relation.',
     'SubmissionDetail': 'Original detailed answer record, retained alongside SubmissionAnswer for historical compatibility.',
     'Doubt': 'A student question assigned to faculty, with an optional attachment and an editable faculty answer.',
@@ -84,7 +86,7 @@ FIELD_NOTES = {
     'require_name': 'Whether the quiz-attempt name field is mandatory.',
     'require_roll': 'Whether the quiz-attempt roll/enrollment field is mandatory.',
     'require_email': 'Whether the quiz-attempt email field is mandatory.',
-    'require_class': 'Whether the quiz-attempt class/division field is mandatory.',
+    'require_class': 'Whether the quiz-attempt course/class field is mandatory. New quiz forms enable this automatically.',
     'code': 'Six uppercase hexadecimal characters, generated when a quiz is saved without a code.',
     'is_multiple': 'True enables selection of multiple correct options.',
     'is_correct': 'Correct-answer flag; students do not receive it before the review is released.',
@@ -92,7 +94,9 @@ FIELD_NOTES = {
     'review': 'Saved question/option text and selected/correct answer IDs used by the results view.',
     'total': 'Number of questions in the saved attempt.',
     'score': 'Correct-answer count; on SubmissionDetail this is 0 or 1 for one question.',
-    'roll_no': 'Roll/enrollment value copied into an attempt.', 'class_div': 'Class/division value copied into an attempt.',
+    'roll_no': 'Roll/enrollment value copied into an attempt.', 'class_div': 'Legacy combined academic summary, limited to 50 characters; full separate values are in academic_details.',
+    'batch': 'Student batch/cohort text, editable at registration and in My profile.',
+    'academic_details': 'Submission JSON snapshot containing course, year, semester, section and batch separately.',
     'student_name': 'Student display-name snapshot, including historical records.',
     'student_email': 'Student email snapshot, including historical records.',
     'answer': 'Latest faculty answer text; the form allows an existing answer to be updated.',
@@ -108,7 +112,7 @@ FIELD_NOTES = {
     'key': 'SHA-256 digest of an ip: or user: throttle key; not a plaintext password.',
     'failures': 'Invalid authentication attempts counted in the current window.',
     'window_start': 'Beginning of the stored throttle window.',
-    'otp': 'Historical reset OTP text; unused by the current token-reset flow.',
+    'otp': 'Historical reset OTP text; no current public OTP/reset workflow.',
     'rating': 'Integer rating from 1 to 5, with form and database constraints.',
 }
 
@@ -117,6 +121,7 @@ ACCESS = {
     'health': ('GET', 'Public'), 'sign_in': ('GET, POST', 'Public; optional route-specific role'),
     'register': ('GET, POST', 'Public; creates students only'),
     'dashboard': ('GET', 'Authenticated'), 'resources': ('GET', 'Authenticated'),
+    'profile_edit': ('GET, POST', 'Authenticated; own account only'),
     'resource_create': ('GET, POST', 'Faculty or director'), 'resource_download': ('POST', 'Authenticated'),
     'notifications': ('GET', 'Own inbox'), 'notification_read': ('POST', 'Own notification'),
     'notifications_read_all': ('POST', 'Own inbox'), 'notification_create': ('GET, POST', 'Faculty or director'),
@@ -237,9 +242,7 @@ def route_reference():
         if isinstance(pattern, URLResolver): continue
         name = pattern.name or ''
         path = '/' + str(pattern.pattern)
-        if 'forgot_password' in name or name.startswith('password_reset'):
-            access = 'Public token/email reset flow'
-        elif name.startswith('password_change') or name == 'logout':
+        if name.startswith('password_change') or name == 'logout':
             access = 'Authenticated'
         elif name == 'register': access = 'Public student registration'
         else: access = 'Public login'
@@ -274,11 +277,17 @@ def form_reference():
              'AnnouncementForm', 'ComplaintForm', 'DoubtForm', 'FeedbackForm', 'ReplyForm', 'AnswerForm', 'NotificationForm', 'ContactForm']
     instances = [(n, getattr(project_forms, n)()) for n in names]
     instances[1:1] = [(f'AccountForm — {role}', project_forms.AccountForm(role=role)) for role in ['student', 'faculty', 'director']]
+    from ClassApp.models import Profile, Student, Faculty, Director
+    for role, model, relation in [('student', Student, 'legacy_student'),
+                                  ('faculty', Faculty, 'legacy_faculty'),
+                                  ('director', Director, 'legacy_director')]:
+        account = get_user_model()()
+        account.profile = Profile(user=account, role=role)
+        setattr(account, relation, model(user=account))
+        instances.append((f'ProfileForm — {role}', project_forms.ProfileForm(instance=account)))
     user = get_user_model()()
     instances += [('Django AuthenticationForm', AuthenticationForm()),
-                  ('Django PasswordChangeForm', PasswordChangeForm(user)),
-                  ('Django PasswordResetForm', PasswordResetForm()),
-                  ('Django SetPasswordForm', SetPasswordForm(user))]
+                  ('Django PasswordChangeForm', PasswordChangeForm(user))]
     for name, form in instances:
         out += [f'## {name}', '']
         rows = []
@@ -305,19 +314,25 @@ def form_reference():
             '- Faculty announcement and notification forms permit the Students audience only; directors may choose all configured audiences.',
             '- A complaint reply requires a message up to 5,000 characters. Only directors receive the status input. A complaint body accepts up to 10,000 characters.',
             '- Resource, announcement and doubt file validation and image safety checks are detailed in the handbook Security and uploads chapter.',
-            '- AuthenticationForm, password-change and token-reset forms come from Django. The login field is a username, not an email identifier.', '']
+            '- New quiz forms automatically publish and require name, enrollment, email and course; these flags are not displayed.',
+            '- StudentInfoForm autofills identity and separate course/year/semester/section/batch fields from the account.',
+            '- ProfileForm edits only the authenticated account and synchronizes linked role records; roles and permissions cannot be edited here.',
+            '- Login and signed-in password change use Django forms. Public password reset, phone OTP and SMTP are disabled.', '']
     write('FORM_REFERENCE.md', '\n'.join(out))
 
 
 def palette_reference():
-    css = (ROOT / 'ClassApp/static/ClassApp/app.css').read_text(encoding='utf-8')
-    tokens = re.findall(r'(--[\w-]+)\s*:\s*([^;}]+)', css)
+    sources = ['ClassApp/static/ClassApp/app.css', 'ClassApp/static/ClassApp/theme.css']
+    css = '\n'.join((ROOT / name).read_text(encoding='utf-8') for name in sources)
+    tokens = []
     usages = defaultdict(set)
     for rule in re.finditer(r'([^{}]+)\{([^{}]*)\}', css):
         selector = rule.group(1).strip()
         for declaration in rule.group(2).split(';'):
             if ':' not in declaration: continue
             prop, value = declaration.split(':', 1)
+            if prop.strip().startswith('--'):
+                tokens.append((selector + ' / ' + prop.strip(), value.strip()))
             for color in re.findall(r'#[0-9a-fA-F]{3,8}\b|(?<![-\w])(?:white|transparent)\b', value):
                 usages[color.lower()].add(selector + ' → ' + prop.strip())
     palette = []
@@ -332,7 +347,7 @@ def palette_reference():
     rows = [[f'`{p["literal"]}`', f'{p["rgb"][0]}, {p["rgb"][1]}, {p["rgb"][2]}', f'{p["alpha"] * 100:.2f}%',
              '; '.join(f'`{s}`' for s in p['usages'])] for p in palette]
     out = ['# Complete colour index', '',
-           f'Generated from `ClassApp/static/ClassApp/app.css` on {REVIEW_DATE}: '
+           f'Generated from `app.css` and `theme.css` on {REVIEW_DATE}: '
            f'{len([p for p in palette if p["literal"].startswith("#")])} distinct hex literals plus named CSS colours. '
            'This is an inventory of the active application stylesheet, not of photographic pixels, browser defaults or the retained legacy theme.', '',
            '## Theme variables', '', table(['Token', 'Declared value'], [[f'`{k}`', f'`{v}`'] for k, v in tokens]), '',
@@ -342,7 +357,7 @@ def palette_reference():
            'Named white aliases #ffffff, while transparent has zero opacity. `currentColor` in SVG arrows inherits its surrounding text colour.', '',
            table(['CSS literal', 'RGB', 'Opacity', 'Selectors and properties'], rows), '']
     write('COLOUR_INDEX.md', '\n'.join(out))
-    (DOCS / 'colour-index.json').write_text(json.dumps({'source': 'ClassApp/static/ClassApp/app.css', 'tokens': dict(tokens), 'colours': palette}, indent=2) + '\n', encoding='utf-8')
+    (DOCS / 'colour-index.json').write_text(json.dumps({'sources': sources, 'tokens': dict(tokens), 'colours': palette}, indent=2) + '\n', encoding='utf-8')
     return palette
 
 
@@ -391,8 +406,8 @@ def build_diagrams():
         ('templates', 510, 75, 205, 70, ['Templates + static assets', 'Server-rendered response']),
         ('db', 240, 225, 210, 70, ['Relational database', 'SQLite / MySQL / PostgreSQL']),
         ('media', 510, 225, 205, 70, ['Private uploaded files', 'Local media / GCS bucket']),
-        ('email', 25, 225, 160, 70, ['Password reset email', 'Console / SMTP']),
-    ], [('browser','django'),('django','templates'),('django','db'),('django','media'),('django','email')], 740, 325)
+        ('theme', 25, 225, 160, 70, ['Light / dark mode', 'Browser preference']),
+    ], [('browser','django'),('django','templates'),('django','db'),('django','media'),('browser','theme')], 740, 325)
     diagram('database.svg', 'Core relationships — full field dictionary follows', [
         ('user', 275, 65, 185, 65, ['Django User + Profile', 'Role / account identity']),
         ('legacy', 25, 180, 205, 65, ['Student / Faculty / Director', 'Legacy contact / academic data']),
@@ -418,6 +433,8 @@ CHAPTERS = [
     ('DATABASE_REFERENCE.md', 'Database reference'), ('FORM_REFERENCE.md', 'Forms and validation'),
     ('ROUTE_REFERENCE.md', 'Route reference'), ('CONFIGURATION_REFERENCE.md', 'Configuration reference'),
     ('COLOUR_INDEX.md', 'Complete colour index'), ('TEST_CATALOGUE.md', 'Test catalogue'),
+    ('VERCEL_DEPLOYMENT.md', 'Vercel deployment'), ('RECENT_CHANGES.md', 'Current features and changes'),
+    ('TESTING.md', 'Testing and acceptance'), ('WEBSITE_REVIEW.md', 'Website quality review'),
 ]
 
 
@@ -502,7 +519,7 @@ def build_html(palette):
         query = color['literal'] + ' ' + ' '.join(color['usages'])
         usage = html.escape('; '.join(color['usages']))
         swatches.append(f'<article class="swatch-card" data-colour="{html.escape(query, quote=True)}"><div class="swatch-preview"><span style="background:{color["literal"]}"></span></div><code>{color["literal"]}</code><small>RGB {color["rgb"]} · {color["alpha"]*100:.2f}% opacity</small><p>{usage}</p></article>')
-    colour_section = '<section class="chapter" id="visual-colour-catalogue"><h1>Visual colour catalogue</h1><p>Every explicit colour in the active application stylesheet. Transparent colours are shown over a checkerboard. Search by value, selector or property.</p><label class="colour-search">Filter colours <input type="search" id="colour-search" placeholder="Try #126c64, .pending, or footer"></label><div class="swatch-grid">' + ''.join(swatches) + '</div></section>'
+    colour_section = '<section class="chapter" id="visual-colour-catalogue"><h1>Visual colour catalogue</h1><p>Every explicit colour in the active application and light/dark theme stylesheets. Transparent colours are shown over a checkerboard. Search by value, selector or property.</p><label class="colour-search">Filter colours <input type="search" id="colour-search" placeholder="Try #126c64, .pending, or footer"></label><div class="swatch-grid">' + ''.join(swatches) + '</div></section>'
     css = '''
 :root{--ink:#172d35;--teal:#126c64;--line:#dfe8e2}*{box-sizing:border-box}body{margin:0;background:#f5f7fa;color:var(--ink);font:15px/1.75 system-ui,-apple-system,"Segoe UI",sans-serif}a{color:var(--teal)}aside{position:fixed;inset:0 auto 0 0;width:290px;padding:30px 22px;background:#143c35;color:#fff;overflow:auto}aside strong{display:block;font-size:24px;letter-spacing:-1px}aside p{font-size:12px;color:#c2d5c9}aside nav a{display:block;color:#d5e4da;text-decoration:none;font-size:11px;padding:5px 9px;border-radius:5px}aside nav a:hover{background:#ffffff20}aside .chapter-link{font-size:13px;font-weight:700;margin-top:16px;color:#fff}aside .sub-link{border-left:1px solid #ffffff20;margin-left:9px}.document{max-width:1240px;padding:55px 55px 80px;margin-left:290px}.cover{padding:40px;background:linear-gradient(120deg,#e8f4ef,#fff);border:1px solid var(--line);border-radius:16px;margin-bottom:40px}.cover h1{font-size:46px;line-height:1.1;margin:14px 0 20px;letter-spacing:-1.8px}.cover small{letter-spacing:2px;color:var(--teal);font-weight:700}.cover p{max-width:680px}.toolbar{display:flex;gap:20px;align-items:center;margin-top:22px}button{background:var(--teal);border:0;border-radius:6px;color:white;padding:10px 18px;font:inherit;cursor:pointer}.chapter{margin-bottom:65px;scroll-margin-top:20px}h1{font-size:34px;line-height:1.2;letter-spacing:-.9px;margin:55px 0 25px}h2{font-size:23px;line-height:1.35;border-bottom:1px solid var(--line);padding-bottom:10px;margin:38px 0 18px}h3{font-size:18px;margin:28px 0 12px}h4{font-size:15px}p{margin:0 0 16px}li{margin-bottom:8px}ul,ol{padding-left:24px}code{font-family:Consolas,monospace;font-size:.9em;background:#eaf0ec;padding:2px 5px;border-radius:3px;overflow-wrap:anywhere}pre{background:#102b24;color:#e3eee7;padding:20px;border-radius:8px;overflow:auto;line-height:1.6;font-size:12px}pre code{background:none;padding:0;color:inherit;white-space:pre-wrap;overflow-wrap:anywhere}.table-scroll{overflow:auto;margin:20px 0 28px}table{width:100%;border-collapse:collapse;background:#fff;font-size:12px}th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:#e8f4ef;font-size:11px}tbody tr:nth-child(even){background:#f7faf8}.doc-diagram{display:block;width:100%;max-height:460px;object-fit:contain;margin:20px auto}.colour-search{display:block;margin:24px 0}.colour-search input{display:block;width:100%;max-width:580px;margin-top:7px;padding:12px;border:1px solid #b7cbbd;border-radius:6px;font:inherit}.swatch-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.swatch-card{background:white;border:1px solid var(--line);border-radius:9px;overflow:hidden;min-width:0}.swatch-preview{height:86px;background:repeating-conic-gradient(#d6dcd8 0% 25%,#fff 0% 50%) 50%/16px 16px}.swatch-preview span{display:block;width:100%;height:100%}.swatch-card>code{display:block;margin:15px 15px 5px;background:none;font-weight:700}.swatch-card small{display:block;font-size:10px;margin:0 15px 10px;color:#63766f}.swatch-card p{font-size:9px;margin:0 15px 15px;max-height:105px;overflow:auto;overflow-wrap:anywhere}.swatch-card[hidden]{display:none}a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid #e7af49;outline-offset:3px}@media(max-width:1000px){aside{width:235px}.document{margin-left:235px;padding:30px}.swatch-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:720px){aside{position:static;width:auto;max-height:330px}.document{margin:0;padding:22px}.cover{padding:25px}.cover h1{font-size:34px}h1{font-size:28px}.swatch-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@page{size:A4;margin:16mm 13mm}@media print{body{background:#fff;font:11px/1.6 Arial,sans-serif}aside,.toolbar,.colour-search{display:none}.document{margin:0;padding:0;max-width:none}.cover{margin:0;padding:22px;background:#e8f4ef;break-after:page;border-radius:0}.cover h1{font-size:40px}.chapter{break-before:page;margin:0}h1{font-size:27px;margin:0 0 20px}h2{font-size:19px;margin:25px 0 12px;break-after:avoid}h3{font-size:15px;break-after:avoid}h4{break-after:avoid}p,li{orphans:3;widows:3}table{font-size:9px;table-layout:fixed}th{font-size:9px}td,th{padding:6px;word-break:normal;overflow-wrap:anywhere}thead{display:table-header-group}tr{break-inside:avoid}.table-scroll{overflow:visible}pre{white-space:pre-wrap;font-size:9px;background:#f1f5f2;color:#172d35;border:1px solid #dfe8e2}pre code{white-space:pre-wrap}.doc-diagram{max-height:320px;break-inside:avoid}.swatch-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.swatch-card{break-inside:avoid}.swatch-preview{height:48px;print-color-adjust:exact;-webkit-print-color-adjust:exact}.swatch-card p{max-height:none;font-size:6.5px;line-height:1.4}.swatch-card>code{margin:8px 8px 4px;font-size:10px}.swatch-card small{font-size:7px;margin:0 8px 8px}.swatch-card p{margin:0 8px 8px}.swatch-card[hidden]{display:block}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}a{color:#126c64;text-decoration:none}}
 '''

@@ -14,7 +14,7 @@ Official references:
 
 ## Existing original media and database
 
-The main guide below uses PostgreSQL. To retain an original MySQL installation, optional requirements-mysql.txt is supplied for a separate staging upgrade; translating between database engines is not performed automatically by Django migrations. Rehearse the real database separately as described in UPGRADE.md.
+For the current Vercel/Aiven setup, see [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md). This optional container/GCS guide uses PostgreSQL. To retain an original MySQL installation, optional requirements-mysql.txt is supplied for a separate staging upgrade; translating between database engines is not performed automatically by Django migrations. Rehearse the real database separately as described in UPGRADE.md.
 
 The ZIP retains the original media directory. Before enabling private cloud storage for an existing installation, copy those objects into the private bucket under the same relative paths (for example attachments/, announcements/ and quiz_images/). Do not make the bucket public. Validate both old attachment paths and new uploads after the copy.
 
@@ -76,7 +76,7 @@ gcloud run jobs create teachtrack-migrate \
 gcloud run jobs execute teachtrack-migrate --region REGION --wait
 ```
 
-On later releases, update the job image and execute it before switching traffic. Use a Cloud SQL Auth Proxy connection from a trusted local terminal to run the interactive `create_director` command against the new production database. Configure DATABASE_URL for that proxy and the production environment, using environment variables rather than source changes. If working from a machine without bucket access, no media is read by create_director, but production settings still require the bucket name.
+On later releases, update the job image and execute it before switching traffic. Use a Cloud SQL Auth Proxy connection from a trusted local terminal to run the interactive `create_director` command against the new production database. Configure DATABASE_URL for that proxy and the production environment, using environment variables rather than source changes. create_director does not read media. A bucket is optional for startup; uploads stay disabled in production when no bucket is configured.
 
 Do not create initial accounts using the local demo command in production. Keep the legacy student import optional and run it only against a backed-up database with reviewed source data.
 

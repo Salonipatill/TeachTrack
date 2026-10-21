@@ -1,7 +1,5 @@
 # TeachTrack project handbook
 
-> Update: email password reset and SMTP delivery have been removed. Earlier reset/email descriptions below are historical. Signed-in password changes remain available.
-
 
 Documentation edition: 21 October 2026. Prepared for Zaman & Saloni. This handbook describes the implementation in this workspace, including the updated role sign-in pages, staff account forms, public header/footer, seven-photo homepage carousel and Campus Life page.
 
@@ -44,7 +42,7 @@ Students use the platform to find materials, attempt quizzes, ask doubts, send f
 | Module | Main capability | Principal records |
 | --- | --- | --- |
 | Public website | Homepage, campus information and contact form | Static images; Contact |
-| Identity | Username/password login, role labels, password change/reset | Django User, Profile, LoginThrottle |
+| Identity | Username/password login, role labels, signed-in password change | Django User, Profile, LoginThrottle |
 | Accounts | Director-created student/faculty/director accounts; deactivation | User, Profile and legacy role records |
 | Resources | Notes, PYQs and assignments; search, filters and downloads | Resource, Download |
 | Quizzes | Timed availability, question builder, exact-set scoring and review | Quiz, Question, Option, Submission |
@@ -64,14 +62,14 @@ Students use the platform to find materials, attempt quizzes, ask doubts, send f
 | Browser code | Project CSS and vanilla JavaScript; no front-end build step |
 | Data access | Django ORM; database selected by DATABASE_URL |
 | Local fallback database | db.sqlite3 only when DATABASE_URL is blank |
-| Database options | SQLite for local work; PostgreSQL or optional MySQL configuration |
-| Uploaded files | Local media directory or private Google Cloud Storage |
+| Database options | SQLite for local work; PostgreSQL or MySQL Connector |
+| Uploaded files | Local media in development; private GCS or disabled uploads in production |
 | Static assets | Django staticfiles plus WhiteNoise compressed manifest storage |
-| Production process | Gunicorn serving Classroom.wsgi:application |
+| Production process | Vercel Django deployment or Gunicorn serving Classroom.wsgi:application in the container |
 | Timezone | Asia/Kolkata; timezone-aware application timestamps |
-| Tests | 53 test methods in the current source catalogue |
+| Tests | 57 test methods in the current source catalogue |
 
-The source contains cloud configuration and a deployment guide. A working local server and passing local tests do not establish that a Google Cloud service, production SMTP account or private production bucket has been provisioned.
+The source contains cloud configuration and a deployment guide. A working local server and passing local tests do not establish that a live deployment or private production bucket has been provisioned.
 
 ## 2. Architecture and request lifecycle
 
@@ -115,7 +113,7 @@ There is no task queue, websocket consumer, public JSON API, service worker or s
 TeachTrack/
   manage.py                         Django command entry point
   requirements.txt                 Main pinned dependency set
-  requirements-mysql.txt           Optional MySQL driver additions
+  requirements-mysql.txt           Compatibility include of the main requirements
   Dockerfile                       Python 3.12 / Gunicorn container
   .env.example                     Safe configuration template
   Classroom/
@@ -171,7 +169,7 @@ The environment file, generated development secret, local database, uploaded med
 | Communication | announcements.html; notifications.html; doubts.html; feedback.html |
 | Complaints | complaints.html and complaint_detail.html |
 | Reporting/history | reports.html and submission_history.html |
-| Shared partials | pagination.html; Django password/reset completion and email templates |
+| Shared partials | pagination.html; signed-in password-change completion template |
 | Error presentation | 403.html, 404.html, 500.html; actual error presentation also depends on DEBUG |
 
 Files such as faculty_login.html, director_login.html, student_dashboard.html, Director_dashboard.html and the old quiz/ templates remain in the repository for historical context. Their presence does not mean a current URL renders them. The original role URLs now use the upgraded views and current templates. For example, /faculty-login/ renders registration/login.html with a faculty role context, and /faculty_dashboard/ renders dashboard.html after its role check.
@@ -254,13 +252,9 @@ export DEBUG=True
 
 ### Database choices
 
-DATABASE_URL is parsed by dj-database-url. PostgreSQL support is in the main dependency set. MySQL support requires installing requirements-mysql.txt and having a reachable server/database. SQLite is convenient for an isolated local demonstration, but production settings explicitly require PostgreSQL or MySQL.
+DATABASE_URL is parsed by dj-database-url. Local SQLite is the fallback when blank; production requires PostgreSQL or MySQL. The main dependency set includes psycopg and mysql-connector-python. requirements-mysql.txt includes the same base set for compatibility.
 
-```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements-mysql.txt
-```
-
-A database name, host, port and credentials belong in private configuration. Creating a new SQL schema does not transfer records from another database engine. Keep the database engine decision separate from application schema migrations.
+For MySQL, settings remap django.db.backends.mysql to mysql.connector.django and enable certificate and hostname verification with the public certs/aiven-ca.pem. Use the actual Aiven host, port, database name and URL-encoded credentials; keep credentials private. Schema migrations do not transfer data between engines.
 
 ### First account and first useful session
 
@@ -275,6 +269,10 @@ Running createsuperuser is a separate decision for trusted Django administration
 Django User stores the username, password hash, name, email and is_active status. Profile stores the application role. Original Student, Faculty and Director records retain descriptive/contact data and connect to the Django user. Faculty and student complaint workflows also use the original Teacher and AuthenticatedStudent wrappers.
 
 Passwords are checked through Django AuthenticationForm. The older role-table username/password approach and custom session keys do not establish current identity. Plaintext pw columns were removed by migration 0009.
+
+### Own profile editing
+
+Every role opens /accounts/profile/ from the sidebar name/role footer. Name, username, email, department and phone are editable for the current account; students additionally edit enrollment, year, semester, section and batch. Saving synchronizes linked role records and complaint-wrapper names. Role, account IDs and permission flags cannot be edited here. Duplicate usernames/emails fail validation.
 
 ### Role-specific login
 
@@ -385,7 +383,7 @@ Directors can create accounts, deactivate eligible non-director users and downlo
 
 ### Contact
 
-The public Contact form saves name, email, title and message to Contact, then returns to the homepage with a success message. It does not automatically email staff or create an in-app notification. Trusted Django administrators can review saved Contact records.
+The public Contact page uses public_base.html, retaining the homepage header, footer, active navigation and theme toggle. Valid submissions create Contact records and redirect home with a success message. Authorized Django administrators can inspect them at /admin/; they do not appear in the role dashboards and do not send email.
 
 ## 7. Academic workflow rules
 
@@ -399,15 +397,13 @@ The download view first opens the file. A missing file returns 404 before increm
 
 ### Building a quiz
 
-1. A faculty member or director enters title, subject, opening/closing dates and the publication flag.
-2. Optional flags require student name, roll/enrollment number, email or class/division when attempting the quiz.
-3. Add between 1 and 50 questions. Each has text, an optional validated image, a multiple-selection flag and answer choices.
-4. Options A and B are required. C and D are optional. Mark at least one valid correct answer; single-selection questions allow exactly one correct option.
-5. The server saves the quiz, questions and options in a transaction. A newly published quiz notifies active students.
+1. Faculty or director enters title, subject, launch time and submission deadline, displayed in IST.
+2. New QuizForm instances publish automatically and require name, enrollment, email and course. The five old checkbox settings are not displayed; authorized staff can still use the publication toggle later.
+3. Add between 1 and 50 questions, with optional images and single/multiple selection.
+4. Options A and B are required; C and D are optional. Mark exactly one correct option for single-choice, or a valid nonempty set for multiple-choice.
+5. A transaction saves the quiz/questions/options and notifies active students.
 
-The question builder offers four input slots per question. The legacy Option model itself can retain other historical option counts. A two-option true/false question is represented using the same working choice model; there is no functioning short-answer grading flow.
-
-Quiz codes use secrets.token_hex(3).upper(): six characters from 0–9 and A–F. The database requires code uniqueness. If creation encounters an integrity error, the form reports a code collision and asks for another submission; it does not silently retry indefinitely.
+Quiz question numbers sit inside each card above the question text. Question panels align with student details and long options wrap. The multipart form supports optional images when uploads are enabled. Quiz codes use secrets.token_hex(3).upper(); a uniqueness failure is reported rather than silently retried.
 
 ### Availability and attempt eligibility
 
@@ -417,7 +413,7 @@ The date widgets use local datetime input labels in IST. Django stores timezone-
 
 ### Attempt processing and scoring
 
-The view locks the Quiz row inside a transaction, checks for an existing authenticated attempt, verifies availability and validates the quiz structure. Initial student details come from the authenticated user and legacy academic record. Empty optional values are filled from those initial details when saving.
+The view locks the Quiz row inside a transaction, checks for an existing authenticated attempt, verifies availability and validates the quiz structure. Initial student details come from the authenticated account and linked student record. Course, year, semester, section and batch are separate prefilled inputs; submissions retain these values in academic_details JSON. The legacy class_div summary remains for compatibility. Empty optional values are filled from those initial details when saving.
 
 Every question must have a non-empty answer selection. Selected IDs must belong to that question, may not repeat and must have exactly one element for single-selection questions. Forged option IDs from another question are rejected.
 
@@ -506,7 +502,7 @@ Null links retained for historical compatibility may allow multiple unlinked leg
 
 ### Migration history
 
-Migrations 0001–0006 represent the original model history. Migration 0007 adds the secure academic fields and new modules. Migration 0008 converts accounts, hashes old passwords, assigns roles, links unambiguous records, fills quiz metadata/reviews and clears old sessions/OTPs. Migration 0009 removes plaintext password columns and adds the final uniqueness/rating constraints.
+Migrations 0001–0006 represent the original model history. Migration 0007 adds the secure academic fields and new modules. Migration 0008 converts accounts, hashes old passwords, assigns roles, links unambiguous records, fills quiz metadata/reviews and clears old sessions/OTPs. Migration 0009 removes plaintext password columns and adds uniqueness/rating constraints. Migration 0010 adds Student.batch and Submission.academic_details without guessing historical snapshots.
 
 The conversion is intentionally irreversible. A rollback to an older schema requires restoring the matching backed-up database and application code, rather than unapplying the password-removal migration. Existing media paths and record IDs are retained by the intended upgrade path.
 
@@ -520,7 +516,7 @@ When repeated historical attempts/ratings map to the same authenticated pair, on
 
 The [forms reference](FORM_REFERENCE.md) lists every active form field, required flag, widget, choice and directly declared bound. AccountForm is listed separately for all three roles because the field sets differ.
 
-The reference also includes the installed Django AuthenticationForm, PasswordChangeForm, PasswordResetForm and SetPasswordForm used by the current account/password workflows. Those forms are inspected with an unsaved dummy User, without loading any real account.
+The reference also includes the installed Django AuthenticationForm and PasswordChangeForm, plus three unsaved ProfileForm variants used by the current account/password workflows. Those forms are inspected with an unsaved dummy User, without loading any real account.
 
 Browser attributes improve entry but do not replace server checks. The role decorator runs independently of whether a button is visible. ModelChoice faculty fields constrain the submitted target to active faculty users. The quiz-attempt view checks option ownership rather than trusting the radio/checkbox values emitted earlier.
 
@@ -553,9 +549,9 @@ The [design-system guide](DESIGN_SYSTEM.md) explains theme tokens, RGB values, s
 
 ### Source of visual truth
 
-ClassApp/static/ClassApp/app.css is the active application stylesheet loaded by base.html. ClassApp/static/ClassApp/app.js is the active browser script. Retained original css/theme.css, css/media.css, old jquery/sudoSlider files and legacy inline styles do not automatically determine the current pages’ appearance.
+ClassApp/static/ClassApp/app.css and theme.css are the active stylesheets. app.js handles application interactions; theme.js runs early to set the preferred theme before rendering. Legacy css/theme.css, jQuery and retained inline templates do not define current layouts.
 
-Changing a shared theme variable affects the components that reference that variable. Many public-page shades are still explicit literal values; changing --teal alone does not rewrite every literal green in the stylesheet. Use the colour inventory to locate those cases.
+The bottom-right sun/moon button switches every shared public/login/workspace layout. The preference is stored under teachtrack-theme, synchronized across tabs, and initially follows the device preference. Storage restrictions do not break the page. Theme tokens and hardcoded overrides are inventoried in COLOUR_INDEX.md, including scoped light/dark definitions.
 
 ### Current JavaScript features
 
@@ -563,6 +559,9 @@ Changing a shared theme variable affects the components that reference that vari
 | --- | --- |
 | Sidebar location | Compares each sidebar link pathname with the current pathname; sets active class and aria-current |
 | Mobile menu | Toggles the sidebar open class and the menu’s aria-expanded value |
+| Theme switch | Persists light/dark preference, follows initial system preference, and syncs tabs |
+| Form submission | Shows progress, prevents duplicates and restores state on back navigation |
+| Upload availability | Explains unavailable file uploads before submitting production forms |
 | Escape key | Closes an open sidebar and resets aria-expanded |
 | Add quiz question | Copies the empty-question template, replaces __prefix__, increments TOTAL_FORMS and stops at 50 |
 | Carousel arrows | Shows previous/next slide, wrapping between the last and first |
@@ -574,13 +573,13 @@ The carousel is manually controlled; it does not auto-advance. Exactly one slide
 
 ### Accessibility scope
 
-The interface includes semantic navigation, labels, visible keyboard focus, alternative image text, status labels, form errors and keyboard-operable carousel buttons. Public pages provide a skip link. The mobile menu exposes expanded state. These are implementation features, not a completed independent accessibility certification. Colour combinations, small captions, screen-reader behavior and keyboard flow should be evaluated when changing the design.
+The interface includes semantic navigation, labels, visible keyboard focus, alternative image text, status labels, form errors and keyboard-operable carousel buttons. All shared pages provide a keyboard skip link; reduced-motion preferences are respected. The mobile menu exposes expanded state. These are implementation features, not a completed independent accessibility certification. Colour combinations, small captions, screen-reader behavior and keyboard flow should be evaluated when changing the design.
 
 ## 12. Authentication, security and private files
 
 ### Authentication and sessions
 
-Django stores password hashes and authenticates active users through its normal backend. Password validators reject passwords under 10 characters, overly similar values, common passwords and numeric-only values. Password change requires the current password; forgotten-password recovery uses Django email/token views.
+Django stores password hashes and authenticates active users through its normal backend. Password validators reject passwords under 10 characters, overly similar values, common passwords and numeric-only values. Password change requires the current password; public forgotten-password recovery and outbound email have been removed.
 
 Session cookies are HTTP-only and SameSite=Lax. The configured age is 3,600 seconds and browser-close expiration is enabled. Secure session/CSRF cookies, HTTPS redirect and HSTS become enabled with DEBUG=False. Password changes use Django’s session/auth-hash machinery; stored old plaintext values are not part of the current login flow.
 
@@ -619,7 +618,7 @@ There is no public /media/ URL pattern. Resources use an authenticated POST down
 
 ### Credential and data handling
 
-Do not commit the private .env, .dev-secret, database dump, service-account file or reset email containing a live token. The documentation uses placeholders. Backups of the original pre-upgrade database can contain plaintext credentials even though the current schema does not. User email, enrollment, feedback identity and complaint content remain personal application data in storage and exports; define appropriate campus access/retention policies before wider use.
+Do not commit the private .env, .dev-secret, database dump, service-account file or other private credentials. The documentation uses placeholders. Backups of the original pre-upgrade database can contain plaintext credentials even though the current schema does not. User email, enrollment, feedback identity and complaint content remain personal application data in storage and exports; define appropriate campus access/retention policies before wider use.
 
 ## 13. Configuration and dependencies
 
@@ -630,7 +629,7 @@ The [configuration reference](CONFIGURATION_REFERENCE.md) documents every enviro
 | Package declaration | Role in this project |
 | --- | --- |
 | Django==5.2.18 | ORM, routing, templates, forms, sessions, authentication and admin |
-| python-dotenv==1.2.4 | Loads the local .env without replacing process variables |
+| python-dotenv==1.2.4 | Loads .env; runserver explicitly overrides inherited process values, other entry points do not |
 | dj-database-url==3.1.2 | Converts DATABASE_URL into Django database configuration |
 | whitenoise==6.12.0 | Serves compressed/hashed static files in the application process |
 | psycopg[binary]==3.3.6 | PostgreSQL database driver |
@@ -638,15 +637,17 @@ The [configuration reference](CONFIGURATION_REFERENCE.md) documents every enviro
 | django-storages[google]==1.14.6 | Google Cloud Storage integration |
 | google-cloud-storage==3.17.1 | GCS client dependency |
 | Pillow>=11.3,<13 | Image parsing/validation; range declaration rather than an exact lock |
-| mysqlclient>=2.2.7,<3 | Optional MySQL driver in requirements-mysql.txt |
+| mysql-connector-python | MySQL Connector driver, engine mysql.connector.django, installed by the main requirements |
 
 Requirements describe the intended install set. A virtual environment can differ if changed manually; inspect it with that environment’s pip. Gunicorn is used by the Linux container; local Windows development uses Django runserver.
 
 ### Database, storage and email selection
 
-An empty DATABASE_URL selects the db.sqlite3 path. An empty GS_BUCKET_NAME selects local FileSystemStorage and MEDIA_ROOT. A bucket name selects GoogleCloudStorage with no public default ACL and authenticated query signing. The development email backend prints reset email content to the terminal; configure SMTP to deliver actual email.
+DATABASE_URL selects SQLite locally or PostgreSQL/MySQL; see CONFIGURATION_REFERENCE.md and VERCEL_DEPLOYMENT.md. Aiven uses MySQL Connector with certificate and hostname verification.
 
-ASGI and WSGI entry points are both present. The deployed Docker command selects WSGI/Gunicorn. Merely having asgi.py does not add websocket features or an ASGI production server dependency.
+With DEBUG=True, blank GS_BUCKET_NAME uses local media storage. With DEBUG=False and no bucket, uploads are disabled at the form, middleware and storage layers. A private GCS bucket plus runtime credentials enables persistent uploads. A bucket is optional for production startup; text workflows continue without it. Supabase is not integrated.
+
+Outbound email uses the dummy backend. SMTP variables, Forgot password, public reset links and email/phone OTP flows are removed. Signed-in users can change their password with the current password; trusted administrators can use Django changepassword from a private terminal.
 
 ## 14. Management commands
 
@@ -729,9 +730,7 @@ Node is only needed for the optional JavaScript syntax check or browser-verifica
 
 ### Browser acceptance
 
-Verify the public header/footer links, seven-image carousel, arrow wrap-around, dots, keyboard controls, touch behavior, the selected Campus Life cover and all image responses. Check widths around 320, 390, 768 and desktop sizes. Verify staff account forms omit student academic fields while student forms preserve them. Sign in as each role and test both permitted actions and direct attempts at forbidden URLs.
-
-The workspace’s prior local application test record is 53 passing tests. Public-page browser checks have used the running local HTTP server, with images loaded and responsive overflow inspected. Those observations do not cover production SMTP, live cloud storage, SQL-engine-specific behavior at scale or a full accessibility audit. See TESTING.md for the evolving verification record and remaining environment checks.
+Local Microsoft Edge browser checks covered public pages at 390/768/1440 pixels, role login/navigation, director faculty creation, student quiz autofill/submission/result grid, keyboard skip navigation and the visible persistent light/dark toggle. These observations do not certify a protected Vercel deployment, Safari/Firefox, real mobile hardware or production latency. See WEBSITE_REVIEW.md for verified checks and limits.
 
 ## 16. Deployment, maintenance and recovery
 
@@ -739,13 +738,13 @@ The workspace’s prior local application test record is 53 passing tests. Publi
 
 The Dockerfile uses python:3.12-slim, installs the main requirements, collects static files with a build-only development setting, creates a non-root app user and starts Gunicorn. The default bind is 0.0.0.0 on PORT or 8080, with 2 workers, 4 threads and a 120-second timeout. Access/error logs go to standard output/error.
 
-Migrations are separate from web startup. This avoids having several web instances race to migrate at the same time. The supplied container installs PostgreSQL support; a deployment specifically using MySQL must also arrange the optional driver and any OS build requirements.
+Migrations are separate from web startup. This avoids having several web instances race to migrate at the same time. The supplied requirements install PostgreSQL and MySQL Connector support; runtime connection settings and the matching certificate are still required.
 
 ### Production startup requirements
 
-DEBUG=False requires a non-empty SECRET_KEY of at least 50 characters, a PostgreSQL or MySQL database configuration, and GS_BUCKET_NAME. Local SQLite/local-only media is rejected by the explicit production guard. Hostname, CSRF origins, trusted HTTPS proxy behavior, SMTP and cloud service permissions still need correct environment configuration.
+With DEBUG=False, settings require SECRET_KEY of at least 50 characters and a PostgreSQL or MySQL configuration. GS_BUCKET_NAME is optional; omitting it disables uploads.
 
-The repository’s [deployment guide](DEPLOYMENT.md) describes a Google Cloud Run, Cloud SQL PostgreSQL and private Cloud Storage topology. It includes placeholder build/deploy/migration-job commands and runtime configuration. Treat its project/region/hostname/service-account values as placeholders to replace and verify in the target environment.
+On Vercel, DEBUG defaults false and supplied VERCEL_URL, VERCEL_PROJECT_PRODUCTION_URL and VERCEL_BRANCH_URL hostnames are added to ALLOWED_HOSTS and HTTPS CSRF origins. Custom domains still belong in explicit configuration. Process environment wins over .env except local manage.py runserver, which deliberately loads .env with override=True. See VERCEL_DEPLOYMENT.md for deploy and verification steps.
 
 ### Release process
 
@@ -753,12 +752,12 @@ The repository’s [deployment guide](DEPLOYMENT.md) describes a Google Cloud Ru
 2. Run checks and the isolated test suite against the intended release source.
 3. Build the container/static output and apply necessary migrations through the controlled migration job.
 4. Deploy the matching application image with the intended runtime secrets/configuration.
-5. Verify login, roles, real SQL connectivity, private object download, reset email, quiz submission, complaint updates and report export.
+5. Verify login, roles, SQL connectivity, theme assets, own profile, enabled private object download, quiz submission/result layout, complaint updates and reports.
 6. Record the release version, configuration changes, migration state and verification results.
 
 ### Health and logging
 
-/health/ returns plain-text ok. It is a process-level health endpoint; it does not query the database or prove cloud-bucket/SMTP readiness. Django logging uses console output at INFO. Local server output can be redirected to the runserver log files, but those files are not a formal audit trail or a full monitoring system.
+/health/ returns plain-text ok. It is a process-level health endpoint; it does not query the database or prove database or cloud-bucket readiness. Django logging uses console output at INFO. Local server output can be redirected to the runserver log files, but those files are not a formal audit trail or a full monitoring system.
 
 ### Backups and recovery
 
@@ -770,14 +769,14 @@ An ordinary code-only rollback and a migration rollback are different operations
 
 | Symptom | Likely cause | What to do |
 | --- | --- | --- |
-| Login says credentials are incorrect | Email entered instead of username, wrong password, absent account or inactive user | Use the actual Django username; check account status; reset through a trusted terminal or token email |
+| Login says credentials are incorrect | Email entered instead of username, wrong password, absent account or inactive user | Use the actual Django username; check account status; use signed-in password change or a trusted terminal administrator |
 | Faculty login offers no public staff creation | Faculty accounts are director-managed | Sign in as director and use Manage accounts → Faculty |
 | Faculty form shows year/semester | Old page/cached source or student role selected | Open current account form, choose Faculty and refresh; the active staff form removes these fields |
 | Correct login is still blocked | IP/username failure window reached 10 attempts | Observe the normal 15-minute window; password change alone does not clear counters |
 | SECRET_KEY required in production during local run | Inherited DEBUG is not one of the accepted true values | Set $env:DEBUG = 'True' in the local shell; inspect process configuration without printing secrets |
 | Django cannot be imported | Wrong interpreter or missing installed requirements | Run pip and manage.py with the same .venv interpreter |
 | py -3.12 cannot find Python | That exact interpreter is not installed | Use an installed supported project interpreter; do not replace a working environment just to activate it |
-| MySQL driver/server error | Optional driver absent, server unavailable or DATABASE_URL incorrect | Install requirements-mysql.txt and check private connection configuration |
+| MySQL driver/server error | MySQL Connector absent, server/certificate unavailable or DATABASE_URL incorrect | Install requirements.txt and check the private URL and matching public CA |
 | No such table / inconsistent history | Migrations absent, wrong database or incomplete historical SQLite file | Inspect migration status and use the appropriate fresh/upgrade procedure; do not fake a mismatched schema |
 | DisallowedHost | Requested hostname not in ALLOWED_HOSTS | Configure that hostname without a URL scheme |
 | CSRF failure | Missing token, changed origin, secure-cookie or proxy mismatch | Verify form token, exact HTTPS trusted origin and trusted-proxy setup |
@@ -786,7 +785,7 @@ An ordinary code-only rollback and a migration rollback are different operations
 | Image displays alternative text | Missing asset, wrong static path, failed request or stale output | Inspect the image response; edit source assets and regenerate collectstatic output |
 | Homepage stays unchanged | Cached page/assets or an older server process | Refresh with Ctrl+F5 and make sure the intended server is serving the port |
 | Carousel arrows/dots do not move | app.js failed to load or invalid slide markup | Check script response/console and data-carousel/data-slide/dot structure |
-| Password reset email is not delivered | Console backend selected, SMTP misconfiguration or no eligible account | Read the local console email or configure/test SMTP; Django does not reveal account existence through reset success text |
+| Forgot password is absent | Public password reset and SMTP were removed | Signed-in users use Password; trusted administrators can run changepassword from a private terminal |
 | Upload rejected | Unsupported format, invalid content, image/archive limit or size | Use a permitted validated file within the documented bounds |
 | Quiz not open | Unpublished, upcoming, closed or invalid question structure | Check publication, IST dates and correct-option definitions |
 | Another quiz attempt is refused | An authenticated attempt already exists | Open that saved result; there is no reset/re-attempt UI |
@@ -798,7 +797,7 @@ An ordinary code-only rollback and a migration rollback are different operations
 
 This version has one campus workspace, without tenant isolation, class/cohort enrollment, attendance, fees, timetable or a full gradebook. Quizzes have one authenticated attempt, exact-set auto-grading, no short-answer evaluator, no partial marks, no per-user countdown and no question-weight configuration. Resource assignment files are learning uploads; the app does not provide a separate assignment hand-in/marking workflow.
 
-There are no general account/profile edit, user-facing role-change, resource-edit/delete, quiz-edit/delete or notification-delete workflows in the current routes. Contact messages are stored without an automatic email workflow. Announcements, notifications and feedback are ordinary server-rendered data, not live push streams. API/mobile clients, multi-factor authentication and institutional SSO are not implemented.
+An own-account profile editor is available; there are no user-facing role-change, resource-edit/delete, quiz-edit/delete or notification-delete workflows in the current routes. Contact messages are stored without an automatic email workflow. Announcements, notifications and feedback are ordinary server-rendered data, not live push streams. API/mobile clients, multi-factor authentication and institutional SSO are not implemented.
 
 Legacy historical data can affect totals. Feedback is identity-hidden in its template rather than anonymized in storage. A full malware-scanning pipeline, streaming ingress policy, abuse controls for the public contact form, load testing and independent accessibility/security reviews remain separate development/operational work.
 
@@ -820,9 +819,9 @@ Keep the original migration files unchanged. Add new migrations after the existi
 
 ### Documentation maintenance
 
-PROJECT_DOCUMENTATION.md, DESIGN_SYSTEM.md and CONFIGURATION_REFERENCE.md are authored guides. DATABASE_REFERENCE.md, FORM_REFERENCE.md, ROUTE_REFERENCE.md, COLOUR_INDEX.md and TEST_CATALOGUE.md are generated from source/metadata. TEACHTRACK_DOCUMENTATION.html combines them into an offline handbook with navigation, diagrams and searchable swatches. Its Print / save as PDF action creates a portable print view; the supplied PDF is a snapshot and should be regenerated after documentation changes.
+Edit the authored handbook, design/configuration guides, RECENT_CHANGES.md and deployment/testing notes when behavior changes. Then run tools/build_documentation.py, tools/export_documentation_pdf.py and tools/check_documentation.py from the project root.
 
-The documentation build reads schema definitions and source, not live account/password records. It deliberately does not serialize the private environment, development secret or database connection credentials.
+The builder isolates Django from production with in-memory SQLite and a build-only secret. It reads metadata and unsaved form variants, not account rows. Generated outputs include model/form/route/test/colour references, JSON tokens, diagrams and the combined offline handbook. The exporter refreshes the PDF using an optional local browser with external HTTP blocked. The checker validates maintained local links and current feature references. See tools/README.md for usage.
 
 ## 19. Glossary
 

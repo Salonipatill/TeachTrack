@@ -1,4 +1,32 @@
-# Changes to the uploaded original
+# Change log
+
+## 21 October 2026 - current updates
+
+- Added own profile editing for students, faculty and directors from the sidebar footer.
+- Added student batch and separate quiz academic snapshots in migration 0010.
+- Automatically publish newly created quizzes and require identity/course details;
+  removed the old five checkbox settings from creation.
+- Autofill student attempts; split course/year/semester/section/batch inputs;
+  label launch/deadline and submission timestamps in IST.
+- Moved question numbers inside cards and aligned result metadata in a responsive grid.
+- Added persistent light/dark themes, keyboard skip navigation, reduced motion,
+  form progress/duplicate-submit handling, mobile refinements and a favicon.
+- Kept Contact inside the public header/footer; submissions remain database records.
+- Configured MySQL Connector/Aiven TLS and included only the public CA certificate.
+- Accept exact Vercel-supplied hostnames; production without a bucket starts with
+  uploads disabled and explanatory feedback. Text workflows remain available.
+- Removed public password reset/OTP pages, SMTP setup, email credentials and
+  check_email. Signed-in password changes remain available.
+- Updated authored/generated documentation, light/dark colour inventory, diagrams,
+  HTML/PDF handbook, documentation checks and repeatable PDF export tooling.
+- The latest feature-removal test run passed 57 tests; local Edge checks covered
+  mobile/desktop layouts, role flows, themes, faculty creation and quiz submission.
+
+The following section records the original upgrade work; it is historical and
+must not be read as a list of current reset/email features.
+
+## Original upgrade history
+
 
 - Kept ClassApp/Classroom, all original academic model names and relationships, migrations 0001–0006, original static assets and media.
 - Added migrations 0007–0009; these extend and convert existing tables instead of creating a replacement database model set.

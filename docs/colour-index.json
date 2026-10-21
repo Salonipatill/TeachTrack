@@ -1,17 +1,43 @@
 {
-  "source": "ClassApp/static/ClassApp/app.css",
+  "sources": [
+    "ClassApp/static/ClassApp/app.css",
+    "ClassApp/static/ClassApp/theme.css"
+  ],
   "tokens": {
-    "--bg": "#f5f7fa",
-    "--ink": "#172d35",
-    "--muted": "#6e7e86",
-    "--line": "#e5ebee",
-    "--teal": "#126c64",
-    "--teal-dark": "#0e514b",
-    "--pale": "#e8f4ef",
-    "--white": "#fff",
-    "--shadow": "0 3px 12px #19353c04"
+    ":root / --bg": "#f5f7fa",
+    ":root / --ink": "#172d35",
+    ":root / --muted": "#596b75",
+    ":root / --line": "#e5ebee",
+    ":root / --teal": "#126c64",
+    ":root / --teal-dark": "#0e514b",
+    ":root / --pale": "#e8f4ef",
+    ":root / --white": "#fff",
+    ":root / --shadow": "0 3px 12px #19353c04",
+    "[data-theme=dark] / --bg": "#10191f",
+    "[data-theme=dark] / --ink": "#e6edf1",
+    "[data-theme=dark] / --muted": "#a5b5be",
+    "[data-theme=dark] / --line": "#33444e",
+    "[data-theme=dark] / --teal": "#76d2bc",
+    "[data-theme=dark] / --teal-dark": "#247665",
+    "[data-theme=dark] / --pale": "#203d36",
+    "[data-theme=dark] / --white": "#1a2831",
+    "[data-theme=dark] / --shadow": "0 3px 12px #0002"
   },
   "colours": [
+    {
+      "literal": "#0002",
+      "hex": "#00000022",
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alpha": 0.13333333333333333,
+      "usages": [
+        ".theme-toggle \u2192 box-shadow",
+        "[data-theme=dark] \u2192 --shadow"
+      ]
+    },
     {
       "literal": "#0e514b",
       "hex": "#0e514b",
@@ -26,6 +52,32 @@
       ]
     },
     {
+      "literal": "#10191f",
+      "hex": "#10191f",
+      "rgb": [
+        16,
+        25,
+        31
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] \u2192 --bg"
+      ]
+    },
+    {
+      "literal": "#101e19",
+      "hex": "#101e19",
+      "rgb": [
+        16,
+        30,
+        25
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] .site-footer \u2192 background"
+      ]
+    },
+    {
       "literal": "#102b24e8",
       "hex": "#102b24e8",
       "rgb": [
@@ -36,6 +88,19 @@
       "alpha": 0.9098039215686274,
       "usages": [
         ".campus-slide figcaption \u2192 background"
+      ]
+    },
+    {
+      "literal": "#111e26",
+      "hex": "#111e26",
+      "rgb": [
+        17,
+        30,
+        38
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] :is(input:not([type=checkbox]):not([type=radio]), select, textarea) \u2192 background"
       ]
     },
     {
@@ -130,6 +195,19 @@
       ]
     },
     {
+      "literal": "#176c5c",
+      "hex": "#176c5c",
+      "rgb": [
+        23,
+        108,
+        92
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] :is(button, .button):not(.secondary):not(.theme-toggle) \u2192 background"
+      ]
+    },
+    {
       "literal": "#19353c04",
       "hex": "#19353c04",
       "rgb": [
@@ -157,6 +235,19 @@
       ]
     },
     {
+      "literal": "#1a2831",
+      "hex": "#1a2831",
+      "rgb": [
+        26,
+        40,
+        49
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] \u2192 --white"
+      ]
+    },
+    {
       "literal": "#1c493214",
       "hex": "#1c493214",
       "rgb": [
@@ -170,6 +261,32 @@
       ]
     },
     {
+      "literal": "#203d32",
+      "hex": "#203d32",
+      "rgb": [
+        32,
+        61,
+        50
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] :is(.notification.unread, .alert) \u2192 background"
+      ]
+    },
+    {
+      "literal": "#203d36",
+      "hex": "#203d36",
+      "rgb": [
+        32,
+        61,
+        54
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] \u2192 --pale"
+      ]
+    },
+    {
       "literal": "#204c3e",
       "hex": "#204c3e",
       "rgb": [
@@ -180,6 +297,58 @@
       "alpha": 1,
       "usages": [
         ".site-footer .brand-icon \u2192 color"
+      ]
+    },
+    {
+      "literal": "#247665",
+      "hex": "#247665",
+      "rgb": [
+        36,
+        118,
+        101
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] \u2192 --teal-dark"
+      ]
+    },
+    {
+      "literal": "#283d37",
+      "hex": "#283d37",
+      "rgb": [
+        40,
+        61,
+        55
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] .status \u2192 background"
+      ]
+    },
+    {
+      "literal": "#33444e",
+      "hex": "#33444e",
+      "rgb": [
+        51,
+        68,
+        78
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] \u2192 --line"
+      ]
+    },
+    {
+      "literal": "#338b78",
+      "hex": "#338b78",
+      "rgb": [
+        51,
+        139,
+        120
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] :is(button, .button):not(.secondary):not(.theme-toggle) \u2192 border-color"
       ]
     },
     {
@@ -222,6 +391,32 @@
       ]
     },
     {
+      "literal": "#406452",
+      "hex": "#406452",
+      "rgb": [
+        64,
+        100,
+        82
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] :is(.notification.unread, .alert) \u2192 border-color"
+      ]
+    },
+    {
+      "literal": "#432827",
+      "hex": "#432827",
+      "rgb": [
+        67,
+        40,
+        39
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] :is(.alert.error, .errorlist) \u2192 background"
+      ]
+    },
+    {
       "literal": "#435f56",
       "hex": "#435f56",
       "rgb": [
@@ -232,6 +427,19 @@
       "alpha": 1,
       "usages": [
         ".home-explore \u2192 color"
+      ]
+    },
+    {
+      "literal": "#443b24",
+      "hex": "#443b24",
+      "rgb": [
+        68,
+        59,
+        36
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] .status.pending \u2192 background"
       ]
     },
     {
@@ -285,6 +493,19 @@
       "alpha": 1,
       "usages": [
         ".in_progress \u2192 color"
+      ]
+    },
+    {
+      "literal": "#596b75",
+      "hex": "#596b75",
+      "rgb": [
+        89,
+        107,
+        117
+      ],
+      "alpha": 1,
+      "usages": [
+        ":root \u2192 --muted"
       ]
     },
     {
@@ -497,6 +718,32 @@
       ]
     },
     {
+      "literal": "#76d2bc",
+      "hex": "#76d2bc",
+      "rgb": [
+        118,
+        210,
+        188
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] \u2192 --teal"
+      ]
+    },
+    {
+      "literal": "#784640",
+      "hex": "#784640",
+      "rgb": [
+        120,
+        70,
+        64
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] :is(.alert.error, .errorlist) \u2192 border-color"
+      ]
+    },
+    {
       "literal": "#7b8a81",
       "hex": "#7b8a81",
       "rgb": [
@@ -575,6 +822,19 @@
       ]
     },
     {
+      "literal": "#a5b5be",
+      "hex": "#a5b5be",
+      "rgb": [
+        165,
+        181,
+        190
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] \u2192 --muted"
+      ]
+    },
+    {
       "literal": "#a5c0af",
       "hex": "#a5c0af",
       "rgb": [
@@ -637,6 +897,32 @@
       "alpha": 1,
       "usages": [
         ".errorlist \u2192 color"
+      ]
+    },
+    {
+      "literal": "#b0e4cc",
+      "hex": "#b0e4cc",
+      "rgb": [
+        176,
+        228,
+        204
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] .status \u2192 color"
+      ]
+    },
+    {
+      "literal": "#b8efd0",
+      "hex": "#b8efd0",
+      "rgb": [
+        184,
+        239,
+        208
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] :is(.notification.unread, .alert) \u2192 color"
       ]
     },
     {
@@ -1073,6 +1359,19 @@
       ]
     },
     {
+      "literal": "#e6edf1",
+      "hex": "#e6edf1",
+      "rgb": [
+        230,
+        237,
+        241
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] \u2192 --ink"
+      ]
+    },
+    {
       "literal": "#e6f0e8",
       "hex": "#e6f0e8",
       "rgb": [
@@ -1284,6 +1583,19 @@
       ]
     },
     {
+      "literal": "#f4d48d",
+      "hex": "#f4d48d",
+      "rgb": [
+        244,
+        212,
+        141
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] .status.pending \u2192 color"
+      ]
+    },
+    {
       "literal": "#f4f6f6",
       "hex": "#f4f6f6",
       "rgb": [
@@ -1336,6 +1648,19 @@
       ]
     },
     {
+      "literal": "#ffc2ba",
+      "hex": "#ffc2ba",
+      "rgb": [
+        255,
+        194,
+        186
+      ],
+      "alpha": 1,
+      "usages": [
+        "[data-theme=dark] :is(.alert.error, .errorlist) \u2192 color"
+      ]
+    },
+    {
       "literal": "#fff",
       "hex": "#ffffff",
       "rgb": [
@@ -1360,6 +1685,7 @@
         ".site-footer a:hover \u2192 color",
         ".skip-link \u2192 color",
         ":root \u2192 --white",
+        "[data-theme=dark] :is(button, .button):not(.secondary):not(.theme-toggle) \u2192 color",
         "input:not([type=checkbox]):not([type=radio]),select,textarea \u2192 background"
       ]
     },

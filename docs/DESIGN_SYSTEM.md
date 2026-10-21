@@ -1,6 +1,29 @@
 # TeachTrack design system
 
-Design reference for the source reviewed on 21 October 2026. The active visual implementation is ClassApp/static/ClassApp/app.css, loaded by base.html. This guide explains the design decisions expressed by that stylesheet; it does not introduce an additional theme framework.
+## Current shared UI updates
+
+The active stylesheets are app.css and theme.css; the colour inventory now includes
+both, with selector scope retained for light/dark tokens. theme.js initializes the
+saved browser preference before rendering; app.js handles menus, forms and quizzes.
+The sun/moon button is fixed at bottom-right across public, login, dashboard and
+error templates. It has an accessible label, pressed state and keyboard focus.
+
+Result academic details use an aligned grid: five columns on large screens, three
+at 900px and two at 480px. Labels sit above values with no browser default dd indent.
+Question numbers are inside cards above question text; the attempt form is at most
+800px wide and long text/options wrap. Launch/deadline labels explicitly show IST.
+
+The public Contact page retains the homepage header/footer. All shared pages have
+a keyboard skip link; reduced-motion preferences are respected. Mobile controls,
+form actions and toolbar wrapping are adjusted at small widths. Form navigation
+shows progress and prevents duplicate submission; back navigation restores it.
+
+Light muted text uses #596b75. Dark mode sets the page background to #10191f,
+surfaces to #1a2831, primary text to #e6edf1 and muted text to #a5b5be. The generated
+colour index is authoritative for exact selector/property declarations.
+
+
+Design reference for the source reviewed on 21 October 2026. The active visual implementation is ClassApp/static/ClassApp/app.css plus theme.css, loaded by base.html. This guide explains the design decisions expressed by that stylesheet; it does not introduce an additional theme framework.
 
 ## 1. Visual direction and source files
 
@@ -30,7 +53,7 @@ The active stylesheet contains 111 distinct explicit hex literals, plus named wh
 | --- | --- | --- | --- |
 | --bg | #f5f7fa | 245, 247, 250 | Default application body background |
 | --ink | #172d35 | 23, 45, 53 | Main headings and body text |
-| --muted | #6e7e86 | 110, 126, 134 | Secondary descriptions, help text and small metadata |
+| --muted | #596b75 | 89, 107, 117 | Secondary descriptions, help text and small metadata |
 | --line | #e5ebee | 229, 235, 238 | General borders and dividers |
 | --teal | #126c64 | 18, 108, 100 | Primary buttons, links, accent text and selected states |
 | --teal-dark | #0e514b | 14, 81, 75 | Hover/darker primary interaction colour |

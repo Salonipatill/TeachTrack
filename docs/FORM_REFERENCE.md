@@ -17,6 +17,7 @@ Public student registration ignores injected role or superuser fields. Director-
 | `year` | Year | CharField | No | TextInput | max_length=20 |
 | `semester` | Semester | CharField | No | TextInput | max_length=20 |
 | `section` | Section | CharField | No | TextInput | max_length=5 |
+| `batch` | Batch | CharField | No | TextInput | max_length=30 |
 | `password1` | Password | CharField | Yes | PasswordInput | Default Django field validation |
 | `password2` | Password confirmation | CharField | Yes | PasswordInput | Default Django field validation |
 
@@ -33,6 +34,7 @@ Public student registration ignores injected role or superuser fields. Director-
 | `year` | Year | CharField | No | TextInput | max_length=20 |
 | `semester` | Semester | CharField | No | TextInput | max_length=20 |
 | `section` | Section | CharField | No | TextInput | max_length=5 |
+| `batch` | Batch | CharField | No | TextInput | max_length=30 |
 | `role` | Role | ChoiceField | Yes | HiddenInput | choices: student, faculty, director; hidden input |
 | `password1` | Password | CharField | Yes | PasswordInput | Default Django field validation |
 | `password2` | Password confirmation | CharField | Yes | PasswordInput | Default Django field validation |
@@ -81,11 +83,6 @@ Public student registration ignores injected role or superuser fields. Director-
 | `subject` | Subject | CharField | No | TextInput | max_length=100 |
 | `starts_at` | Opens at (IST) | DateTimeField | Yes | DateTimeInput | Default Django field validation |
 | `expiry_time` | Closes at (IST) | DateTimeField | Yes | DateTimeInput | Default Django field validation |
-| `is_active` | Published | BooleanField | No | CheckboxInput | Default Django field validation |
-| `require_name` | Require name | BooleanField | No | CheckboxInput | Default Django field validation |
-| `require_roll` | Require roll | BooleanField | No | CheckboxInput | Default Django field validation |
-| `require_email` | Require email | BooleanField | No | CheckboxInput | Default Django field validation |
-| `require_class` | Require class | BooleanField | No | CheckboxInput | Default Django field validation |
 
 ## QuestionEntryForm
 
@@ -108,7 +105,11 @@ Public student registration ignores injected role or superuser fields. Director-
 | `student_name` | Full name | CharField | No | TextInput | max_length=255 |
 | `roll_no` | Roll / enrollment number | CharField | No | TextInput | max_length=50 |
 | `email` | Email | EmailField | No | EmailInput | max_length=320 |
-| `class_div` | Class / division | CharField | No | TextInput | max_length=50 |
+| `course` | Course / class | CharField | No | TextInput | max_length=50 |
+| `year` | Year | CharField | No | TextInput | max_length=20 |
+| `semester` | Semester | CharField | No | TextInput | max_length=20 |
+| `section` | Section | CharField | No | TextInput | max_length=5 |
+| `batch` | Batch | CharField | No | TextInput | max_length=30 |
 
 ## AnnouncementForm
 
@@ -174,6 +175,41 @@ Public student registration ignores injected role or superuser fields. Director-
 | `title` | Title | CharField | Yes | TextInput | max_length=200 |
 | `message` | Message | CharField | Yes | Textarea | Default Django field validation |
 
+## ProfileForm — student
+
+| Field | Label | Field type | Required | Widget | Validation / choices |
+| --- | --- | --- | --- | --- | --- |
+| `username` | Username | CharField | Yes | TextInput | max_length=150 |
+| `first_name` | Full name | CharField | Yes | TextInput | max_length=100 |
+| `email` | Email | EmailField | Yes | EmailInput | max_length=320 |
+| `department` | Department | CharField | Yes | TextInput | max_length=50 |
+| `phone` | Phone number | CharField | No | TextInput | max_length=10 |
+| `enrollment` | Enrollment | CharField | No | TextInput | max_length=50 |
+| `year` | Year | CharField | No | TextInput | max_length=20 |
+| `semester` | Semester | CharField | No | TextInput | max_length=20 |
+| `section` | Section | CharField | No | TextInput | max_length=5 |
+| `batch` | Batch | CharField | No | TextInput | max_length=30 |
+
+## ProfileForm — faculty
+
+| Field | Label | Field type | Required | Widget | Validation / choices |
+| --- | --- | --- | --- | --- | --- |
+| `username` | Username | CharField | Yes | TextInput | max_length=150 |
+| `first_name` | Full name | CharField | Yes | TextInput | max_length=100 |
+| `email` | Email | EmailField | Yes | EmailInput | max_length=320 |
+| `department` | Department | CharField | Yes | TextInput | max_length=50 |
+| `phone` | Phone number | CharField | No | TextInput | max_length=15 |
+
+## ProfileForm — director
+
+| Field | Label | Field type | Required | Widget | Validation / choices |
+| --- | --- | --- | --- | --- | --- |
+| `username` | Username | CharField | Yes | TextInput | max_length=150 |
+| `first_name` | Full name | CharField | Yes | TextInput | max_length=100 |
+| `email` | Email | EmailField | Yes | EmailInput | max_length=320 |
+| `department` | Department | CharField | Yes | TextInput | max_length=50 |
+| `phone` | Phone number | CharField | No | TextInput | max_length=15 |
+
 ## Django AuthenticationForm
 
 | Field | Label | Field type | Required | Widget | Validation / choices |
@@ -189,19 +225,6 @@ Public student registration ignores injected role or superuser fields. Director-
 | `new_password1` | New password | CharField | Yes | PasswordInput | Default Django field validation |
 | `new_password2` | New password confirmation | CharField | Yes | PasswordInput | Default Django field validation |
 
-## Django PasswordResetForm
-
-| Field | Label | Field type | Required | Widget | Validation / choices |
-| --- | --- | --- | --- | --- | --- |
-| `email` | Email | EmailField | Yes | EmailInput | max_length=254 |
-
-## Django SetPasswordForm
-
-| Field | Label | Field type | Required | Widget | Validation / choices |
-| --- | --- | --- | --- | --- | --- |
-| `new_password1` | New password | CharField | Yes | PasswordInput | Default Django field validation |
-| `new_password2` | New password confirmation | CharField | Yes | PasswordInput | Default Django field validation |
-
 ## Additional server rules
 
 - Email uniqueness is checked case-insensitively in the account form; the email is stored lowercase. Django User.email itself is not made globally unique by a database constraint.
@@ -214,4 +237,7 @@ Public student registration ignores injected role or superuser fields. Director-
 - Faculty announcement and notification forms permit the Students audience only; directors may choose all configured audiences.
 - A complaint reply requires a message up to 5,000 characters. Only directors receive the status input. A complaint body accepts up to 10,000 characters.
 - Resource, announcement and doubt file validation and image safety checks are detailed in the handbook Security and uploads chapter.
-- AuthenticationForm, password-change and token-reset forms come from Django. The login field is a username, not an email identifier.
+- New quiz forms automatically publish and require name, enrollment, email and course; these flags are not displayed.
+- StudentInfoForm autofills identity and separate course/year/semester/section/batch fields from the account.
+- ProfileForm edits only the authenticated account and synchronizes linked role records; roles and permissions cannot be edited here.
+- Login and signed-in password change use Django forms. Public password reset, phone OTP and SMTP are disabled.

@@ -30,6 +30,7 @@ Table: `ClassApp_student`. Default ordering: `database default`.
 | `year` | CharField(20) | '' | null=False; blank=False | — | Student academic year text. |
 | `sem` | CharField(20) | '' | null=False; blank=False | — | Legacy student semester value. |
 | `section` | CharField(5) | '' | null=False; blank=False | — | Student section text. |
+| `batch` | CharField(30) | '' | null=False; blank=True | — | Student batch/cohort text, editable at registration and in My profile. |
 | `user` | OneToOneField | — | unique; indexed; null=True; blank=True | auth.User; PROTECT | Link to the related record. |
 
 ## Faculty
@@ -105,7 +106,7 @@ Table: `ClassApp_imageuploader`. Default ordering: `database default`.
 
 ## PasswordResetOTP
 
-Retained historical OTP table; public password reset and outbound email are disabled.
+Retained historical OTP table. Public password reset and outbound email are disabled.
 
 Table: `ClassApp_passwordresetotp`. Default ordering: `database default`.
 
@@ -113,7 +114,7 @@ Table: `ClassApp_passwordresetotp`. Default ordering: `database default`.
 | --- | --- | --- | --- | --- | --- |
 | `id` | BigAutoField | — | primary key; null=False; blank=True | — | Automatically generated primary key. |
 | `email` | CharField(254) | — | null=False; blank=False | — | Email. |
-| `otp` | CharField(6) | — | null=False; blank=False | — | Historical reset OTP text; unused by the current token-reset flow. |
+| `otp` | CharField(6) | — | null=False; blank=False | — | Historical reset OTP text; no current public OTP/reset workflow. |
 | `created_at` | DateTimeField | Automatic | null=False; blank=True | — | Creation timestamp, set automatically. |
 
 ## Quiz
@@ -132,7 +133,7 @@ Table: `ClassApp_quiz`. Default ordering: `['-created_at', '-id']`.
 | `require_name` | BooleanField | False | null=False; blank=False | — | Whether the quiz-attempt name field is mandatory. |
 | `require_roll` | BooleanField | False | null=False; blank=False | — | Whether the quiz-attempt roll/enrollment field is mandatory. |
 | `require_email` | BooleanField | False | null=False; blank=False | — | Whether the quiz-attempt email field is mandatory. |
-| `require_class` | BooleanField | False | null=False; blank=False | — | Whether the quiz-attempt class/division field is mandatory. |
+| `require_class` | BooleanField | False | null=False; blank=False | — | Whether the quiz-attempt course/class field is mandatory. New quiz forms enable this automatically. |
 | `faculty` | ForeignKey | — | indexed; null=True; blank=True | ClassApp.Faculty; CASCADE | Link to the related record. |
 | `code` | CharField(6) | — | unique; null=True; blank=True | — | Six uppercase hexadecimal characters, generated when a quiz is saved without a code. |
 | `subject` | CharField(100) | — | null=False; blank=True | — | Subject. |
@@ -168,7 +169,7 @@ Table: `ClassApp_option`. Default ordering: `['id']`.
 
 ## Submission
 
-A recorded quiz attempt with identity details, aggregate score and a saved grading review.
+A recorded quiz attempt with identity and academic snapshots, aggregate score and a saved grading review.
 
 Table: `ClassApp_submission`. Default ordering: `['-score', 'submitted_at', 'id']`.
 
@@ -180,11 +181,12 @@ Table: `ClassApp_submission`. Default ordering: `['-score', 'submitted_at', 'id'
 | `student_name` | CharField(255) | — | null=True; blank=True | — | Student display-name snapshot, including historical records. |
 | `roll_no` | CharField(50) | — | null=True; blank=True | — | Roll/enrollment value copied into an attempt. |
 | `email` | CharField(254) | — | null=True; blank=True | — | Email. |
-| `class_div` | CharField(50) | — | null=True; blank=True | — | Class/division value copied into an attempt. |
+| `class_div` | CharField(50) | — | null=True; blank=True | — | Legacy combined academic summary, limited to 50 characters; full separate values are in academic_details. |
 | `score` | IntegerField | 0 | null=False; blank=False | — | Correct-answer count; on SubmissionDetail this is 0 or 1 for one question. |
 | `student` | ForeignKey | — | indexed; null=True; blank=True | auth.User; PROTECT | Link to the related record. |
 | `total` | PositiveIntegerField | 0 | null=False; blank=False | — | Number of questions in the saved attempt. |
 | `review` | JSONField | list() | null=False; blank=False | — | Saved question/option text and selected/correct answer IDs used by the results view. |
+| `academic_details` | JSONField | dict() | null=False; blank=True | — | Submission JSON snapshot containing course, year, semester, section and batch separately. |
 
 Declared constraints:
 
@@ -218,7 +220,7 @@ Table: `ClassApp_submissiondetail`. Default ordering: `database default`.
 | `student_name` | CharField(255) | — | null=True; blank=True | — | Student display-name snapshot, including historical records. |
 | `roll_no` | CharField(50) | — | null=True; blank=True | — | Roll/enrollment value copied into an attempt. |
 | `email` | CharField(254) | — | null=True; blank=True | — | Email. |
-| `class_div` | CharField(50) | — | null=True; blank=True | — | Class/division value copied into an attempt. |
+| `class_div` | CharField(50) | — | null=True; blank=True | — | Legacy combined academic summary, limited to 50 characters; full separate values are in academic_details. |
 | `score` | IntegerField | 0 | null=False; blank=False | — | Correct-answer count; on SubmissionDetail this is 0 or 1 for one question. |
 | `selected_options` | ManyToManyField | — | null=False; blank=False | ClassApp.Option; M2M via ClassApp_submissiondetail_selected_options | Selected answers, stored through an automatically created join table. |
 
