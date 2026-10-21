@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 def env_bool(name, default=False):
     return os.getenv(name, str(default)).lower() in ('1', 'true', 'yes')
-DEBUG = env_bool('DEBUG', True)
+DEBUG = env_bool('DEBUG', not bool(os.getenv('VERCEL')))
 SECRET_KEY = os.getenv('SECRET_KEY', '')
 if not SECRET_KEY:
     if not DEBUG:

@@ -140,3 +140,20 @@
 .result-details dd { margin: 0; font-size: 14px; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
 @media(max-width:900px) { .result-details { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media(max-width:480px) { .result-details { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; } }
+
+/* Shared accessibility and form feedback. */
+img { max-width: 100%; }
+form[aria-busy="true"] button[aria-disabled="true"] { cursor: progress; opacity: .75; }
+.skip-link { z-index: 200; }
+@media(prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+@media(max-width:700px) {
+  .topbar > .muted { display: none; }
+  .top-actions { flex-wrap: wrap; }
+  .filter-bar label { min-width: 0; flex-basis: 140px; }
+  .form-actions { flex-wrap: wrap; }
+  input:not([type=checkbox]):not([type=radio]), select, textarea { font-size: 16px; }
+}
+
+:root { --muted: #596b75; }

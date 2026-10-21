@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% block page_layout %}
 <div class="public-site" id="top">
-  <a class="skip-link" href="#public-content">Skip to content</a>
   <header class="site-header">
     <div class="site-container header-inner">
       <a class="brand" href="{% url 'index' %}" aria-label="TeachTrack home"><span class="brand-icon">T</span> TeachTrack<span class="brand-dot">.</span></a>
@@ -21,7 +20,7 @@
       </div>
     </div>
   </header>
-  <main class="site-container site-main" id="public-content">
+  <main class="site-container site-main" id="content" tabindex="-1">
     {% for message in messages %}<div role="status" class="alert {{ message.tags }}">{{ message }}</div>{% endfor %}
     {% block public_content %}{% endblock %}
   </main>

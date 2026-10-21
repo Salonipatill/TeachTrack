@@ -1,4 +1,50 @@
 'use strict';
+
+if (document.body.dataset.uploadsEnabled === 'false') {
+  document.querySelectorAll('input[type="file"]').forEach(input => {
+    input.disabled = true;
+    const note = document.createElement('p');
+    note.className = 'muted';
+    note.textContent = 'File uploads are temporarily unavailable. Optional attachments can be left out.';
+    input.insertAdjacentElement('afterend', note);
+    if (input.required) {
+      note.textContent = 'File uploads are temporarily unavailable. Please contact your director for this resource.';
+      input.closest('form')?.querySelectorAll('button[type="submit"], button:not([type])').forEach(button => {
+        button.disabled = true;
+      });
+    }
+  });
+}
+
+// Show feedback during normal form navigation and prevent duplicate submissions.
+document.querySelectorAll('form').forEach(form => {
+  form.addEventListener('submit', event => {
+    if (event.defaultPrevented || form.target === '_blank') return;
+    if (form.dataset.submitting === 'true') {
+      event.preventDefault();
+      return;
+    }
+    form.dataset.submitting = 'true';
+    form.setAttribute('aria-busy', 'true');
+    const button = event.submitter;
+    if (button && button.tagName === 'BUTTON') {
+      button.dataset.originalLabel = button.textContent;
+      button.textContent = form.method.toLowerCase() === 'get' ? 'Searching...' : 'Please wait...';
+      button.setAttribute('aria-disabled', 'true');
+    }
+  });
+});
+window.addEventListener('pageshow', () => {
+  document.querySelectorAll('form[data-submitting]').forEach(form => {
+    delete form.dataset.submitting;
+    form.removeAttribute('aria-busy');
+    form.querySelectorAll('[data-original-label]').forEach(button => {
+      button.textContent = button.dataset.originalLabel;
+      delete button.dataset.originalLabel;
+      button.removeAttribute('aria-disabled');
+    });
+  });
+});
 document.querySelectorAll('.sidebar nav a').forEach(link => {
   if (new URL(link.href).pathname === location.pathname) {
     link.classList.add('active');
