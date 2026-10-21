@@ -67,7 +67,7 @@ Students use the platform to find materials, attempt quizzes, ask doubts, send f
 | Static assets | Django staticfiles plus WhiteNoise compressed manifest storage |
 | Production process | Vercel Django deployment or Gunicorn serving Classroom.wsgi:application in the container |
 | Timezone | Asia/Kolkata; timezone-aware application timestamps |
-| Tests | 57 test methods in the current source catalogue |
+| Tests | 71 test methods in the current source catalogue |
 
 The source contains cloud configuration and a deployment guide. A working local server and passing local tests do not establish that a live deployment or private production bucket has been provisioned.
 
@@ -254,7 +254,7 @@ export DEBUG=True
 
 DATABASE_URL is parsed by dj-database-url. Local SQLite is the fallback when blank; production requires PostgreSQL or MySQL. The main dependency set includes psycopg and mysql-connector-python. requirements-mysql.txt includes the same base set for compatibility.
 
-For MySQL, settings remap django.db.backends.mysql to mysql.connector.django and enable certificate and hostname verification with the public certs/aiven-ca.pem. Use the actual Aiven host, port, database name and URL-encoded credentials; keep credentials private. Schema migrations do not transfer data between engines.
+For MySQL, settings remap django.db.backends.mysql to mysql.connector.django and default to certificate/hostname verification with certs/aiven-ca.pem. MYSQL_SSL_MODE, MYSQL_SSL_CA and optional client certificate/key variables customize TLS; trusted local MySQL can use DISABLED. See DATABASE_SETUP.md for full configuration. Use the actual Aiven host, port, database name and URL-encoded credentials; keep credentials private. Schema migrations do not transfer data between engines.
 
 ### First account and first useful session
 
@@ -629,7 +629,7 @@ The [configuration reference](CONFIGURATION_REFERENCE.md) documents every enviro
 | Package declaration | Role in this project |
 | --- | --- |
 | Django==5.2.18 | ORM, routing, templates, forms, sessions, authentication and admin |
-| python-dotenv==1.2.4 | Loads .env; runserver explicitly overrides inherited process values, other entry points do not |
+| python-dotenv==1.2.4 | Loads the selected private env file; runserver explicitly overrides inherited process values, other entry points do not |
 | dj-database-url==3.1.2 | Converts DATABASE_URL into Django database configuration |
 | whitenoise==6.12.0 | Serves compressed/hashed static files in the application process |
 | psycopg[binary]==3.3.6 | PostgreSQL database driver |
@@ -643,7 +643,7 @@ Requirements describe the intended install set. A virtual environment can differ
 
 ### Database, storage and email selection
 
-DATABASE_URL selects SQLite locally or PostgreSQL/MySQL; see CONFIGURATION_REFERENCE.md and VERCEL_DEPLOYMENT.md. Aiven uses MySQL Connector with certificate and hostname verification.
+DATABASE_URL selects SQLite locally or PostgreSQL/MySQL; see CONFIGURATION_REFERENCE.md and VERCEL_DEPLOYMENT.md. Aiven uses MySQL Connector with certificate/hostname verification by default; local development can explicitly disable SSL via MYSQL_SSL_MODE without editing source.
 
 With DEBUG=True, blank GS_BUCKET_NAME uses local media storage. With DEBUG=False and no bucket, uploads are disabled at the form, middleware and storage layers. A private GCS bucket plus runtime credentials enables persistent uploads. A bucket is optional for production startup; text workflows continue without it. Supabase is not integrated.
 
@@ -744,7 +744,7 @@ Migrations are separate from web startup. This avoids having several web instanc
 
 With DEBUG=False, settings require SECRET_KEY of at least 50 characters and a PostgreSQL or MySQL configuration. GS_BUCKET_NAME is optional; omitting it disables uploads.
 
-On Vercel, DEBUG defaults false and supplied VERCEL_URL, VERCEL_PROJECT_PRODUCTION_URL and VERCEL_BRANCH_URL hostnames are added to ALLOWED_HOSTS and HTTPS CSRF origins. Custom domains still belong in explicit configuration. Process environment wins over .env except local manage.py runserver, which deliberately loads .env with override=True. See VERCEL_DEPLOYMENT.md for deploy and verification steps.
+On Vercel, DEBUG defaults false and supplied VERCEL_URL, VERCEL_PROJECT_PRODUCTION_URL and VERCEL_BRANCH_URL hostnames are added to ALLOWED_HOSTS and HTTPS CSRF origins. Custom domains still belong in explicit configuration. Process environment wins over .env except local manage.py runserver, which deliberately loads the selected TEACHTRACK_ENV_FILE (default .env) with override=True. See VERCEL_DEPLOYMENT.md for deploy and verification steps.
 
 ### Release process
 

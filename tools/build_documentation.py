@@ -362,16 +362,17 @@ def palette_reference():
 
 
 def test_catalogue():
-    tree = ast.parse((ROOT / 'ClassApp/tests.py').read_text(encoding='utf-8'))
     rows = []
-    for cls in tree.body:
-        if isinstance(cls, ast.ClassDef):
-            for method in cls.body:
-                if isinstance(method, ast.FunctionDef) and method.name.startswith('test_'):
-                    rows.append([cls.name, f'`{method.name}`', method.name.removeprefix('test_').replace('_', ' ')])
-    write('TEST_CATALOGUE.md', '# Test catalogue\n\n' + f'{len(rows)} test methods are defined in `ClassApp/tests.py`. '
+    for source in sorted((ROOT / 'ClassApp').glob('test*.py')):
+        tree = ast.parse(source.read_text(encoding='utf-8'))
+        for cls in tree.body:
+            if isinstance(cls, ast.ClassDef):
+                for method in cls.body:
+                    if isinstance(method, ast.FunctionDef) and method.name.startswith('test_'):
+                        rows.append([source.name, cls.name, f'`{method.name}`', method.name.removeprefix('test_').replace('_', ' ')])
+    write('TEST_CATALOGUE.md', '# Test catalogue\n\n' + f'{len(rows)} test methods are defined in `ClassApp/test*.py`. '
           'This catalogue describes source coverage; a successful test execution must be recorded separately.\n\n' +
-          table(['Test class', 'Method', 'Scenario'], rows))
+          table(['Source', 'Test class', 'Method', 'Scenario'], rows))
 
 
 def diagram(name, title, boxes, edges, width, height):
@@ -435,6 +436,7 @@ CHAPTERS = [
     ('COLOUR_INDEX.md', 'Complete colour index'), ('TEST_CATALOGUE.md', 'Test catalogue'),
     ('VERCEL_DEPLOYMENT.md', 'Vercel deployment'), ('RECENT_CHANGES.md', 'Current features and changes'),
     ('TESTING.md', 'Testing and acceptance'), ('WEBSITE_REVIEW.md', 'Website quality review'),
+    ('DATABASE_SETUP.md', 'Local MySQL and Aiven'),
 ]
 
 

@@ -1,5 +1,19 @@
 # Change log
 
+## Local MySQL and Aiven environment switching
+
+- Extracted database configuration into Classroom/database.py with strict environment
+  parsing and a backward-compatible verified Aiven TLS default.
+- Added explicit SSL modes, CA/client certificate paths, Connector implementation,
+  connection timeout/lifetime and health-check settings.
+- Added TEACHTRACK_ENV_FILE for private environment selection; runserver retains its
+  intentional override behavior for the selected file.
+- Added 14 configuration/environment regression checks and isolated MySQL test tools.
+- Local MySQL 8.0.46 passed all 71 tests with SSL disabled in a disposable instance.
+  SQLite passed 71 tests, plus the focused post-correction checks. Aiven 8.4.11 workflow coverage and all 15 focused compatibility rechecks passed with TLS active; detailed run accounting is in DATABASE_SETUP.md.
+- Corrected the rating CHECK-constraint test for Connector/Python's DatabaseError
+  classification, asserting MySQL error 3819 rather than weakening the constraint.
+
 ## 21 October 2026 - current updates
 
 - Added own profile editing for students, faculty and directors from the sidebar footer.

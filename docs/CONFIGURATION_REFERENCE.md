@@ -4,7 +4,7 @@ Updated 21 October 2026. Values below are placeholders, not live credentials.
 
 ## Loading and precedence
 
-Classroom/settings.py loads .env without overriding process variables. WSGI,
+Classroom/settings.py loads the file selected by TEACHTRACK_ENV_FILE (default .env) without overriding process variables. WSGI,
 ASGI and management commands therefore use the process environment first.
 The deliberate exception is local manage.py runserver: it loads the project's
 .env with override=True before Django starts. Do not use that behavior to infer
@@ -19,6 +19,14 @@ release, are false. Comma-separated host/origin lists are trimmed.
 | --- | --- |
 | DEBUG | True locally, false when VERCEL is present; set False explicitly in production |
 | SECRET_KEY | Locally reads/creates .dev-secret if blank; production requires at least 50 characters |
+| TEACHTRACK_ENV_FILE | Private env-file path, relative to the project root or absolute; defaults to .env |
+| MYSQL_SSL_MODE | VERIFY_IDENTITY by default; DISABLED for trusted local development, or VERIFY_CA |
+| MYSQL_SSL_CA | CA path; default certs/aiven-ca.pem for verification modes; ignored when SSL is disabled |
+| MYSQL_SSL_CERT / MYSQL_SSL_KEY | Optional paired client certificate/key paths for mutual TLS |
+| MYSQL_USE_PURE | True; choose the Connector pure-Python implementation |
+| MYSQL_CONNECT_TIMEOUT | Positive seconds, default 10 |
+| DATABASE_CONN_MAX_AGE | Connection lifetime in seconds, default 60; zero closes after each request |
+| DATABASE_CONN_HEALTH_CHECKS | True; reusable connection health checks |
 | DATABASE_URL | Blank selects local SQLite; otherwise dj-database-url parses the URI |
 | ALLOWED_HOSTS | localhost,127.0.0.1,[::1]; add explicit custom production domains without schemes |
 | CSRF_TRUSTED_ORIGINS | Explicit additional origins, including https:// |
@@ -45,8 +53,7 @@ links, email/phone OTP and SMTP setup are removed. Signed-in password change rem
 | MySQL / Aiven | mysql://USER:URL_ENCODED_PASSWORD@HOST:PORT/DATABASE | mysql-connector-python from main requirements |
 
 MySQL configuration maps django.db.backends.mysql to mysql.connector.django.
-OPTIONS contains use_pure=True, ssl_ca pointing at certs/aiven-ca.pem,
-ssl_verify_cert=True and ssl_verify_identity=True. The public CA is committed;
+Default OPTIONS preserve Aiven verification. MYSQL_SSL_MODE=DISABLED omits certificate options and sets ssl_disabled=True. VERIFY_CA checks the CA chain; VERIFY_IDENTITY also checks the hostname. Paths resolve from the project root, or may be absolute. See DATABASE_SETUP.md for complete examples. The public CA is committed;
 private credentials and other private PEM/key files remain excluded. Use a
 certificate matching the service and an existing database/user.
 

@@ -2,12 +2,15 @@
 import os
 import secrets
 from pathlib import Path
-import dj_database_url
+from .database import database_config
 from dotenv import load_dotenv
 from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / '.env')
+ENV_FILE = Path(os.getenv('TEACHTRACK_ENV_FILE') or '.env')
+if not ENV_FILE.is_absolute():
+    ENV_FILE = BASE_DIR / ENV_FILE
+load_dotenv(ENV_FILE)
 def env_bool(name, default=False):
     return os.getenv(name, str(default)).lower() in ('1', 'true', 'yes')
 DEBUG = env_bool('DEBUG', not bool(os.getenv('VERCEL')))
@@ -48,15 +51,7 @@ TEMPLATES = [{'BACKEND': 'django.template.backends.django.DjangoTemplates', 'DIR
               'django.contrib.auth.context_processors.auth', 'django.contrib.messages.context_processors.messages',
               'ClassApp.context_processors.navigation']}}]
 WSGI_APPLICATION = 'Classroom.wsgi.application'
-DATABASES = {'default': dj_database_url.parse(os.getenv('DATABASE_URL') or f'sqlite:///{BASE_DIR / "db.sqlite3"}', conn_max_age=60, conn_health_checks=True)}
-if DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
-    DATABASES['default']['ENGINE'] = 'mysql.connector.django'
-    DATABASES['default'].setdefault('OPTIONS', {}).update({
-        'use_pure': True,
-        'ssl_ca': str(BASE_DIR / 'certs' / 'aiven-ca.pem'),
-        'ssl_verify_cert': True,
-        'ssl_verify_identity': True,
-    })
+DATABASES = {'default': database_config(BASE_DIR)}
 if not DEBUG and DATABASES['default']['ENGINE'] not in {'django.db.backends.postgresql', 'mysql.connector.django'}:
     raise ImproperlyConfigured('Production requires DATABASE_URL (PostgreSQL or MySQL).')
 AUTH_PASSWORD_VALIDATORS = [

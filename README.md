@@ -34,14 +34,13 @@ cd "C:\Users\Zamanuddin Khan\Downloads\Coding Area\TeachTrack"
 .\.venv\Scripts\python.exe manage.py runserver
 ```
 
-Open http://127.0.0.1:8000/. Local runserver loads .env with override enabled. Other
+Open http://127.0.0.1:8000/. Local runserver loads the selected environment file with override enabled. Set TEACHTRACK_ENV_FILE to choose a private file such as .env.local-mysql; it defaults to .env. Other
 commands and deployed entry points give process environment variables precedence.
 For a new setup, copy .env.example to .env and fill private values. Never commit
 .env, passwords, private keys or database dumps.
 
 Blank DATABASE_URL selects local SQLite. PostgreSQL and MySQL Connector are in the
-main requirements. Aiven MySQL uses mysql.connector.django, a matching public CA
-certificate at certs/aiven-ca.pem and TLS certificate/hostname verification.
+main requirements. Both local MySQL and Aiven use mysql.connector.django. SSL is configurable: MYSQL_SSL_MODE=DISABLED for trusted local development, or VERIFY_IDENTITY (the default) for Aiven with MYSQL_SSL_CA=certs/aiven-ca.pem. See [database setup](docs/DATABASE_SETUP.md) for environment examples and isolated verification.
 requirements-mysql.txt is retained as a compatibility include of the main set.
 Before upgrading a populated original database, follow [UPGRADE.md](docs/UPGRADE.md).
 Migration 0010 adds batch and separate quiz academic snapshots; it does not guess
@@ -73,7 +72,7 @@ $env:DATABASE_URL = 'sqlite:///:memory:'
 .\.venv\Scripts\python.exe -m pip check
 ```
 
-The latest feature-removal run passed **57 tests**. Local Edge checks also covered
+The latest SQLite run passed **71 tests** (57 existing workflow tests plus 14 database/environment configuration checks). The full 71-test suite also passed on a disposable local MySQL instance. Aiven workflow tests and final focused rechecks passed with TLS active; see [database verification](docs/DATABASE_SETUP.md#verification-record-for-this-change) for exact run accounting. Local Edge checks also covered
 public mobile/tablet/desktop pages, role navigation, faculty creation, quiz attempts,
 result layouts, keyboard navigation and actual dark colours. This is not a claim
 of zero bugs or independent verification of protected Vercel deployments,

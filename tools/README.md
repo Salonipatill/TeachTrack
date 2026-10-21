@@ -36,3 +36,24 @@ Authored chapters must be edited before rebuilding: PROJECT_DOCUMENTATION.md,
 DESIGN_SYSTEM.md, CONFIGURATION_REFERENCE.md, RECENT_CHANGES.md, deployment guides
 and test/review notes. Generated files should be refreshed through the builder
 rather than edited directly. Re-export the PDF after any handbook change.
+
+## MySQL verification
+
+`python tools/verify_mysql.py --env-file .env.local-mysql` checks the selected
+MySQL connection and reports whether TLS is active without showing credentials.
+Use `--run-tests` only with permission to create/drop a unique temporary database.
+It runs the complete ClassApp suite in a randomly named test_teachtrack_ database,
+not the application's database. The account needs CREATE/DROP DATABASE permission.
+See [database setup](../docs/DATABASE_SETUP.md). No fixed test database is reused.
+
+A disposable local server can be used without knowing the credentials of an
+existing MySQL service:
+
+```powershell
+.\.venv\Scripts\python.exe tools/verify_local_mysql.py --server-executable "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqld.exe"
+```
+
+This initializes a temporary data directory and starts MySQL on a random loopback
+port with SSL disabled, runs the isolated suite, shuts down only that owned server,
+and removes temporary data. It does not use the PC service's data directory or
+change its accounts. Requires a compatible installed MySQL server executable.

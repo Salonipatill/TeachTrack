@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.db import IntegrityError, transaction
+from django.db import DatabaseError, IntegrityError, connection, transaction
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -268,8 +268,14 @@ class WorkspaceTests(TestCase):
         response=self.client.post(reverse('feedback'),{'faculty':Faculty.objects.get(user=self.faculty).pk,'rating':6})
         self.assertEqual(response.status_code,200);self.assertEqual(Feedback.objects.get().rating,5)
     def test_feedback_db_constraint(self):
-        with self.assertRaises(IntegrityError), transaction.atomic():
+        with self.assertRaises(DatabaseError) as error, transaction.atomic():
             Feedback.objects.create(student=self.student,faculty=Faculty.objects.get(user=self.faculty),rating=0,student_name='Student',student_email=self.student.email)
+        if connection.vendor == 'mysql':
+            # Connector/Python classifies MySQL CHECK violations as DatabaseError,
+            # unlike SQLite/PostgreSQL's IntegrityError subclass.
+            self.assertEqual(error.exception.args[0], 3819)
+        else:
+            self.assertIsInstance(error.exception, IntegrityError)
     def test_doubt_answer_permission_and_notification(self):
         self.login_as('student')
         self.client.post(reverse('doubt_create'),{'faculty':Faculty.objects.get(user=self.faculty).pk,'subject':'Python','doubt':'Why use functions?'})

@@ -13,6 +13,8 @@ Configure these in Vercel for every environment that should run the application:
 DEBUG=False
 SECRET_KEY=YOUR_PRIVATE_RANDOM_KEY_AT_LEAST_50_CHARACTERS
 DATABASE_URL=mysql://USER:URL_ENCODED_PASSWORD@YOUR_AIVEN_HOST:PORT/DATABASE
+MYSQL_SSL_MODE=VERIFY_IDENTITY
+MYSQL_SSL_CA=certs/aiven-ca.pem
 ALLOWED_HOSTS=YOUR_CUSTOM_OR_STABLE_HOSTNAME
 CSRF_TRUSTED_ORIGINS=https://YOUR_CUSTOM_OR_STABLE_HOSTNAME
 ```
@@ -25,10 +27,10 @@ when provided, accepting those exact hosts and HTTPS origins. DEBUG defaults off
 when VERCEL is present; explicitly set it false for deployment.
 
 The main requirements include mysql-connector-python. The MySQL engine parsed by
-dj-database-url is remapped to mysql.connector.django. TLS uses use_pure=True,
+dj-database-url is remapped to mysql.connector.django. Default TLS uses MYSQL_SSL_MODE=VERIFY_IDENTITY and use_pure=True,
 ssl_ca, ssl_verify_cert=True and ssl_verify_identity=True. The public certificate
 at certs/aiven-ca.pem must match the service. The Git exception includes that CA
-certificate only; private keys and passwords must remain excluded.
+certificate only; private keys and passwords must remain excluded. Local MySQL can instead use MYSQL_SSL_MODE=DISABLED in a private development env file. See DATABASE_SETUP.md; no source change is needed.
 
 ## Schema and startup
 

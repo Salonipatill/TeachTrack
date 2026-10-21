@@ -2,16 +2,16 @@
 
 Run `python manage.py test ClassApp` from the project folder. Tests use a separate temporary database and in-memory media storage. They do not edit the original supplied database.
 
-The current source defines **57 test methods**, listed individually in [TEST_CATALOGUE.md](TEST_CATALOGUE.md). Use the same virtual-environment interpreter for Django and its test subprocesses. For a workspace with an existing MySQL database, prefer the isolated SQLite procedure in [handbook section 15](PROJECT_DOCUMENTATION.md#15-testing-and-acceptance); it preserves the shell's previous configuration after the run.
+The current source defines **71 test methods**, listed individually in [TEST_CATALOGUE.md](TEST_CATALOGUE.md). Use the same virtual-environment interpreter for Django and its test subprocesses. For a workspace with an existing MySQL database, prefer the isolated SQLite procedure in [handbook section 15](PROJECT_DOCUMENTATION.md#15-testing-and-acceptance); it preserves the shell's previous configuration after the run.
 
 ## Current verification record
 
-The feature-removal run passed all 57 tests, including unavailable reset URLs and
+The earlier feature-removal run passed all 57 workflow tests, including unavailable reset URLs and
 retained signed-in password changes. Coverage now includes per-role profile edits,
 role/permission injection rejection, separate quiz autofill/snapshots and automatic
 quiz defaults. Local Edge flows checked 390/768/1440px public pages, role navigation,
 faculty creation, quiz submission/results, keyboard access and dark-mode persistence.
-Safari/Firefox and protected live Vercel pages were not independently verified.
+Safari/Firefox and protected live Vercel pages were not independently verified. The database update passed 71 tests on SQLite and on a disposable local MySQL 8.0.46 server with SSL disabled; cloud verification is recorded in DATABASE_SETUP.md.
 
 Documentation-only changes do not require a new application test run. Rebuild,
 PDF-export and link checks use the commands in [tools/README.md](../tools/README.md).
@@ -63,7 +63,7 @@ Extract the release into a new directory, create its environment without overwri
 
 Run `.venv\Scripts\python.exe tools/build_documentation.py` to rebuild source-derived model, form, route, colour and test references and the offline HTML handbook. Check local document links, handbook anchors, diagram rendering and the visual colour filter. The generator reads metadata/source without querying live user data. It does not execute the application test suite or automatically refresh the PDF snapshot.
 
-The most recent application-suite execution recorded during the current workspace changes passed all 57 tests. Documentation-only changes should be checked through document generation and reference/link validation; they do not require claiming a fresh application-test execution. Windows compatibility handling includes closing temporary SQLite source handles and launching migration subprocesses with the test environment's Python interpreter.
+The latest SQLite run passed all 71 tests. MySQL-specific verification uses tools/verify_mysql.py and uniquely named isolated databases; see DATABASE_SETUP.md for recorded requirements and commands. Documentation-only changes should be checked through document generation and reference/link validation; they do not require claiming a fresh application-test execution. Windows compatibility handling includes closing temporary SQLite source handles and launching migration subprocesses with the test environment's Python interpreter.
 
 ## Manual acceptance and live production checks
 

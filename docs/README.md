@@ -9,6 +9,7 @@ production storage. Public password reset and SMTP have been removed.
 | --- | --- |
 | [Recent changes](RECENT_CHANGES.md) | Current features, removed behavior, migration 0010 and verification limits |
 | [Project handbook](PROJECT_DOCUMENTATION.md) | Architecture, setup, roles, workflows, security and operations |
+| [Database setup](DATABASE_SETUP.md) | Local MySQL/Aiven environment switching, SSL modes and isolated test runner |
 | [Vercel deployment](VERCEL_DEPLOYMENT.md) | Aiven configuration, commit identity, static assets and live acceptance |
 | [Google Cloud deployment](DEPLOYMENT.md) | Optional container, PostgreSQL and private GCS infrastructure |
 | [Configuration reference](CONFIGURATION_REFERENCE.md) | Current variables, defaults, storage modes and disabled email |

@@ -49,18 +49,18 @@ older Vercel deployment serves the same commit.
 ## Production and storage
 
 - Aiven MySQL uses mysql.connector.django and the committed public CA certificate;
-  credentials remain private. PostgreSQL and local SQLite remain supported.
+  credentials remain private. Local MySQL can explicitly disable SSL; other MySQL servers can use custom CA/client certificates. Timeouts, connection reuse and health checks are configurable. PostgreSQL and local SQLite remain supported.
 - Vercel-provided deployment, production and branch hostnames are added to host
   and CSRF-origin lists. No global wildcard is required.
 - A GCS bucket is optional for startup. In production without a bucket, file
   uploads are disabled at the form, request and storage layers; text workflows
   remain available. There is no Supabase integration yet.
-- Local `manage.py runserver` loads .env with override enabled. Other commands and
+- Local `manage.py runserver` loads the selected TEACHTRACK_ENV_FILE (default .env) with override enabled. Other commands and
   deployed WSGI/ASGI use normal process-environment precedence.
 
 ## Verification record
 
-The latest feature-removal run passed 57 Django tests. Earlier local Edge checks
+The feature-removal run passed 57 workflow tests. The database update adds 14 configuration checks: 71 tests passed on SQLite and disposable local MySQL; Aiven workflow coverage plus focused rechecks passed with TLS active (see DATABASE_SETUP.md for run accounting). Earlier local Edge checks
 covered public pages at 390/768/1440 pixels, role navigation, faculty creation,
 quiz autofill/submission/results, keyboard access and actual dark colours.
 Production checks, static collection and dependency checks passed during the
