@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% include 'header1.html' %}
+{% block content %}
+<style>
+    /* Center page content */
+    .container {
+        max-width: 1000px;
+        margin: 50px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+        color: #007bff;
+        text-align: center;
+        font-size: 28px;
+        margin-bottom: 30px;
+        font-weight: 600;
+    }
+
+    /* Table Styles */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: 'Arial', sans-serif;
+    }
+
+    table th, table td {
+        border: 1px solid #ddd;
+        padding: 12px 15px;
+        text-align: left;
+    }
+
+    table th {
+        background-color: #007bff;
+        color: #fff;
+        font-weight: 600;
+    }
+
+    table tr:nth-child(even) {
+        background-color: #f7f9fc;
+    }
+
+    table tr:hover {
+        background-color: #e1f0ff;
+    }
+
+    /* List Styles */
+    ul {
+        padding-left: 20px;
+        margin: 5px 0;
+    }
+
+    li {
+        margin-bottom: 5px;
+    }
+
+    /* Paragraph Styles */
+    p {
+        font-size: 16px;
+        color: #555;
+        text-align: center;
+    }
+
+    /* Button Styles */
+    .btn {
+        display: inline-block;
+        padding: 12px 30px;
+        background-color: #007bff;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        margin: 20px auto 0 auto;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+        background-color: #0056b3;
+        transform: translateY(-2px);
+    }
+
+    /* Center content */
+    .btn-container {
+        text-align: center;
+    }
+
+    /* Responsive Table */
+    @media (max-width: 768px) {
+        table, thead, tbody, th, td, tr {
+            display: block;
+        }
+        th {
+            position: sticky;
+            top: 0;
+            background-color: #007bff;
+            color: #fff;
+        }
+        td {
+            border-bottom: 1px solid #ddd;
+            padding: 10px;
+        }
+    }
+</style>
+
+<div class="container">
+    <h2>Submissions for Quiz: {{ quiz.title }}</h2>
+
+    {% if submissions %}
+    <table>
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Submitted At</th>
+                <th>Answers</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for submission in submissions %}
+            <tr>
+                <td>{{ submission.student.username }}</td>
+                <td>{{ submission.submitted_at }}</td>
+                <td>
+                    <ul>
+                        {% for answer in submission.answers.all %}
+                        <li>
+                            <strong>Q:</strong> {{ answer.question.text }}<br>
+                            <strong>Selected:</strong> 
+                            {% for opt in answer.selected_options.all %}
+                                {{ opt.text }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                No answer
+                            {% endfor %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No submissions yet for this quiz.</p>
+    {% endif %}
+
+    <div class="btn-container">
+        <a href="{% url 'teacher_quiz_list' %}" class="btn">Back to Quiz List</a>
+    </div>
+</div>
+{% endblock %}
+{% include 'footer.html' %}

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 325" role="img" aria-label="TeachTrack application architecture">
+<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#126c64"/></marker></defs>
+<rect width="740" height="325" rx="16" fill="#f7f9f7"/>
+<text x="25" y="34" font-family="Arial,sans-serif" font-size="18" font-weight="700" fill="#172d35">TeachTrack application architecture</text>
+<path d="M185,110.0 L240,120.0" stroke="#126c64" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M450,120.0 L510,110.0" stroke="#126c64" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M345.0,165 L345.0,225" stroke="#126c64" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M450,120.0 L510,260.0" stroke="#126c64" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M240,120.0 L185,260.0" stroke="#126c64" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="25" y="75" width="160" height="70" rx="9" fill="white" stroke="#cbded2"/>
+<text x="105.0" y="99" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Browser</text>
+<text x="105.0" y="118" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">HTML forms + CSS + JS</text>
+<rect x="240" y="75" width="210" height="90" rx="9" fill="white" stroke="#cbded2"/>
+<text x="345.0" y="99" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Django / Classroom</text>
+<text x="345.0" y="118" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Middleware → URLs → views</text>
+<text x="345.0" y="137" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Forms + role / object checks</text>
+<rect x="510" y="75" width="205" height="70" rx="9" fill="white" stroke="#cbded2"/>
+<text x="612.5" y="99" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Templates + static assets</text>
+<text x="612.5" y="118" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Server-rendered response</text>
+<rect x="240" y="225" width="210" height="70" rx="9" fill="white" stroke="#cbded2"/>
+<text x="345.0" y="249" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Relational database</text>
+<text x="345.0" y="268" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">SQLite / MySQL / PostgreSQL</text>
+<rect x="510" y="225" width="205" height="70" rx="9" fill="white" stroke="#cbded2"/>
+<text x="612.5" y="249" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Private uploaded files</text>
+<text x="612.5" y="268" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Local media / GCS bucket</text>
+<rect x="25" y="225" width="160" height="70" rx="9" fill="white" stroke="#cbded2"/>
+<text x="105.0" y="249" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Password reset email</text>
+<text x="105.0" y="268" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Console / SMTP</text>
+</svg>

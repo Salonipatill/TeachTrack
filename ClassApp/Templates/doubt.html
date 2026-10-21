@@ -1,0 +1,133 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+    {% include 'header1.html' %}
+    <meta charset="UTF-8">
+    <title>Doubt Box</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f2f4f7;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .doubt-box {
+            background: #ffffff;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .doubt-box h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #333;
+        }
+
+        .doubt-box input,
+        .doubt-box textarea,
+        .doubt-box select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .doubt-box textarea {
+            height: 120px;
+            resize: none;
+        }
+
+        .doubt-box input[type="file"] {
+            padding: 8px;
+        }
+
+        .doubt-box button {
+            width: 100%;
+            padding: 12px;
+            background-color: #0d6efd;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .doubt-box button:hover {
+            background-color: #0b5ed7;
+        }
+
+        .message {
+            text-align: center;
+            margin-top: 15px;
+            color: green;
+            font-size: 14px;
+        }
+
+        .note {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body><br><br><br><br><br><br><br><br><br>
+<div class="container">
+    <div class="doubt-box">
+        <h2>Ask Your Doubt</h2>
+
+        <form method="post" enctype="multipart/form-data" action="{% url 'doubt' %}">
+            {% csrf_token %}
+
+            <input type="text" name="name" placeholder="Your Name" required>
+            <input type="email" name="email" placeholder="Your Email" required>
+            <textarea name="doubt" placeholder="Write your doubt here..." required></textarea>
+
+            <div class="note">
+                You may upload an image or document.
+            </div>
+
+            <!-- File input restricted to specific types -->
+            <input type="file" name="attachment" accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png">
+
+            <!-- Faculty selection dropdown -->
+            <div class="note">
+                Select Faculty to send your doubt:
+            </div>
+            <select name="faculty" required>
+                <option value="" disabled selected>Select Faculty</option>
+                {% for faculty in faculties %}
+                    <option value="{{ faculty.id }}">{{ faculty.fname }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Submit Doubt</button><br><br>
+            <a href="{% url 'student_dashboard' %}">
+                <button type="button">Back To Dashboard</button>
+            </a>
+        </form>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message">{{ message }}</div>
+            {% endfor %}
+        {% endif %} 
+    </div>
+</div>
+{% include 'footer.html' %}
+</body>
+</html>

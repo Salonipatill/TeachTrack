@@ -1,0 +1,47 @@
+render → show HTML page
+redirect → send user to another page
+get_object_or_404 → get data OR show 404 error
+
+
+authenticate → check username/password
+login → start session
+
+messages-> Show popup messages (success/error)
+send_mail->Send email
+
+PasswordResetOTP-> OTP model for reset password
+
+
+urlsafe_base64_encode, urlsafe_base64_decode ->>Convert data into safe URL format
+
+
+
+force_bytes ->Convert data into bytes
+
+default_token_generator ->  Generate secure reset token
+
+User -> Built-in Django user table
+
+random -> Generate random numbers
+
+login_required -->   Restrict page to logged-in users only
+
+
+json  --> Handle JSON data
+
+
+ reverse --->  Get URL from name
+
+
+HttpResponseForbidden --> no permission (403)
+
+HttpResponseBadRequest -->  wrong input (400)
+
+
+timezone --> Time handling
+
+ pytz -->  Timezone library
+
+transaction  ---> All-or-nothing database operations
+
+

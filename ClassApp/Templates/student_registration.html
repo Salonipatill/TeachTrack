@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+    {% include 'header1.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Registration</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "segoe ui", verdana, helvetica, arial, sans-serif;
+            font-size: 16px;
+            transition: 300ms ease;
+        }
+
+        body {
+            background: #f2f2f2;
+            padding-top: 90px;
+        }
+
+        .row {
+            background-color: #033258;
+            color: #9dc3e2;
+            text-align: center;
+            padding: 2em 2em 1em;
+            width: 90%;
+            margin: 2em auto;
+            border-radius: 6px;
+        }
+
+        .row h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            margin-top: 1em;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            color: #fff;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 0.7em;
+            width: 100%;
+            border: none;
+            border-bottom: 1px solid #666;
+            background: transparent;
+            color: #eee;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            background: #fff;
+            color: #000;
+            padding: 1em;
+        }
+
+        option {
+            color: #000;
+        }
+
+        .btn {
+            width: 100%;
+            margin-top: 2em;
+            padding: 1em;
+            border: 1px solid #fff;
+            border-radius: 5px;
+            background: transparent;
+            color: #80aed4;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #fff;
+            color: #033258;
+        }
+
+        .footer a {
+            color: #9dc3e2;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+
+        .footer h5 {
+            margin-top: 1.2em;
+        }
+
+        @media screen and (min-width: 900px) {
+            .row {
+                width: 35%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="row">
+        <h1>Student Registration</h1>
+        <p style="color:#ddd; margin-bottom:1em;">Register your details</p>
+
+        <form action="{% url 'student_registration' %}" method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="sname" placeholder="Enter your full name" required>
+            </div>
+
+            <div class="form-group">
+                <label>Enrollment Number</label>
+                <input type="text" name="sen" placeholder="Enter enrollment number" required>
+            </div>
+
+            <div class="form-group">
+                <label>Mobile Number</label>
+                <input type="text" name="sphone" placeholder="10-digit mobile number" required>
+            </div>
+
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" name="semail" placeholder="Enter email" required>
+            </div>
+
+            <div class="form-group">
+                <label>Course</label>
+                <select name="course" required>
+                    <option value="">Select Course</option>
+                    <option value="BTech - CSE">BTech - CSE</option>
+                    <option value="BTech - EC">BTech - EC</option>
+                    <option value="BTech - AIML">BTech - AIML</option>
+                    <option value="BTech - ME">BTech - ME</option>
+                    <option value="Arena">Arena</option>
+                    <option value="Management">Management</option>
+                    <option value="MTech">MTech</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Year</label>
+                <select name="year" required>
+                    <option value="">Select Year</option>
+                    <option value="1st Year">1st Year</option>
+                    <option value="2nd Year">2nd Year</option>
+                    <option value="3rd Year">3rd Year</option>
+                    <option value="4th Year">4th Year</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Semester</label>
+                <select name="sem" required>
+                    <option value="">Select Semester</option>
+                    <option value="Sem 1">Semester 1</option>
+                    <option value="Sem 2">Semester 2</option>
+                    <option value="Sem 3">Semester 3</option>
+                    <option value="Sem 4">Semester 4</option>
+                    <option value="Sem 5">Semester 5</option>
+                    <option value="Sem 6">Semester 6</option>
+                    <option value="Sem 7">Semester 7</option>
+                    <option value="Sem 8">Semester 8</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Section</label>
+                <select name="section" required>
+                    <option value="">Select Section</option>
+                    <option value="A">Section A</option>
+                    <option value="B">Section B</option>
+                    <option value="C">Section C</option>
+                    <option value="D">Section D</option>
+                    <option value="E">Section E</option>
+                </select>
+            </div>
+
+                        <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="unm" placeholder="Enter username" required>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="pw" placeholder="Create a password" required>
+            </div>
+
+            <button type="submit" class="btn">Register</button>
+        </form>
+
+        <div class="footer">
+            <h5>Already have an account? <a href="{% url 'student_login' %}">Login</a></h5>
+        </div>
+    </div>
+    {% include 'footer.html' %}
+</body>
+</html>

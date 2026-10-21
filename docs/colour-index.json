@@ -1,0 +1,1519 @@
+{
+  "source": "ClassApp/static/ClassApp/app.css",
+  "tokens": {
+    "--bg": "#f5f7fa",
+    "--ink": "#172d35",
+    "--muted": "#6e7e86",
+    "--line": "#e5ebee",
+    "--teal": "#126c64",
+    "--teal-dark": "#0e514b",
+    "--pale": "#e8f4ef",
+    "--white": "#fff",
+    "--shadow": "0 3px 12px #19353c04"
+  },
+  "colours": [
+    {
+      "literal": "#0e514b",
+      "hex": "#0e514b",
+      "rgb": [
+        14,
+        81,
+        75
+      ],
+      "alpha": 1,
+      "usages": [
+        ":root \u2192 --teal-dark"
+      ]
+    },
+    {
+      "literal": "#102b24e8",
+      "hex": "#102b24e8",
+      "rgb": [
+        16,
+        43,
+        36
+      ],
+      "alpha": 0.9098039215686274,
+      "usages": [
+        ".campus-slide figcaption \u2192 background"
+      ]
+    },
+    {
+      "literal": "#122d2526",
+      "hex": "#122d2526",
+      "rgb": [
+        18,
+        45,
+        37
+      ],
+      "alpha": 0.14901960784313725,
+      "usages": [
+        ".carousel-arrow \u2192 box-shadow"
+      ]
+    },
+    {
+      "literal": "#126c64",
+      "hex": "#126c64",
+      "rgb": [
+        18,
+        108,
+        100
+      ],
+      "alpha": 1,
+      "usages": [
+        ":root \u2192 --teal"
+      ]
+    },
+    {
+      "literal": "#143c35",
+      "hex": "#143c35",
+      "rgb": [
+        20,
+        60,
+        53
+      ],
+      "alpha": 1,
+      "usages": [
+        ".site-footer \u2192 background"
+      ]
+    },
+    {
+      "literal": "#156c62",
+      "hex": "#156c62",
+      "rgb": [
+        21,
+        108,
+        98
+      ],
+      "alpha": 1,
+      "usages": [
+        ".art-small \u2192 background"
+      ]
+    },
+    {
+      "literal": "#172d35",
+      "hex": "#172d35",
+      "rgb": [
+        23,
+        45,
+        53
+      ],
+      "alpha": 1,
+      "usages": [
+        ":root \u2192 --ink"
+      ]
+    },
+    {
+      "literal": "#17303322",
+      "hex": "#17303322",
+      "rgb": [
+        23,
+        48,
+        51
+      ],
+      "alpha": 0.13333333333333333,
+      "usages": [
+        ".sidebar \u2192 box-shadow"
+      ]
+    },
+    {
+      "literal": "#173e3512",
+      "hex": "#173e3512",
+      "rgb": [
+        23,
+        62,
+        53
+      ],
+      "alpha": 0.07058823529411765,
+      "usages": [
+        ".carousel-stage \u2192 box-shadow"
+      ]
+    },
+    {
+      "literal": "#19353c04",
+      "hex": "#19353c04",
+      "rgb": [
+        25,
+        53,
+        60
+      ],
+      "alpha": 0.01568627450980392,
+      "usages": [
+        ":root \u2192 --shadow"
+      ]
+    },
+    {
+      "literal": "#193e35",
+      "hex": "#193e35",
+      "rgb": [
+        25,
+        62,
+        53
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-slide-portrait img \u2192 background",
+        ".carousel-stage \u2192 background"
+      ]
+    },
+    {
+      "literal": "#1c493214",
+      "hex": "#1c493214",
+      "rgb": [
+        28,
+        73,
+        50
+      ],
+      "alpha": 0.0784313725490196,
+      "usages": [
+        ".campus-cover \u2192 box-shadow"
+      ]
+    },
+    {
+      "literal": "#204c3e",
+      "hex": "#204c3e",
+      "rgb": [
+        32,
+        76,
+        62
+      ],
+      "alpha": 1,
+      "usages": [
+        ".site-footer .brand-icon \u2192 color"
+      ]
+    },
+    {
+      "literal": "#36744f",
+      "hex": "#36744f",
+      "rgb": [
+        54,
+        116,
+        79
+      ],
+      "alpha": 1,
+      "usages": [
+        ".alert \u2192 color"
+      ]
+    },
+    {
+      "literal": "#3c8261",
+      "hex": "#3c8261",
+      "rgb": [
+        60,
+        130,
+        97
+      ],
+      "alpha": 1,
+      "usages": [
+        ".resolved \u2192 color"
+      ]
+    },
+    {
+      "literal": "#3c8d70",
+      "hex": "#3c8d70",
+      "rgb": [
+        60,
+        141,
+        112
+      ],
+      "alpha": 1,
+      "usages": [
+        ".file-icon \u2192 color"
+      ]
+    },
+    {
+      "literal": "#435f56",
+      "hex": "#435f56",
+      "rgb": [
+        67,
+        95,
+        86
+      ],
+      "alpha": 1,
+      "usages": [
+        ".home-explore \u2192 color"
+      ]
+    },
+    {
+      "literal": "#46614f",
+      "hex": "#46614f",
+      "rgb": [
+        70,
+        97,
+        79
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-photo-grid figcaption \u2192 color"
+      ]
+    },
+    {
+      "literal": "#4b6255",
+      "hex": "#4b6255",
+      "rgb": [
+        75,
+        98,
+        85
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-identity strong \u2192 color"
+      ]
+    },
+    {
+      "literal": "#539b84",
+      "hex": "#539b84",
+      "rgb": [
+        83,
+        155,
+        132
+      ],
+      "alpha": 1,
+      "usages": [
+        "progress::-moz-progress-bar \u2192 background",
+        "progress::-webkit-progress-value \u2192 background"
+      ]
+    },
+    {
+      "literal": "#5474ae",
+      "hex": "#5474ae",
+      "rgb": [
+        84,
+        116,
+        174
+      ],
+      "alpha": 1,
+      "usages": [
+        ".in_progress \u2192 color"
+      ]
+    },
+    {
+      "literal": "#5b9d84",
+      "hex": "#5b9d84",
+      "rgb": [
+        91,
+        157,
+        132
+      ],
+      "alpha": 1,
+      "usages": [
+        ".timeline article:before \u2192 background"
+      ]
+    },
+    {
+      "literal": "#5c7566",
+      "hex": "#5c7566",
+      "rgb": [
+        92,
+        117,
+        102
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-visit p \u2192 color"
+      ]
+    },
+    {
+      "literal": "#62776a",
+      "hex": "#62776a",
+      "rgb": [
+        98,
+        119,
+        106
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-facilities p \u2192 color"
+      ]
+    },
+    {
+      "literal": "#63766f",
+      "hex": "#63766f",
+      "rgb": [
+        99,
+        118,
+        111
+      ],
+      "alpha": 1,
+      "usages": [
+        ".site-nav a \u2192 color"
+      ]
+    },
+    {
+      "literal": "#647c6c",
+      "hex": "#647c6c",
+      "rgb": [
+        100,
+        124,
+        108
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-cover figcaption \u2192 color"
+      ]
+    },
+    {
+      "literal": "#65a98d",
+      "hex": "#65a98d",
+      "rgb": [
+        101,
+        169,
+        141
+      ],
+      "alpha": 1,
+      "usages": [
+        ".notification.unread \u2192 border-left"
+      ]
+    },
+    {
+      "literal": "#668179",
+      "hex": "#668179",
+      "rgb": [
+        102,
+        129,
+        121
+      ],
+      "alpha": 1,
+      "usages": [
+        ".welcome-banner p \u2192 color"
+      ]
+    },
+    {
+      "literal": "#687b81",
+      "hex": "#687b81",
+      "rgb": [
+        104,
+        123,
+        129
+      ],
+      "alpha": 1,
+      "usages": [
+        ".sidebar nav a \u2192 color"
+      ]
+    },
+    {
+      "literal": "#6a7b82",
+      "hex": "#6a7b82",
+      "rgb": [
+        106,
+        123,
+        130
+      ],
+      "alpha": 1,
+      "usages": [
+        ".top-actions a \u2192 color"
+      ]
+    },
+    {
+      "literal": "#6b7e73",
+      "hex": "#6b7e73",
+      "rgb": [
+        107,
+        126,
+        115
+      ],
+      "alpha": 1,
+      "usages": [
+        ".carousel-heading \u2192 color",
+        ".carousel-position \u2192 color"
+      ]
+    },
+    {
+      "literal": "#6b7e85",
+      "hex": "#6b7e85",
+      "rgb": [
+        107,
+        126,
+        133
+      ],
+      "alpha": 1,
+      "usages": [
+        ".stat-card>span \u2192 color"
+      ]
+    },
+    {
+      "literal": "#6e7e86",
+      "hex": "#6e7e86",
+      "rgb": [
+        110,
+        126,
+        134
+      ],
+      "alpha": 1,
+      "usages": [
+        ":root \u2192 --muted"
+      ]
+    },
+    {
+      "literal": "#708475",
+      "hex": "#708475",
+      "rgb": [
+        112,
+        132,
+        117
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-location-tag \u2192 color"
+      ]
+    },
+    {
+      "literal": "#75858c",
+      "hex": "#75858c",
+      "rgb": [
+        117,
+        133,
+        140
+      ],
+      "alpha": 1,
+      "usages": [
+        ".announcement-preview p \u2192 color"
+      ]
+    },
+    {
+      "literal": "#75858d",
+      "hex": "#75858d",
+      "rgb": [
+        117,
+        133,
+        141
+      ],
+      "alpha": 1,
+      "usages": [
+        ".empty \u2192 color"
+      ]
+    },
+    {
+      "literal": "#76a88b",
+      "hex": "#76a88b",
+      "rgb": [
+        118,
+        168,
+        139
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-marker \u2192 background"
+      ]
+    },
+    {
+      "literal": "#7b8a81",
+      "hex": "#7b8a81",
+      "rgb": [
+        123,
+        138,
+        129
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-breadcrumb \u2192 color"
+      ]
+    },
+    {
+      "literal": "#7c8a80",
+      "hex": "#7c8a80",
+      "rgb": [
+        124,
+        138,
+        128
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-source \u2192 color"
+      ]
+    },
+    {
+      "literal": "#8a9d91",
+      "hex": "#8a9d91",
+      "rgb": [
+        138,
+        157,
+        145
+      ],
+      "alpha": 1,
+      "usages": [
+        ".feature-number \u2192 color"
+      ]
+    },
+    {
+      "literal": "#94a0a5",
+      "hex": "#94a0a5",
+      "rgb": [
+        148,
+        160,
+        165
+      ],
+      "alpha": 1,
+      "usages": [
+        ".workspace \u2192 color"
+      ]
+    },
+    {
+      "literal": "#99a6aa",
+      "hex": "#99a6aa",
+      "rgb": [
+        153,
+        166,
+        170
+      ],
+      "alpha": 1,
+      "usages": [
+        "footer \u2192 color"
+      ]
+    },
+    {
+      "literal": "#9a6b17",
+      "hex": "#9a6b17",
+      "rgb": [
+        154,
+        107,
+        23
+      ],
+      "alpha": 1,
+      "usages": [
+        ".pending \u2192 color"
+      ]
+    },
+    {
+      "literal": "#a5c0af",
+      "hex": "#a5c0af",
+      "rgb": [
+        165,
+        192,
+        175
+      ],
+      "alpha": 1,
+      "usages": [
+        ".footer-about>span \u2192 color"
+      ]
+    },
+    {
+      "literal": "#a7523e",
+      "hex": "#a7523e",
+      "rgb": [
+        167,
+        82,
+        62
+      ],
+      "alpha": 1,
+      "usages": [
+        ".alert.error \u2192 color"
+      ]
+    },
+    {
+      "literal": "#a7c1b0",
+      "hex": "#a7c1b0",
+      "rgb": [
+        167,
+        193,
+        176
+      ],
+      "alpha": 1,
+      "usages": [
+        ".footer-bottom \u2192 color"
+      ]
+    },
+    {
+      "literal": "#a9c9b5",
+      "hex": "#a9c9b5",
+      "rgb": [
+        169,
+        201,
+        181
+      ],
+      "alpha": 1,
+      "usages": [
+        ".site-footer .brand-dot \u2192 color"
+      ]
+    },
+    {
+      "literal": "#ac4239",
+      "hex": "#ac4239",
+      "rgb": [
+        172,
+        66,
+        57
+      ],
+      "alpha": 1,
+      "usages": [
+        ".errorlist \u2192 color"
+      ]
+    },
+    {
+      "literal": "#bd8c3a",
+      "hex": "#bd8c3a",
+      "rgb": [
+        189,
+        140,
+        58
+      ],
+      "alpha": 1,
+      "usages": [
+        ".list-row:nth-child(3n) .file-icon \u2192 color"
+      ]
+    },
+    {
+      "literal": "#c2d5c9",
+      "hex": "#c2d5c9",
+      "rgb": [
+        194,
+        213,
+        201
+      ],
+      "alpha": 1,
+      "usages": [
+        ".footer-about p \u2192 color"
+      ]
+    },
+    {
+      "literal": "#c4d8cb",
+      "hex": "#c4d8cb",
+      "rgb": [
+        196,
+        216,
+        203
+      ],
+      "alpha": 1,
+      "usages": [
+        ".site-footer nav a \u2192 color"
+      ]
+    },
+    {
+      "literal": "#c6d4ca",
+      "hex": "#c6d4ca",
+      "rgb": [
+        198,
+        212,
+        202
+      ],
+      "alpha": 1,
+      "usages": [
+        ".carousel-dots button::after \u2192 background"
+      ]
+    },
+    {
+      "literal": "#cadbd0",
+      "hex": "#cadbd0",
+      "rgb": [
+        202,
+        219,
+        208
+      ],
+      "alpha": 1,
+      "usages": [
+        ".header-sign-in \u2192 border"
+      ]
+    },
+    {
+      "literal": "#cbe5d2",
+      "hex": "#cbe5d2",
+      "rgb": [
+        203,
+        229,
+        210
+      ],
+      "alpha": 1,
+      "usages": [
+        ".alert \u2192 border"
+      ]
+    },
+    {
+      "literal": "#cfe3d7",
+      "hex": "#cfe3d7",
+      "rgb": [
+        207,
+        227,
+        215
+      ],
+      "alpha": 1,
+      "usages": [
+        ".art-square \u2192 box-shadow"
+      ]
+    },
+    {
+      "literal": "#d3e0d9",
+      "hex": "#d3e0d9",
+      "rgb": [
+        211,
+        224,
+        217
+      ],
+      "alpha": 1,
+      "usages": [
+        ".site-footer \u2192 color"
+      ]
+    },
+    {
+      "literal": "#d5e4da",
+      "hex": "#d5e4da",
+      "rgb": [
+        213,
+        228,
+        218
+      ],
+      "alpha": 1,
+      "usages": [
+        ".footer-bottom a \u2192 color"
+      ]
+    },
+    {
+      "literal": "#d6e1e3",
+      "hex": "#d6e1e3",
+      "rgb": [
+        214,
+        225,
+        227
+      ],
+      "alpha": 1,
+      "usages": [
+        "input:not([type=checkbox]):not([type=radio]),select,textarea \u2192 border"
+      ]
+    },
+    {
+      "literal": "#d7e7dc",
+      "hex": "#d7e7dc",
+      "rgb": [
+        215,
+        231,
+        220
+      ],
+      "alpha": 1,
+      "usages": [
+        ".site-footer .brand-icon \u2192 background"
+      ]
+    },
+    {
+      "literal": "#d8e2e4",
+      "hex": "#d8e2e4",
+      "rgb": [
+        216,
+        226,
+        228
+      ],
+      "alpha": 1,
+      "usages": [
+        ".secondary \u2192 border-color"
+      ]
+    },
+    {
+      "literal": "#d9e7dc",
+      "hex": "#d9e7dc",
+      "rgb": [
+        217,
+        231,
+        220
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-visit \u2192 border"
+      ]
+    },
+    {
+      "literal": "#d9e9e0",
+      "hex": "#d9e9e0",
+      "rgb": [
+        217,
+        233,
+        224
+      ],
+      "alpha": 1,
+      "usages": [
+        ".welcome-banner \u2192 border"
+      ]
+    },
+    {
+      "literal": "#dbece4",
+      "hex": "#dbece4",
+      "rgb": [
+        219,
+        236,
+        228
+      ],
+      "alpha": 1,
+      "usages": [
+        ".timeline \u2192 border-left"
+      ]
+    },
+    {
+      "literal": "#dce8e0",
+      "hex": "#dce8e0",
+      "rgb": [
+        220,
+        232,
+        224
+      ],
+      "alpha": 1,
+      "usages": [
+        ".auth-tiles>div \u2192 border"
+      ]
+    },
+    {
+      "literal": "#dceee5",
+      "hex": "#dceee5",
+      "rgb": [
+        220,
+        238,
+        229
+      ],
+      "alpha": 1,
+      "usages": [
+        ".avatar \u2192 background"
+      ]
+    },
+    {
+      "literal": "#dfe7e1",
+      "hex": "#dfe7e1",
+      "rgb": [
+        223,
+        231,
+        225
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-facilities article \u2192 border",
+        ".campus-photo-grid figure \u2192 border",
+        ".campus-space-card \u2192 border"
+      ]
+    },
+    {
+      "literal": "#dfe8e2",
+      "hex": "#dfe8e2",
+      "rgb": [
+        223,
+        232,
+        226
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-location-tag \u2192 border-top",
+        ".campus-spaces \u2192 border-top",
+        ".home-features \u2192 border-top"
+      ]
+    },
+    {
+      "literal": "#dfe9e1",
+      "hex": "#dfe9e1",
+      "rgb": [
+        223,
+        233,
+        225
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-photo-grid .campus-photo-portrait img \u2192 background"
+      ]
+    },
+    {
+      "literal": "#dfece3",
+      "hex": "#dfece3",
+      "rgb": [
+        223,
+        236,
+        227
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-facilities .file-icon \u2192 background"
+      ]
+    },
+    {
+      "literal": "#e0e8e2",
+      "hex": "#e0e8e2",
+      "rgb": [
+        224,
+        232,
+        226
+      ],
+      "alpha": 1,
+      "usages": [
+        ".home-features .panel \u2192 border-color"
+      ]
+    },
+    {
+      "literal": "#e0eae4",
+      "hex": "#e0eae4",
+      "rgb": [
+        224,
+        234,
+        228
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-slide figcaption p \u2192 color"
+      ]
+    },
+    {
+      "literal": "#e1ece5",
+      "hex": "#e1ece5",
+      "rgb": [
+        225,
+        236,
+        229
+      ],
+      "alpha": 1,
+      "usages": [
+        ".site-footer h2 \u2192 color"
+      ]
+    },
+    {
+      "literal": "#e1f1e9",
+      "hex": "#e1f1e9",
+      "rgb": [
+        225,
+        241,
+        233
+      ],
+      "alpha": 1,
+      "usages": [
+        ".badge \u2192 background"
+      ]
+    },
+    {
+      "literal": "#e2e8e2",
+      "hex": "#e2e8e2",
+      "rgb": [
+        226,
+        232,
+        226
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-identity img \u2192 border"
+      ]
+    },
+    {
+      "literal": "#e2e9e4",
+      "hex": "#e2e9e4",
+      "rgb": [
+        226,
+        233,
+        228
+      ],
+      "alpha": 1,
+      "usages": [
+        ".site-header \u2192 border-bottom"
+      ]
+    },
+    {
+      "literal": "#e3eee7",
+      "hex": "#e3eee7",
+      "rgb": [
+        227,
+        238,
+        231
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-slide figcaption>span \u2192 color"
+      ]
+    },
+    {
+      "literal": "#e5ebee",
+      "hex": "#e5ebee",
+      "rgb": [
+        229,
+        235,
+        238
+      ],
+      "alpha": 1,
+      "usages": [
+        ":root \u2192 --line"
+      ]
+    },
+    {
+      "literal": "#e5eee7",
+      "hex": "#e5eee7",
+      "rgb": [
+        229,
+        238,
+        231
+      ],
+      "alpha": 1,
+      "usages": [
+        ".carousel-dots button:hover \u2192 background"
+      ]
+    },
+    {
+      "literal": "#e5eeea",
+      "hex": "#e5eeea",
+      "rgb": [
+        229,
+        238,
+        234
+      ],
+      "alpha": 1,
+      "usages": [
+        ".tag \u2192 border"
+      ]
+    },
+    {
+      "literal": "#e5efe7",
+      "hex": "#e5efe7",
+      "rgb": [
+        229,
+        239,
+        231
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-marker \u2192 box-shadow"
+      ]
+    },
+    {
+      "literal": "#e5f0e9",
+      "hex": "#e5f0e9",
+      "rgb": [
+        229,
+        240,
+        233
+      ],
+      "alpha": 1,
+      "usages": [
+        ".auth-tiles>div \u2192 background"
+      ]
+    },
+    {
+      "literal": "#e6f0e8",
+      "hex": "#e6f0e8",
+      "rgb": [
+        230,
+        240,
+        232
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-visit \u2192 background"
+      ]
+    },
+    {
+      "literal": "#e7af49",
+      "hex": "#e7af49",
+      "rgb": [
+        231,
+        175,
+        73
+      ],
+      "alpha": 1,
+      "usages": [
+        "button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible \u2192 outline"
+      ]
+    },
+    {
+      "literal": "#e7f2ec",
+      "hex": "#e7f2ec",
+      "rgb": [
+        231,
+        242,
+        236
+      ],
+      "alpha": 1,
+      "usages": [
+        ".welcome-banner \u2192 background"
+      ]
+    },
+    {
+      "literal": "#e7f4ec",
+      "hex": "#e7f4ec",
+      "rgb": [
+        231,
+        244,
+        236
+      ],
+      "alpha": 1,
+      "usages": [
+        ".resolved \u2192 background"
+      ]
+    },
+    {
+      "literal": "#e8f4eb",
+      "hex": "#e8f4eb",
+      "rgb": [
+        232,
+        244,
+        235
+      ],
+      "alpha": 1,
+      "usages": [
+        ".alert \u2192 background"
+      ]
+    },
+    {
+      "literal": "#e8f4ef",
+      "hex": "#e8f4ef",
+      "rgb": [
+        232,
+        244,
+        239
+      ],
+      "alpha": 1,
+      "usages": [
+        ":root \u2192 --pale"
+      ]
+    },
+    {
+      "literal": "#e9b55c",
+      "hex": "#e9b55c",
+      "rgb": [
+        233,
+        181,
+        92
+      ],
+      "alpha": 1,
+      "usages": [
+        ".art-circle \u2192 color"
+      ]
+    },
+    {
+      "literal": "#eaf0ff",
+      "hex": "#eaf0ff",
+      "rgb": [
+        234,
+        240,
+        255
+      ],
+      "alpha": 1,
+      "usages": [
+        ".in_progress \u2192 background"
+      ]
+    },
+    {
+      "literal": "#edf3ee",
+      "hex": "#edf3ee",
+      "rgb": [
+        237,
+        243,
+        238
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-facilities article \u2192 background"
+      ]
+    },
+    {
+      "literal": "#edf3ef",
+      "hex": "#edf3ef",
+      "rgb": [
+        237,
+        243,
+        239
+      ],
+      "alpha": 1,
+      "usages": [
+        "progress \u2192 background",
+        "progress::-webkit-progress-bar \u2192 background"
+      ]
+    },
+    {
+      "literal": "#eef5f1",
+      "hex": "#eef5f1",
+      "rgb": [
+        238,
+        245,
+        241
+      ],
+      "alpha": 1,
+      "usages": [
+        ".file-icon \u2192 background"
+      ]
+    },
+    {
+      "literal": "#efd5ce",
+      "hex": "#efd5ce",
+      "rgb": [
+        239,
+        213,
+        206
+      ],
+      "alpha": 1,
+      "usages": [
+        ".alert.error \u2192 border-color"
+      ]
+    },
+    {
+      "literal": "#f0f3f4",
+      "hex": "#f0f3f4",
+      "rgb": [
+        240,
+        243,
+        244
+      ],
+      "alpha": 1,
+      "usages": [
+        ".announcement-preview \u2192 border-top",
+        ".list-row \u2192 border-top",
+        "td \u2192 border-bottom"
+      ]
+    },
+    {
+      "literal": "#f0f5f3",
+      "hex": "#f0f5f3",
+      "rgb": [
+        240,
+        245,
+        243
+      ],
+      "alpha": 1,
+      "usages": [
+        ".tag \u2192 background"
+      ]
+    },
+    {
+      "literal": "#f0f7f3",
+      "hex": "#f0f7f3",
+      "rgb": [
+        240,
+        247,
+        243
+      ],
+      "alpha": 1,
+      "usages": [
+        ".answer-box \u2192 background"
+      ]
+    },
+    {
+      "literal": "#f0f8f3",
+      "hex": "#f0f8f3",
+      "rgb": [
+        240,
+        248,
+        243
+      ],
+      "alpha": 1,
+      "usages": [
+        ".notification.unread \u2192 background"
+      ]
+    },
+    {
+      "literal": "#f4f6f6",
+      "hex": "#f4f6f6",
+      "rgb": [
+        244,
+        246,
+        246
+      ],
+      "alpha": 1,
+      "usages": [
+        "code \u2192 background"
+      ]
+    },
+    {
+      "literal": "#f5f7fa",
+      "hex": "#f5f7fa",
+      "rgb": [
+        245,
+        247,
+        250
+      ],
+      "alpha": 1,
+      "usages": [
+        ":root \u2192 --bg"
+      ]
+    },
+    {
+      "literal": "#f7f9f7",
+      "hex": "#f7f9f7",
+      "rgb": [
+        247,
+        249,
+        247
+      ],
+      "alpha": 1,
+      "usages": [
+        ".public-site \u2192 background"
+      ]
+    },
+    {
+      "literal": "#fafcfb",
+      "hex": "#fafcfb",
+      "rgb": [
+        250,
+        252,
+        251
+      ],
+      "alpha": 1,
+      "usages": [
+        ".status-grid>div \u2192 background"
+      ]
+    },
+    {
+      "literal": "#fff",
+      "hex": "#ffffff",
+      "rgb": [
+        255,
+        255,
+        255
+      ],
+      "alpha": 1,
+      "usages": [
+        ".campus-cover \u2192 background",
+        ".campus-cover \u2192 border",
+        ".campus-identity img \u2192 background",
+        ".campus-photo-grid figure \u2192 background",
+        ".campus-slide figcaption \u2192 color",
+        ".campus-space-card \u2192 background",
+        ".carousel-arrow:hover \u2192 border-color",
+        ".home-features .panel \u2192 background",
+        ".light \u2192 background",
+        ".light \u2192 border-color",
+        ".role-switch a[aria-current=page] \u2192 color",
+        ".site-footer .brand \u2192 color",
+        ".site-footer a:hover \u2192 color",
+        ".skip-link \u2192 color",
+        ":root \u2192 --white",
+        "input:not([type=checkbox]):not([type=radio]),select,textarea \u2192 background"
+      ]
+    },
+    {
+      "literal": "#fff0ed",
+      "hex": "#fff0ed",
+      "rgb": [
+        255,
+        240,
+        237
+      ],
+      "alpha": 1,
+      "usages": [
+        ".errorlist \u2192 background"
+      ]
+    },
+    {
+      "literal": "#fff1ed",
+      "hex": "#fff1ed",
+      "rgb": [
+        255,
+        241,
+        237
+      ],
+      "alpha": 1,
+      "usages": [
+        ".alert.error \u2192 background"
+      ]
+    },
+    {
+      "literal": "#fff3dc",
+      "hex": "#fff3dc",
+      "rgb": [
+        255,
+        243,
+        220
+      ],
+      "alpha": 1,
+      "usages": [
+        ".pending \u2192 background"
+      ]
+    },
+    {
+      "literal": "#fff5e6",
+      "hex": "#fff5e6",
+      "rgb": [
+        255,
+        245,
+        230
+      ],
+      "alpha": 1,
+      "usages": [
+        ".list-row:nth-child(3n) .file-icon \u2192 background"
+      ]
+    },
+    {
+      "literal": "#ffffff20",
+      "hex": "#ffffff20",
+      "rgb": [
+        255,
+        255,
+        255
+      ],
+      "alpha": 0.12549019607843137,
+      "usages": [
+        ".footer-bottom \u2192 border-top"
+      ]
+    },
+    {
+      "literal": "#ffffff80",
+      "hex": "#ffffff80",
+      "rgb": [
+        255,
+        255,
+        255
+      ],
+      "alpha": 0.5019607843137255,
+      "usages": [
+        ".carousel-arrow \u2192 border"
+      ]
+    },
+    {
+      "literal": "#ffffffc9",
+      "hex": "#ffffffc9",
+      "rgb": [
+        255,
+        255,
+        255
+      ],
+      "alpha": 0.788235294117647,
+      "usages": [
+        ".topbar \u2192 background"
+      ]
+    },
+    {
+      "literal": "#fffffff2",
+      "hex": "#fffffff2",
+      "rgb": [
+        255,
+        255,
+        255
+      ],
+      "alpha": 0.9490196078431372,
+      "usages": [
+        ".carousel-arrow \u2192 background"
+      ]
+    },
+    {
+      "literal": "#fffffff5",
+      "hex": "#fffffff5",
+      "rgb": [
+        255,
+        255,
+        255
+      ],
+      "alpha": 0.9607843137254902,
+      "usages": [
+        ".site-header \u2192 background"
+      ]
+    },
+    {
+      "literal": "transparent",
+      "hex": "#00000000",
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alpha": 0.0,
+      "usages": [
+        ".campus-slide figcaption \u2192 background",
+        ".carousel-dots button \u2192 background"
+      ]
+    },
+    {
+      "literal": "white",
+      "hex": "#ffffff",
+      "rgb": [
+        255,
+        255,
+        255
+      ],
+      "alpha": 1,
+      "usages": [
+        ".art-small \u2192 color",
+        ".art-square \u2192 background",
+        ".brand-icon \u2192 color",
+        ".panel \u2192 background",
+        ".sidebar \u2192 background",
+        ".stat-card \u2192 background",
+        ".timeline article:before \u2192 border",
+        "button,.button \u2192 color",
+        "button:hover,.button:hover \u2192 color"
+      ]
+    }
+  ]
+}

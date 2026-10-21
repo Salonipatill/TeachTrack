@@ -1,0 +1,77 @@
+{% extends 'public_base.html' %}
+{% load static %}
+{% block title %}Welcome{% endblock %}
+{% block public_content %}
+    <section class="home-hero" aria-labelledby="home-heading">
+      <div class="home-intro">
+        <div class="eyebrow"><span class="campus-marker" aria-hidden="true"></span> SRI AUROBINDO INSTITUTE OF TECHNOLOGY · INDORE</div>
+        <h1 id="home-heading">Your campus.<br>Your learning.<br><span class="accent">All connected.</span></h1>
+        <p class="muted">A little less searching. A lot more learning. Bring your resources, quizzes and campus conversations together with TeachTrack.</p>
+        <div class="head-actions">
+          {% if user.is_authenticated %}
+          <a class="button" href="{% url 'dashboard' %}">Go to your workspace <span aria-hidden="true">→</span></a>
+          {% else %}
+          <a class="button" href="{% url 'login' %}">Sign in to TeachTrack <span aria-hidden="true">→</span></a>
+          {% endif %}
+          <a class="home-explore" href="#features">Explore the platform <span aria-hidden="true">↘</span></a>
+        </div>
+      </div>
+
+      <section class="campus-carousel" id="campus-gallery" aria-label="Campus photo gallery" aria-roledescription="carousel" data-carousel>
+        <div class="carousel-heading"><span class="eyebrow">LIFE AT AUROBINDO</span><a href="{% url 'campus_life' %}">Explore campus life <span aria-hidden="true">↗</span></a></div>
+        <div class="carousel-stage" id="campus-slides">
+          <figure class="campus-slide" id="campus-slide-1" aria-roledescription="slide" aria-label="1 of 7" data-slide>
+            <img src="{% static 'img/Slider-img4.jpg' %}" alt="Students studying together on the campus lawn" width="1600" height="1066" fetchpriority="high">
+            <figcaption><span>CAMPUS MOMENTS / 01</span><h2>Learning, together.</h2><p>Shared ideas. Stronger understanding.</p></figcaption>
+          </figure>
+          <figure class="campus-slide" id="campus-slide-2" aria-roledescription="slide" aria-label="2 of 7" data-slide hidden>
+            <img src="{% static 'img/Slider-img1.jpg' %}" alt="Students playing guitar and spending time together in a campus common area" width="1600" height="1066" loading="lazy">
+            <figcaption><span>CAMPUS MOMENTS / 02</span><h2>Find your people.</h2><p>Make room for creativity and connection.</p></figcaption>
+          </figure>
+          <figure class="campus-slide campus-slide-portrait" id="campus-slide-3" aria-roledescription="slide" aria-label="3 of 7" data-slide hidden>
+            <img src="{% static 'img/Slider-img2.jpg' %}" alt="Students taking part in a panel discussion on campus" width="864" height="1152" loading="lazy">
+            <figcaption><span>CAMPUS MOMENTS / 03</span><h2>Find your voice.</h2><p>Conversations that bring ideas to life.</p></figcaption>
+          </figure>
+          <figure class="campus-slide" id="campus-slide-4" aria-roledescription="slide" aria-label="4 of 7" data-slide hidden>
+            <img src="{% static 'img/Slider-img3.jpg' %}" alt="Students and faculty gathered for a campus group photograph" width="1600" height="1200" loading="lazy">
+            <figcaption><span>CAMPUS MOMENTS / 04</span><h2>Celebrate the community.</h2><p>Students and faculty coming together.</p></figcaption>
+          </figure>
+          <figure class="campus-slide" id="campus-slide-5" aria-roledescription="slide" aria-label="5 of 7" data-slide hidden>
+            <img src="{% static 'img/Slider-img5.jpg' %}" alt="Students and faculty gathered in the campus auditorium" width="1080" height="890" loading="lazy">
+            <figcaption><span>CAMPUS MOMENTS / 05</span><h2>More than a classroom.</h2><p>A place to learn, connect and grow.</p></figcaption>
+          </figure>
+          <figure class="campus-slide" id="campus-slide-6" aria-roledescription="slide" aria-label="6 of 7" data-slide hidden>
+            <img src="{% static 'img/sait-campus-extra-1.jpg' %}" alt="Sri Aurobindo Institute of Technology building overlooking the campus lawn" width="559" height="357" loading="lazy">
+            <figcaption><span>CAMPUS MOMENTS / 06</span><h2>A place to begin.</h2><p>Explore the SAIT campus.</p></figcaption>
+          </figure>
+          <figure class="campus-slide" id="campus-slide-7" aria-roledescription="slide" aria-label="7 of 7" data-slide hidden>
+            <img src="{% static 'img/sait-campus-extra-2.jpg' %}" alt="Students working at desktop computers in a campus computer lab" width="447" height="447" loading="lazy">
+            <figcaption><span>CAMPUS MOMENTS / 07</span><h2>Learn by doing.</h2><p>New skills, built through practice.</p></figcaption>
+          </figure>
+          <button class="carousel-arrow carousel-prev" type="button" aria-label="Previous campus photo" aria-controls="campus-slides" data-carousel-prev><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+          <button class="carousel-arrow carousel-next" type="button" aria-label="Next campus photo" aria-controls="campus-slides" data-carousel-next><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button>
+        </div>
+        <div class="carousel-controls">
+          <div class="carousel-dots" role="group" aria-label="Choose a campus photo">
+            <button type="button" aria-label="Show photo 1: Learning together" aria-controls="campus-slide-1" aria-current="true" data-slide-to="0"></button>
+            <button type="button" aria-label="Show photo 2: Find your people" aria-controls="campus-slide-2" data-slide-to="1"></button>
+            <button type="button" aria-label="Show photo 3: Find your voice" aria-controls="campus-slide-3" data-slide-to="2"></button>
+            <button type="button" aria-label="Show photo 4: Celebrate the community" aria-controls="campus-slide-4" data-slide-to="3"></button>
+            <button type="button" aria-label="Show photo 5: More than a classroom" aria-controls="campus-slide-5" data-slide-to="4"></button>
+            <button type="button" aria-label="Show photo 6: A place to begin" aria-controls="campus-slide-6" data-slide-to="5"></button>
+            <button type="button" aria-label="Show photo 7: Learn by doing" aria-controls="campus-slide-7" data-slide-to="6"></button>
+          </div>
+          <span class="carousel-position" aria-live="polite" aria-atomic="true" data-carousel-status>Photo 1 of 7</span>
+        </div>
+      </section>
+    </section>
+
+    <section class="home-features" id="features" aria-labelledby="features-heading">
+      <div class="home-section-heading"><div><div class="eyebrow">YOUR EVERYDAY, SIMPLIFIED</div><h2 id="features-heading">Everything you need to move forward.</h2></div><p class="muted">Less switching between tools.<br>More time for what matters.</p></div>
+      <div class="resource-grid">
+        <article class="panel"><span class="file-icon" aria-hidden="true">▤</span><span class="feature-number">01</span><h3>Knowledge, shared.</h3><p class="muted">Notes, previous year papers and assignments in one searchable resource library.</p></article>
+        <article class="panel"><span class="file-icon" aria-hidden="true">▦</span><span class="feature-number">02</span><h3>Progress you can see.</h3><p class="muted">Quizzes, results and faculty feedback help turn practice into understanding.</p></article>
+        <article class="panel"><span class="file-icon" aria-hidden="true">◎</span><span class="feature-number">03</span><h3>Every voice matters.</h3><p class="muted">Ask doubts, share concerns and follow every campus conversation through.</p></article>
+      </div>
+    </section>
+{% endblock %}

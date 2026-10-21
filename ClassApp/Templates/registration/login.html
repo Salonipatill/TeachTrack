@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}{% if login_role %}{{ login_role_label }} sign in{% else %}Sign in{% endif %}{% endblock %}
+{% block content %}
+<div class="auth-layout">
+  <section class="auth-intro">
+    <div class="eyebrow">ONE CAMPUS. EVERY POSSIBILITY.</div>
+    <h1>A better place<br>to learn together.</h1>
+    <p>Resources, quizzes, feedback and conversations.<br>Your academic day, in one thoughtful workspace.</p>
+    <div class="auth-tiles"><div>▤<b>Share knowledge</b><small>Notes, PYQs &amp; assignments</small></div><div>◈<b>Stay connected</b><small>Updates that matter to you</small></div></div>
+  </section>
+  <section class="panel auth-card">
+    <div class="eyebrow">WELCOME BACK</div>
+    <h2>{% if login_role %}{{ login_role_label }} sign in{% else %}Sign in to TeachTrack{% endif %}</h2>
+    <p class="muted">{% if login_role %}Use your {{ login_role }} username and password.{% else %}Use your campus username and password.{% endif %}</p>
+    <nav class="role-switch" aria-label="Sign in role">
+      <a href="{% url 'student_login' %}"{% if login_role == 'student' %} aria-current="page"{% endif %}>Student</a>
+      <a href="{% url 'faculty_login' %}"{% if login_role == 'faculty' %} aria-current="page"{% endif %}>Faculty</a>
+      <a href="{% url 'director_login' %}"{% if login_role == 'director' %} aria-current="page"{% endif %}>Director</a>
+    </nav>
+    <form method="post">{% csrf_token %}{{ form.as_p }}<button class="full">Sign in →</button></form>
+    <p><a href="{% url 'password_reset' %}">Forgot your password?</a></p>
+    <hr>
+    {% if login_role == 'faculty' %}
+    <p class="muted">Need a faculty account? Ask your director to create one in Manage accounts.</p>
+    {% elif login_role == 'director' %}
+    <p class="muted">New director accounts are created by an existing director in Manage accounts.</p>
+    {% else %}
+    <p class="muted">New student? <a href="{% url 'register' %}">Create a student account</a></p>
+    <small class="muted">Faculty and director accounts are created by your director.</small>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

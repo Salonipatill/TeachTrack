@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include 'header1.html' %}
+    <meta charset="UTF-8">
+    <title>Add Announcement</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #eaf2fb;
+            color: #2c3e50;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            padding-top: 120px;
+            padding-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Header box */
+        .header-box {
+            background-color: #337ee0; /* Blue */
+            color: #fff;
+            padding: 20px 30px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .header-box h2 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 600;
+        }
+
+        .header-box p {
+            margin: 5px 0 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Form card */
+        .form-card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 25px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .form-label.required::after {
+            content: " *";
+            color: red;
+        }
+
+        .form-text {
+            font-size: 13px;
+            color: #777777;
+        }
+
+        textarea {
+            min-height: 120px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .header-box, .form-card {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .header-box h2 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="content-wrapper">
+
+    <!-- Header Box -->
+    <div class="header-box">
+        <h2>Add New Announcement</h2>
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Title -->
+            <div class="mb-3">
+                <label class="form-label required">Announcement Title</label>
+                {{ form.title }}
+            </div>
+
+            <!-- Content -->
+            <div class="mb-3">
+                <label class="form-label required">Announcement Content</label>
+                {{ form.content }}
+            </div>
+
+            <!-- Document Upload -->
+            <div class="mb-3">
+                <label class="form-label">Attach Document</label>
+                {{ form.document }}
+            </div>
+
+            <!-- Buttons -->
+            <div class="btn-group">
+                <button type="submit" class="btn btn-primary px-4">Post Announcement</button>
+                <a href="{% url 'faculty_dashboard' %}" class="btn btn-outline-secondary px-4">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+{% include 'footer.html' %}
+</body>
+</html>

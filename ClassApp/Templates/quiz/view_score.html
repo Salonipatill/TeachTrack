@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% include 'header1.html' %}
+    <title>View Scores</title>
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h2>Quiz Scores</h2>
+    <table>
+        <tr>
+            <th>Student</th>
+            <th>Quiz</th>
+            <th>Question</th>
+            <th>Selected Options</th>
+            <th>Score</th>
+        </tr>
+        {% for d in details %}
+        <tr>
+            <td>{{ d.student_name }}</td>
+            <td>{{ d.quiz.title }}</td>
+            <td>{{ d.question.text }}</td>
+            <td>
+                {% for opt in d.selected_options.all %}
+                    {{ opt.text }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </td>
+            <td>{{ d.score }}</td>
+             </tr>
+        {% endfor %}
+    </table>
+    {% include 'footer.html' %}
+</body>
+</html>

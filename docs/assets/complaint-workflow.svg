@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 745 205" role="img" aria-label="Complaint lifecycle">
+<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#126c64"/></marker></defs>
+<rect width="745" height="205" rx="16" fill="#f7f9f7"/>
+<text x="25" y="34" font-family="Arial,sans-serif" font-size="18" font-weight="700" fill="#172d35">Complaint lifecycle</text>
+<path d="M220,125.0 L275,125.0" stroke="#126c64" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M470,125.0 L525,125.0" stroke="#126c64" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="25" y="80" width="195" height="90" rx="9" fill="white" stroke="#cbded2"/>
+<text x="122.5" y="104" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Pending</text>
+<text x="122.5" y="123" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Student submits a concern</text>
+<text x="122.5" y="142" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Initial timeline event</text>
+<rect x="275" y="80" width="195" height="90" rx="9" fill="white" stroke="#cbded2"/>
+<text x="372.5" y="104" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">In progress</text>
+<text x="372.5" y="123" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">First assigned faculty reply</text>
+<text x="372.5" y="142" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Timeline + notifications</text>
+<rect x="525" y="80" width="195" height="90" rx="9" fill="white" stroke="#cbded2"/>
+<text x="622.5" y="104" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Resolved</text>
+<text x="622.5" y="123" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Director selects status</text>
+<text x="622.5" y="142" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Timeline + notifications</text>
+</svg>

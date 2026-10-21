@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 745 405" role="img" aria-label="Core relationships — full field dictionary follows">
+<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#126c64"/></marker></defs>
+<rect width="745" height="405" rx="16" fill="#f7f9f7"/>
+<text x="25" y="34" font-family="Arial,sans-serif" font-size="18" font-weight="700" fill="#172d35">Core relationships — full field dictionary follows</text>
+<path d="M275,97.5 L230,212.5" stroke="#126c64" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M367.5,130 L367.5,180" stroke="#126c64" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M460,97.5 L515,212.5" stroke="#126c64" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M367.5,245 L367.5,305" stroke="#126c64" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M127.5,245 L127.5,305" stroke="#126c64" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M367.5,130 L617.5,305" stroke="#126c64" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="275" y="65" width="185" height="65" rx="9" fill="white" stroke="#cbded2"/>
+<text x="367.5" y="89" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Django User + Profile</text>
+<text x="367.5" y="108" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Role / account identity</text>
+<rect x="25" y="180" width="205" height="65" rx="9" fill="white" stroke="#cbded2"/>
+<text x="127.5" y="204" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Student / Faculty / Director</text>
+<text x="127.5" y="223" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Legacy contact / academic data</text>
+<rect x="275" y="180" width="185" height="65" rx="9" fill="white" stroke="#cbded2"/>
+<text x="367.5" y="204" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Quiz → Question → Option</text>
+<text x="367.5" y="223" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Creator and answer structure</text>
+<rect x="515" y="180" width="205" height="65" rx="9" fill="white" stroke="#cbded2"/>
+<text x="617.5" y="204" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Resource / Download</text>
+<text x="617.5" y="223" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Uploader and reader</text>
+<rect x="275" y="305" width="185" height="65" rx="9" fill="white" stroke="#cbded2"/>
+<text x="367.5" y="329" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Submission</text>
+<text x="367.5" y="348" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Answer / Detail + M2M options</text>
+<rect x="25" y="305" width="205" height="65" rx="9" fill="white" stroke="#cbded2"/>
+<text x="127.5" y="329" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Complaint → ComplaintEvent</text>
+<text x="127.5" y="348" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Student / Teacher wrappers</text>
+<rect x="515" y="305" width="205" height="65" rx="9" fill="white" stroke="#cbded2"/>
+<text x="617.5" y="329" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Doubt / Rating / Notification</text>
+<text x="617.5" y="348" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Assignment and ownership</text>
+</svg>
