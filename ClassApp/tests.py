@@ -119,6 +119,34 @@ class WorkspaceTests(TestCase):
             self.assertEqual(response.status_code,302)
             self.assertEqual(len(mail.outbox),1)
             self.assertIn('/accounts/password/reset/',mail.outbox[0].body)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_password_reset_link_for_each_role_is_single_use(self):
+        import re
+        for role in ['student', 'faculty', 'director']:
+            with self.subTest(role=role):
+                self.client.logout()
+                user = self.users[role]
+                response = self.client.post(reverse(role + '_forgot_password'), {'email': user.email}, secure=True)
+                self.assertEqual(response.status_code, 302)
+                message = mail.outbox[-1]
+                self.assertEqual(message.to, [user.email])
+                link = re.search(r'https://testserver(/accounts/password/reset/[^\s]+)', message.body).group(1)
+                response = self.client.get(link, secure=True)
+                self.assertEqual(response.status_code, 302)
+                new_password = 'NewRolePassword#529'
+                response = self.client.post(response.url, {'new_password1': new_password, 'new_password2': new_password}, secure=True)
+                self.assertRedirects(response, reverse('password_reset_complete'), fetch_redirect_response=False)
+                user.refresh_from_db()
+                self.assertTrue(user.check_password(new_password))
+                self.assertFalse(user.check_password('TestingPassword#57'))
+                self.assertContains(self.client.get(link, secure=True), 'invalid or has expired')
+
+    def test_email_configuration_check_reports_missing_credentials(self):
+        with override_settings(EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend',
+                               EMAIL_HOST='', EMAIL_HOST_USER='', EMAIL_HOST_PASSWORD=''):
+            with self.assertRaisesMessage(CommandError, 'Missing settings:'):
+                call_command('check_email')
     def test_resource_upload_search_and_notification(self):
         self.login_as('faculty')
         response=self.client.post(reverse('resource_create'),{'title':'Normalization','subject':'DBMS','category':'notes','description':'Normal forms','file':SimpleUploadedFile('notes.txt',b'Database notes')})
