@@ -49,8 +49,8 @@ if DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
         'ssl_verify_cert': True,
         'ssl_verify_identity': True,
     })
-if not DEBUG and (DATABASES['default']['ENGINE'] not in {'django.db.backends.postgresql', 'mysql.connector.django'} or not os.getenv('GS_BUCKET_NAME')):
-    raise ImproperlyConfigured('Production requires DATABASE_URL (PostgreSQL or MySQL) and GS_BUCKET_NAME (private media).')
+if not DEBUG and DATABASES['default']['ENGINE'] not in {'django.db.backends.postgresql', 'mysql.connector.django'}:
+    raise ImproperlyConfigured('Production requires DATABASE_URL (PostgreSQL or MySQL).')
 AUTH_PASSWORD_VALIDATORS = [
  {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
  {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 10}},
@@ -66,6 +66,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_ROOT = BASE_DIR / 'media'
 STORAGES = {'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
             'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'}}
+UPLOADS_ENABLED = DEBUG or bool(os.getenv('GS_BUCKET_NAME'))
+if not UPLOADS_ENABLED:
+    STORAGES['default'] = {'BACKEND': 'ClassApp.storage.DisabledUploadStorage'}
 if os.getenv('GS_BUCKET_NAME'):
     STORAGES['default'] = {'BACKEND': 'storages.backends.gcloud.GoogleCloudStorage',
                           'OPTIONS': {'bucket_name': os.environ['GS_BUCKET_NAME'], 'default_acl': None, 'querystring_auth': True}}
