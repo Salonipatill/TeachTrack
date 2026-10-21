@@ -75,6 +75,73 @@ class AccountForm(StudentRegistrationForm):
             self.fields['department'].label='Department'
             for name in ['enrollment','year','semester','section']:
                 self.fields.pop(name)
+class ProfileForm(forms.ModelForm):
+    first_name = forms.CharField(label='Full name', max_length=100)
+    email = forms.EmailField()
+    department = forms.CharField(label='Department', max_length=50)
+    phone = forms.CharField(label='Phone number', max_length=15, required=False)
+    enrollment = forms.CharField(max_length=50, required=False)
+    year = forms.CharField(max_length=20, required=False)
+    semester = forms.CharField(max_length=20, required=False)
+    section = forms.CharField(max_length=5, required=False)
+
+    class Meta:
+        model = get_user_model()
+        fields = ['username', 'first_name', 'email']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        profile = self.instance.profile
+        role = profile.role
+        self.initial.update(department=profile.department, enrollment=profile.enrollment)
+        relation = {'student': 'legacy_student', 'faculty': 'legacy_faculty', 'director': 'legacy_director'}[role]
+        item = getattr(self.instance, relation, None)
+        if item:
+            self.initial['phone'] = getattr(item, {'student': 'sphone', 'faculty': 'fphone', 'director': 'dphone'}[role])
+        if role == 'student':
+            self.fields['phone'].max_length = 10
+            if item:
+                self.initial.update(year=item.year, semester=item.sem, section=item.section)
+        else:
+            for name in ['enrollment', 'year', 'semester', 'section']:
+                self.fields.pop(name)
+
+    def clean_phone(self):
+        phone = self.cleaned_data['phone']
+        if self.instance.profile.role == 'student' and len(phone) > 10:
+            raise forms.ValidationError('Use at most 10 characters.')
+        return phone
+
+    def clean_email(self):
+        email = self.cleaned_data['email'].lower()
+        if get_user_model().objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('An account with this email already exists.')
+        return email
+
+    def save(self):
+        user = super().save()
+        profile = user.profile
+        profile.department = self.cleaned_data['department']
+        if profile.role == 'student':
+            profile.enrollment = self.cleaned_data['enrollment']
+        profile.save()
+        item = ensure_legacy(user, profile.role)
+        data = self.cleaned_data
+        if profile.role == 'student':
+            item.sname, item.semail, item.unm = user.first_name, user.email, user.username[:50]
+            item.sphone, item.sen, item.course = data['phone'], data['enrollment'], data['department']
+            item.year, item.sem, item.section = data['year'], data['semester'], data['section']
+        elif profile.role == 'faculty':
+            item.fname, item.femail, item.fphone = user.first_name, user.email, data['phone']
+        else:
+            item.dname, item.demail, item.dphone = user.first_name, user.email, data['phone']
+        item.save()
+        from .models import AuthenticatedStudent, Teacher
+        AuthenticatedStudent.objects.filter(user=user).update(name=user.first_name)
+        Teacher.objects.filter(user=user).update(name=user.first_name)
+        return user
+
+
 class ResourceForm(forms.ModelForm):
     class Meta:
         model=Resource

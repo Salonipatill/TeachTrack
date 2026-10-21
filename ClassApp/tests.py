@@ -281,6 +281,55 @@ class WorkspaceTests(TestCase):
         u=get_user_model().objects.get(username='newfaculty');self.assertEqual(u.profile.role,'faculty')
         self.client.post(reverse('account_toggle',args=[u.pk]));u.refresh_from_db();self.assertFalse(u.is_active)
         self.client.logout();self.assertFalse(self.client.login(username='newfaculty',password='UniqueStrongPassword#529'))
+
+    def test_profile_edit_for_all_roles(self):
+        for role in ['student', 'faculty', 'director']:
+            with self.subTest(role=role):
+                self.login_as(role)
+                page = self.client.get(reverse('profile_edit'))
+                self.assertEqual(page.status_code, 200)
+                self.assertContains(page, 'Save changes')
+                payload = {'username': role + '_corrected', 'first_name': 'Corrected Name',
+                           'email': role + '-corrected@example.test', 'department': 'Physics',
+                           'phone': '9876543210', 'enrollment': 'ST123', 'year': '2',
+                           'semester': '4', 'section': 'B', 'role': 'director',
+                           'is_superuser': 'True', 'user_id': self.faculty.pk}
+                response = self.client.post(reverse('profile_edit'), payload)
+                self.assertRedirects(response, reverse('profile_edit'))
+                user = get_user_model().objects.get(pk=self.users[role].pk)
+                self.assertEqual(user.first_name, 'Corrected Name')
+                self.assertEqual(user.profile.role, role)
+                self.assertFalse(user.is_superuser)
+                self.assertEqual(user.profile.department, 'Physics')
+                self.assertTrue(user.check_password('TestingPassword#57'))
+                if role == 'student':
+                    item = Student.objects.get(user=user)
+                    self.assertEqual((item.sname, item.sen, item.sem), ('Corrected Name', 'ST123', '4'))
+                    self.assertEqual(AuthenticatedStudent.objects.get(user=user).name, 'Corrected Name')
+                elif role == 'faculty':
+                    self.assertEqual(Faculty.objects.get(user=user).fname, 'Corrected Name')
+                    self.assertEqual(Teacher.objects.get(user=user).name, 'Corrected Name')
+                else:
+                    self.assertEqual(user.legacy_director.dname, 'Corrected Name')
+                self.assertContains(self.client.get(reverse('dashboard')), 'Corrected Name')
+
+    def test_profile_edit_rejects_duplicate_email_and_username(self):
+        self.login_as('student')
+        response = self.client.post(reverse('profile_edit'), {
+            'username': self.faculty.username, 'first_name': 'Changed',
+            'email': self.faculty.email, 'department': 'Physics', 'phone': '1234567890123'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['form'].errors.get('username'))
+        self.assertTrue(response.context['form'].errors.get('email'))
+        self.assertTrue(response.context['form'].errors.get('phone'))
+        self.student.refresh_from_db()
+        self.assertEqual(self.student.first_name, 'Student')
+
+    def test_profile_edit_requires_login_and_csrf(self):
+        self.assertEqual(self.client.get(reverse('profile_edit')).status_code, 302)
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.director)
+        self.assertEqual(client.post(reverse('profile_edit'), {}).status_code, 403)
     def test_staff_creation_forms_exclude_student_details(self):
         self.login_as('director')
         for role in ['faculty','director']:

@@ -1,4 +1,5 @@
 import csv
+from .forms import ProfileForm
 import hashlib
 from datetime import timedelta
 from pathlib import Path
@@ -397,6 +398,17 @@ def feedback(request):
     if role=='student':comments=comments.filter(student=request.user)
     elif role=='faculty':comments=comments.filter(faculty__user=request.user)
     return render(request,'feedback.html',{'form':form,'faculty_stats':stats,'page_obj':paginated(request,comments)})
+
+@login_required
+def profile_edit(request):
+    form = ProfileForm(request.POST if request.method == 'POST' else None, instance=request.user)
+    if request.method == 'POST' and form.is_valid():
+        with transaction.atomic():
+            form.save()
+        messages.success(request, 'Your profile has been updated.')
+        return redirect('profile_edit')
+    return render(request, 'profile.html', {'form': form})
+
 
 @roles('director')
 def accounts(request):

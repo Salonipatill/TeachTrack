@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}My profile{% endblock %}
+{% block content %}
+<div class="page-head"><div><div class="eyebrow">MY ACCOUNT</div><h1>My profile</h1><p class="muted">Keep your personal details up to date.</p></div></div>
+<section class="panel form-panel">
+  <p>Account role: <strong>{{ user.profile.get_role_display }}</strong></p>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div class="form-actions"><button>Save changes</button><a href="{% url 'dashboard' %}">Back to overview</a><a href="{% url 'password_change' %}">Change password</a></div>
+  </form>
+</section>
+{% endblock %}
