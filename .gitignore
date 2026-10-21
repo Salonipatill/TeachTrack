@@ -9,6 +9,8 @@ service-account*.json
 credentials.json
 *credentials*.json
 *.pem
+# Public Aiven CA certificate required to verify database connections.
+!certs/aiven-ca.pem
 *.key
 *.p12
 *.pfx
