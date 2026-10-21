@@ -8,7 +8,7 @@
         <a href="{% url 'index' %}"{% if public_page == 'home' %} aria-current="page"{% endif %}>Home</a>
         <a href="{% url 'index' %}#features">Features</a>
         <a href="{% url 'campus_life' %}"{% if public_page == 'campus' %} aria-current="page"{% endif %}>Campus life</a>
-        <a href="{% url 'contact' %}">Contact</a>
+        <a href="{% url 'contact' %}"{% if public_page == 'contact' %} aria-current="page"{% endif %}>Contact</a>
       </nav>
       <div class="site-header-actions">
         {% if user.is_authenticated %}

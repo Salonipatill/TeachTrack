@@ -490,7 +490,7 @@ def contact(request):
     form=ContactForm(request.POST or None)
     if request.method=='POST' and form.is_valid():
         form.save();messages.success(request,'Your message has been received.');return redirect('index')
-    return form_page(request,form,'Contact TeachTrack')
+    return render(request, 'contact.html', {'form': form, 'public_page': 'contact'})
 
 @login_required
 def question_image(request,pk):
