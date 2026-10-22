@@ -1,7 +1,7 @@
 # TeachTrack project handbook
 
 
-Documentation edition: 21 October 2026. Prepared for Zaman & Saloni. This handbook describes the implementation in this workspace, including the updated role sign-in pages, staff account forms, public header/footer, seven-photo homepage carousel and Campus Life page.
+Documentation edition: 22 October 2026. Prepared for Zaman & Saloni. This handbook describes the implementation in this workspace, including quiz option controls and multiple correct answers, Home/WORKSPACE navigation, Campus Life location search, local document/image uploads and custom resource categories.
 
 The project is a server-rendered Django academic workspace. It has one shared campus workspace and three application roles: Student, Faculty and Director. Its source retains the original ClassApp/Classroom layout, academic relationships and migration history while using Django authentication for current accounts.
 
@@ -44,8 +44,8 @@ Students use the platform to find materials, attempt quizzes, ask doubts, send f
 | Public website | Homepage, campus information and contact form | Static images; Contact |
 | Identity | Username/password login, role labels, signed-in password change | Django User, Profile, LoginThrottle |
 | Accounts | Director-created student/faculty/director accounts; deactivation | User, Profile and legacy role records |
-| Resources | Notes, PYQs and assignments; search, filters and downloads | Resource, Download |
-| Quizzes | Timed availability, question builder, exact-set scoring and review | Quiz, Question, Option, Submission |
+| Resources | Documents/images, built-in/custom categories, search, filters and downloads | Resource, Download |
+| Quizzes | Timed availability, 2–26 options per question, exact-set scoring and review | Quiz, Question, Option, Submission |
 | Announcements | Role-targeted campus posts and optional documents | Announcement |
 | Notifications | Individual inbox, broadcasts and workflow messages | Notification |
 | Doubts | Student-to-faculty questions and answers | Doubt |
@@ -63,11 +63,11 @@ Students use the platform to find materials, attempt quizzes, ask doubts, send f
 | Data access | Django ORM; database selected by DATABASE_URL |
 | Local fallback database | db.sqlite3 only when DATABASE_URL is blank |
 | Database options | SQLite for local work; PostgreSQL or MySQL Connector |
-| Uploaded files | Local media in development; private GCS or disabled uploads in production |
+| Uploaded files | Configurable auto/local/gcs/disabled storage, independently of the database |
 | Static assets | Django staticfiles plus WhiteNoise compressed manifest storage |
 | Production process | Vercel Django deployment or Gunicorn serving Classroom.wsgi:application in the container |
 | Timezone | Asia/Kolkata; timezone-aware application timestamps |
-| Tests | 71 test methods in the current source catalogue |
+| Tests | Workflow, migration, database/environment and storage checks listed in TEST_CATALOGUE.md |
 
 The source contains cloud configuration and a deployment guide. A working local server and passing local tests do not establish that a live deployment or private production bucket has been provisioned.
 
@@ -94,7 +94,7 @@ The source contains cloud configuration and a deployment guide. A working local 
 1. An authenticated faculty member opens the upload form.
 2. The role decorator admits faculty and directors; students cannot access the action by entering its URL directly.
 3. The browser submits the form and file with a CSRF token.
-4. Request-size middleware rejects a declared body above 12 MiB. Form validation checks the file itself against the 10 MiB policy and its permitted content format.
+4. Request-size middleware rejects a declared body above 32 MiB. Form validation checks the file itself against the 30 MiB policy and its permitted document/image content format.
 5. The view starts a database transaction, assigns the current user as uploader, strips directory components from the original filename and saves the resource.
 6. Django storage writes the file under a generated resource key. Student recipients receive individual notification records.
 7. A success message is added and the browser is redirected to the resource list.
@@ -134,8 +134,10 @@ TeachTrack/
     admin.py                       Trusted Django admin registration
     apps.py                        App registration and signal loading
     tests.py                       Workspace and migration test classes
+    test_database_config.py         Database/environment configuration tests
+    test_upload_storage.py          Upload storage selection tests
     management/commands/           Director, demo, report and import commands
-    migrations/                    Original 0001–0006 and upgrade 0007–0009
+    migrations/                    Original 0001–0006 and upgrade 0007–0011
     Templates/                     Active and retained legacy templates
     static/ClassApp/app.css        Current visual system
     static/ClassApp/app.js         Current browser interactions
@@ -160,9 +162,9 @@ The environment file, generated development secret, local database, uploaded med
 | --- | --- |
 | Application shell | base.html; authenticated sidebar/topbar/footer, or anonymous authentication layout |
 | Public shell | public_base.html overrides the page_layout block; shared public header/footer |
-| Public pages | index.html; campus_life.html |
+| Public pages | index.html; campus_life.html; contact.html |
 | Current sign-in | registration/login.html with the optional role label and role links |
-| Generic forms | form.html for registration, uploads, contact and several action forms |
+| Generic forms | form.html for registration, uploads and several action forms |
 | Account administration | accounts.html and account_form.html |
 | Overview and resources | dashboard.html and resources.html |
 | Quizzes | quizzes.html; quiz_create.html; quiz_attempt.html; quiz_result.html; leaderboard.html |
@@ -218,7 +220,21 @@ $env:DEBUG = 'True'
 .\.venv\Scripts\python.exe manage.py runserver
 ```
 
-Open http://127.0.0.1:8000/. The DEBUG override matters if an IDE or parent process supplies a different DEBUG value: python-dotenv loads .env without overriding an already-set process environment variable.
+Open http://127.0.0.1:8000/. Local runserver loads the selected TEACHTRACK_ENV_FILE (default .env) with override enabled. Other commands and deployed entry points preserve existing process environment values. Keep the selected private file configured for the intended local database.
+
+### Isolated PC MySQL startup from CMD
+
+Set `.env.local-mysql` to use the MySQL server on your PC, with a DATABASE_URL host of `127.0.0.1`, your URL-encoded credentials and local database name. Set `DEBUG=True`, `MYSQL_SSL_MODE=DISABLED` and `UPLOAD_STORAGE=local` in that private file. Then run in Command Prompt:
+
+```cmd
+cd /d "C:\Users\Zamanuddin Khan\Downloads\Coding Area\TeachTrack"
+set "TEACHTRACK_ENV_FILE=.env.local-mysql"
+set "DATABASE_URL="
+.venv\Scripts\python.exe manage.py migrate
+.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8001
+```
+
+Open http://127.0.0.1:8001/. Migrate uses the selected local database; it does not transfer production data. Local uploads go to media/, while MySQL stores their metadata. Confirm other inherited database/storage settings do not override your chosen file when running management commands; see [database setup](DATABASE_SETUP.md).
 
 ### Fresh Windows setup
 
@@ -335,7 +351,7 @@ There is no user-facing role-editing or profile-editing workflow in this version
 
 ### Public homepage
 
-The header offers Home, Features, Campus life, Contact and account access. Signed-in users see My dashboard. The main section introduces TeachTrack and offers a workspace/sign-in action. Seven campus photos appear in a manual carousel with previous/next arrows, individual dots and a current-photo counter. The removed star/tagline block is absent.
+The header offers Home, Features, Campus life, Contact and account access. The TeachTrack logo opens Home for anonymous and signed-in users. The main Home view hides the signed-in WORKSPACE header button; its hero still offers a workspace action. Features is `/#features` on the same page, where the header WORKSPACE button becomes visible and opens the dashboard. Signed-in users also see WORKSPACE on Campus life and Contact. Anonymous visitors see Sign in/Get started. Seven campus photos appear in a manual carousel with previous/next arrows, individual dots and a current-photo counter. The removed star/tagline block is absent.
 
 The three feature cards introduce the resource library, quizzes/feedback and campus communication. The footer contains campus identity, public navigation, role-specific sign-in links, student registration, credits and Back to top.
 
@@ -343,7 +359,7 @@ The three feature cards introduce the resource library, quizzes/feedback and cam
 
 Campus life opens /campus-life/, rather than scrolling to the homepage photograph. The page displays the user-selected campus cover image, SAIT logo, library and Common Ground café, four facility summaries, an eight-photo gallery, campus location and official contact links. With the cover/logo, facility images and location image, the page contains 13 image elements.
 
-Campus descriptions link to the official institute pages. Image references and information sources are recorded in CAMPUS_CONTENT.md. Google thumbnail references were downloaded into project static assets so local rendering does not depend on third-party image requests.
+Campus descriptions stay inside TeachTrack and do not link to Aurobindo's official website. The Find us in Indore panel includes View location on Google Maps, opening a new-tab search for Sri Aurobindo Institute of Technology, Indore, Madhya Pradesh. This is a place search, not a pinned coordinate or verified directions route. Telephone and email links remain. Image references and historical information sources are recorded in CAMPUS_CONTENT.md. Google thumbnail references were downloaded into project static assets so local rendering does not depend on third-party image requests.
 
 ### Dashboard
 
@@ -389,7 +405,9 @@ The public Contact page uses public_base.html, retaining the homepage header, fo
 
 ### Resource upload and download
 
-Resources have a title, optional description, subject, category, file, safe original filename, uploader, count and timestamp. Valid categories are notes, pyq and assignment. New resource uploads notify active students. Uploaded resource keys use a random UUID and the lowercased file extension under resources/.
+Resources have a title, optional description, subject, category, file, safe original filename, uploader, count and timestamp. Built-in categories are notes, pyq and assignment. Faculty/directors can choose + Add custom category and enter a name of up to 100 characters. Successful uploads save the category on the resource; saved values are reused in later upload choices and library filters. Whitespace is collapsed, and a case-insensitive match against an existing category value or label reuses that category. There is no separate category-management table or deletion screen. New resource uploads notify active students. Uploaded resource keys use a random UUID and the lowercased file extension under resources/.
+
+The resource form accepts PDF, UTF-8 TXT, DOCX, PPTX, JPG/JPEG and PNG, with recognizable content validation. A file may be up to 30 MiB (labelled 30 MB in the interface), within the combined 32 MiB request limit. Local storage works without Google Cloud: UPLOAD_STORAGE=local saves bytes under media/ while the selected SQL database stores resource details.
 
 Search matches title, description or subject. Category filters use the stored code; subject uses a case-insensitive exact match. The title sort orders title then ID; the default is newest creation time then ID. Lists use 15 records per page.
 
@@ -400,7 +418,7 @@ The download view first opens the file. A missing file returns 404 before increm
 1. Faculty or director enters title, subject, launch time and submission deadline, displayed in IST.
 2. New QuizForm instances publish automatically and require name, enrollment, email and course. The five old checkbox settings are not displayed; authorized staff can still use the publication toggle later.
 3. Add between 1 and 50 questions, with optional images and single/multiple selection.
-4. Options A and B are required; C and D are optional. Mark exactly one correct option for single-choice, or a valid nonempty set for multiple-choice.
+4. Each question starts with four options. Use Add option/Remove last option for 2–26 options (A–Z); every visible option needs text. Removing the last option clears it from the selected correct answers. Tick exactly one correct answer for single-choice or a nonempty set for multiple-choice. Selecting more than one correct answer automatically enables Allow multiple correct options; turning that setting off retains only the first selected answer.
 5. A transaction saves the quiz/questions/options and notifies active students.
 
 Quiz question numbers sit inside each card above the question text. Question panels align with student details and long options wrap. The multipart form supports optional images when uploads are enabled. Quiz codes use secrets.token_hex(3).upper(); a uniqueness failure is reported rather than silently retried.
@@ -502,7 +520,7 @@ Null links retained for historical compatibility may allow multiple unlinked leg
 
 ### Migration history
 
-Migrations 0001–0006 represent the original model history. Migration 0007 adds the secure academic fields and new modules. Migration 0008 converts accounts, hashes old passwords, assigns roles, links unambiguous records, fills quiz metadata/reviews and clears old sessions/OTPs. Migration 0009 removes plaintext password columns and adds uniqueness/rating constraints. Migration 0010 adds Student.batch and Submission.academic_details without guessing historical snapshots.
+Migrations 0001–0006 represent the original model history. Migration 0007 adds the secure academic fields and new modules. Migration 0008 converts accounts, hashes old passwords, assigns roles, links unambiguous records, fills quiz metadata/reviews and clears old sessions/OTPs. Migration 0009 removes plaintext password columns and adds uniqueness/rating constraints. Migration 0010 adds Student.batch and Submission.academic_details without guessing historical snapshots. Migration 0011_resource_custom_category widens the indexed Resource.category field to 100 characters and removes its fixed model choices while retaining existing values; built-in and saved custom choices are supplied by the form and library view.
 
 The conversion is intentionally irreversible. A rollback to an older schema requires restoring the matching backed-up database and application code, rather than unapplying the password-removal migration. Existing media paths and record IDs are retained by the intended upgrade path.
 
@@ -538,7 +556,7 @@ Use reverse or Django’s url template tag for navigation. Avoid hardcoded endpo
 | 403 | Incorrect role, CSRF failure or explicit object permission denial |
 | 404 | Missing/private object, unsupported kind or invalid selected account role |
 | 405 | Wrong HTTP method on an explicitly restricted action |
-| 413 | Declared body above the middleware’s 12 MiB limit |
+| 413 | Declared body above the middleware’s 32 MiB limit |
 | 429 | Current username/IP throttle window is blocked |
 
 The application returns HTML forms and redirects. There is no documented bearer-token API, OAuth flow, CORS contract or JSON CRUD interface. POST actions use Django session cookies and CSRF protection.
@@ -561,9 +579,13 @@ The bottom-right sun/moon button switches every shared public/login/workspace la
 | Mobile menu | Toggles the sidebar open class and the menu’s aria-expanded value |
 | Theme switch | Persists light/dark preference, follows initial system preference, and syncs tabs |
 | Form submission | Shows progress, prevents duplicates and restores state on back navigation |
-| Upload availability | Explains unavailable file uploads before submitting production forms |
+| Upload availability | Explains unavailable file uploads before submitting forms when storage is disabled |
 | Escape key | Closes an open sidebar and resets aria-expanded |
 | Add quiz question | Copies the empty-question template, replaces __prefix__, increments TOTAL_FORMS and stops at 50 |
+| Quiz options | Adds/removes the final option within 2–26, updates option_count and clears removed correct selections |
+| Multiple correct answers | Checking several correct answers enables multiple selection; disabling it keeps the first selected answer |
+| Features WORKSPACE button | Watches the URL hash and shows the signed-in public-header dashboard shortcut only at #features on Home |
+| Custom resource category | Shows/enables the custom category input only when + Add custom category is selected |
 | Carousel arrows | Shows previous/next slide, wrapping between the last and first |
 | Carousel dots | Selects a zero-based data-slide-to index and updates aria-current |
 | Carousel keyboard | Left/Right arrows, Home and End while focus is within the carousel |
@@ -605,16 +627,16 @@ Authenticated responses receive private/no-store headers from the custom middlew
 | PPTX | ZIP contains ppt/presentation.xml and [Content_Types].xml |
 | Office archive size | Sum of uncompressed entries must be below 50 MiB |
 | JPG/JPEG/PNG where images are enabled | Pillow opens/verifies the image and permits JPEG/PNG formats; decompression-bomb warnings are rejected |
-| File size | At most 10 × 1,024 × 1,024 bytes per validated upload |
-| Declared request body | Custom middleware rejects more than 12 × 1,024 × 1,024 bytes |
+| File size | At most 30 × 1,024 × 1,024 bytes per validated upload |
+| Declared request body | Custom middleware rejects more than 32 × 1,024 × 1,024 bytes, including combined files/form data |
 
-The resources form permits the document types above. Doubt attachments and announcement documents additionally permit validated JPEG/PNG images. QuestionEntryForm uses a Django ImageField plus the image-enabled validator. Existing image delivery recognizes selected stored image MIME types, but new uploads remain subject to the current form restrictions.
+The resources form, doubt attachments and announcement documents permit the document types above and validated JPG/JPEG/PNG images. QuestionEntryForm uses a Django ImageField plus the image-enabled validator. Existing image delivery recognizes selected stored image MIME types, while new uploads remain subject to the current form restrictions. The 32 MiB cap applies to the entire request, so several valid files can exceed it together.
 
 These checks validate recognizable formats and size; they do not perform antivirus scanning, strip active document content or prove a file harmless. Declared Content-Length checks do not independently enforce a streaming ingress limit when a client omits that header. Production ingress limits and any malware-scanning process are separate operations.
 
 ### Private-media delivery
 
-There is no public /media/ URL pattern. Resources use an authenticated POST download. Original doubt and announcement attachments use the attachments route with object/audience checks. Question images use a protected GET endpoint that checks quiz access. Production storage uses a private GCS backend and is read by the application before an authenticated FileResponse is returned.
+There is no public /media/ URL pattern. Resources use an authenticated POST download. Original doubt and announcement attachments use the attachments route with object/audience checks. Question images use a protected GET endpoint that checks quiz access. Local and private GCS storage are read by the application before an authenticated FileResponse is returned; selecting local storage does not create a public media route.
 
 ### Credential and data handling
 
@@ -645,7 +667,16 @@ Requirements describe the intended install set. A virtual environment can differ
 
 DATABASE_URL selects SQLite locally or PostgreSQL/MySQL; see CONFIGURATION_REFERENCE.md and VERCEL_DEPLOYMENT.md. Aiven uses MySQL Connector with certificate/hostname verification by default; local development can explicitly disable SSL via MYSQL_SSL_MODE without editing source.
 
-With DEBUG=True, blank GS_BUCKET_NAME uses local media storage. With DEBUG=False and no bucket, uploads are disabled at the form, middleware and storage layers. A private GCS bucket plus runtime credentials enables persistent uploads. A bucket is optional for production startup; text workflows continue without it. Supabase is not integrated.
+UPLOAD_STORAGE selects file handling independently of DATABASE_URL. Explicit local, gcs and disabled modes apply independently of DEBUG. Local mode saves files under MEDIA_ROOT (media/) without Google Cloud; MySQL/PostgreSQL/SQLite store their metadata. Back up both the database and local media directory.
+
+| UPLOAD_STORAGE | Behavior |
+| --- | --- |
+| auto (default) | Use GCS when GS_BUCKET_NAME is set; otherwise local files with DEBUG=True or disabled uploads with DEBUG=False |
+| local | Use FileSystemStorage under media/; a GCS bucket is unnecessary |
+| gcs | Use the private GCS backend; requires GS_BUCKET_NAME and runtime credentials |
+| disabled | Reject file uploads at the form, middleware and storage layers; text workflows remain available |
+
+Persistent disk is required for local mode on a hosted server; an ephemeral platform should use GCS or disabled uploads. A bucket remains optional for startup under auto, local or disabled modes. Supabase is not integrated.
 
 Outbound email uses the dummy backend. SMTP variables, Forgot password, public reset links and email/phone OTP flows are removed. Signed-in users can change their password with the current password; trusted administrators can use Django changepassword from a private terminal.
 
@@ -694,22 +725,34 @@ The importer reads the specific ClassApp_student columns id, sname, sen, semail,
 
 ### Automated suite
 
-There are 53 current test methods across WorkspaceTests and LegacyMigrationTests. The [test catalogue](TEST_CATALOGUE.md) lists each method and scenario. Tests cover role authorization, password/session behavior, forms, private uploads/downloads, quiz grading/availability/duplicate protection, feedback constraints, complaint/doubt access, account management, export handling and legacy data migration.
+The [test catalogue](TEST_CATALOGUE.md) lists current test methods and scenarios; [TESTING.md](TESTING.md) records run results and their limits. Coverage includes role authorization, password/session behavior, forms, private uploads/downloads, quiz option counts and grading/availability/duplicate protection, resource image/size validation and custom categories, public navigation, feedback constraints, complaint/doubt access, account management, export handling, database/environment/storage configuration and legacy data migration.
 
 ### Isolated Windows test run
 
 Use process-level SQLite configuration in a temporary shell scope so the verification is isolated from an existing MySQL workspace:
 
 ```powershell
-$previousDatabaseUrl = $env:DATABASE_URL
-$previousDebug = $env:DEBUG
+$testEnvironment = @{
+    DEBUG = 'True'
+    DATABASE_URL = 'sqlite:///:memory:'
+    TEACHTRACK_ENV_FILE = '.env.isolated-tests-unused'
+    SECRET_KEY = 'isolated-tests-only-22-October-2026'
+    UPLOAD_STORAGE = 'local'
+    GS_BUCKET_NAME = ''
+}
+$previousEnvironment = @{}
+foreach ($name in $testEnvironment.Keys) {
+    $previousEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
+}
 try {
-    $env:DEBUG = 'True'
-    $env:DATABASE_URL = 'sqlite:///:memory:'
+    foreach ($name in $testEnvironment.Keys) {
+        [Environment]::SetEnvironmentVariable($name, $testEnvironment[$name], 'Process')
+    }
     .\.venv\Scripts\python.exe manage.py test ClassApp --noinput
 } finally {
-    if ($null -eq $previousDatabaseUrl) { Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue } else { $env:DATABASE_URL = $previousDatabaseUrl }
-    if ($null -eq $previousDebug) { Remove-Item Env:DEBUG -ErrorAction SilentlyContinue } else { $env:DEBUG = $previousDebug }
+    foreach ($name in $previousEnvironment.Keys) {
+        [Environment]::SetEnvironmentVariable($name, $previousEnvironment[$name], 'Process')
+    }
 }
 ```
 
@@ -742,7 +785,7 @@ Migrations are separate from web startup. This avoids having several web instanc
 
 ### Production startup requirements
 
-With DEBUG=False, settings require SECRET_KEY of at least 50 characters and a PostgreSQL or MySQL configuration. GS_BUCKET_NAME is optional; omitting it disables uploads.
+With DEBUG=False, settings require SECRET_KEY of at least 50 characters and a PostgreSQL or MySQL configuration. With the default UPLOAD_STORAGE=auto, omitting GS_BUCKET_NAME disables uploads. Explicit local mode enables uploads without a bucket when persistent disk is available; explicit gcs mode requires a bucket.
 
 On Vercel, DEBUG defaults false and supplied VERCEL_URL, VERCEL_PROJECT_PRODUCTION_URL and VERCEL_BRANCH_URL hostnames are added to ALLOWED_HOSTS and HTTPS CSRF origins. Custom domains still belong in explicit configuration. Process environment wins over .env except local manage.py runserver, which deliberately loads the selected TEACHTRACK_ENV_FILE (default .env) with override=True. See VERCEL_DEPLOYMENT.md for deploy and verification steps.
 
@@ -808,7 +851,7 @@ Legacy historical data can affect totals. Feedback is identity-hidden in its tem
 | New model field | models.py, a new migration, form validation, views, templates, historical defaults and generated database reference |
 | New protected action | Named route, role decorator, filtered object queryset, CSRF/method enforcement, UI affordance and permission tests |
 | New account field | Student/staff field differences, Profile/legacy persistence, bootstrap/import handling and validation |
-| New resource category | Resource.CATEGORIES, migration if applicable, form/filter labels, UI and exports |
+| Custom resource category | Use + Add custom category during upload; model migration is needed only if changing the stored field/schema |
 | New quiz question behavior | Form structure, valid_quiz, attempt validation/scoring, review snapshot, answer tables and grading tests |
 | New announcement audience | Choices, permitted actor roles, recipient selection, listing/download access and notification fan-out |
 | New colour/theme | Tokens, literal usages, semantic/status meaning, focus/contrast checks and rebuilt colour catalogue |
