@@ -1,81 +1,201 @@
 # Testing and verification
 
-Run `python manage.py test ClassApp` from the project folder. Tests use a separate temporary database and in-memory media storage. They do not edit the original supplied database.
+Run from the TeachTrack folder using the project virtual environment. The current
+source defines **90 test methods**, listed in [TEST_CATALOGUE.md](TEST_CATALOGUE.md).
+Tests use a separate database, in-memory storage for most uploads and temporary
+media directories for local-disk tests. Existing application data is not needed.
 
-The current source defines **71 test methods**, listed individually in [TEST_CATALOGUE.md](TEST_CATALOGUE.md). Use the same virtual-environment interpreter for Django and its test subprocesses. For a workspace with an existing MySQL database, prefer the isolated SQLite procedure in [handbook section 15](PROJECT_DOCUMENTATION.md#15-testing-and-acceptance); it preserves the shell's previous configuration after the run.
+## Verification record: 22 October 2026
 
-## Current verification record
+The complete final ClassApp suite passed on both database engines using Windows
+and Python 3.14.5 from `.venv\Scripts\python.exe`:
 
-The earlier feature-removal run passed all 57 workflow tests, including unavailable reset URLs and
-retained signed-in password changes. Coverage now includes per-role profile edits,
-role/permission injection rejection, separate quiz autofill/snapshots and automatic
-quiz defaults. Local Edge flows checked 390/768/1440px public pages, role navigation,
-faculty creation, quiz submission/results, keyboard access and dark-mode persistence.
-Safari/Firefox and protected live Vercel pages were not independently verified. The database update passed 71 tests on SQLite and on a disposable local MySQL 8.0.46 server with SSL disabled; cloud verification is recorded in DATABASE_SETUP.md.
+| Database | Final result | Test runtime |
+| --- | --- | --- |
+| Isolated in-memory SQLite | 90/90 passed | 87.130 seconds |
+| Disposable local MySQL 8.0.46, loopback, TLS disabled | 90/90 passed | 52.993 seconds |
 
-Documentation-only changes do not require a new application test run. Rebuild,
-PDF-export and link checks use the commands in [tools/README.md](../tools/README.md).
+Django's system check reported no issues in both runs. The unique MySQL test
+database was destroyed, the owned MySQL process stopped, and the checked
+workspace scratch directory removed. No existing local service data or
+production records were modified. Expected Forbidden/Not Found logs come from
+permission, CSRF and missing-file checks and are not test failures.
+
+The first MySQL run exposed redundant `response.close()` calls after the test
+client's streaming iterator had already closed two download responses. The
+second close emitted request-finished cleanup again and invalidated MySQL's
+test transaction, causing cascading connection errors. Removing those two
+redundant test-only calls preserved automatic stream/file closure. Both complete
+90-test suites above passed after that correction; application behavior did not
+need a change.
+
+Additional source checks passed: `pip check`, Django `check`,
+`makemigrations --check --dry-run`, JavaScript syntax checks and
+`python -m compileall -q ClassApp Classroom tools`. A synthetic production
+`check --deploy --fail-level WARNING` passed with a placeholder PostgreSQL URL,
+disabled uploads and fake host/secret; this did not connect to a database or
+perform a deployment.
+
+These results cover the checked-out source. They do not verify the deployed
+website, configured PC MySQL credentials, Google Cloud permissions or production
+records. Earlier cloud/browser records are historical and do not establish that
+the current deployment was retested.
+
+A separate read-only check of the saved PC MySQL configuration still returned
+**1045 (Access denied)**. Update that local account/password before running the
+application on the existing PC service. The disposable-server pass establishes
+engine compatibility and does not fix or verify the configured credentials.
+
+## Safe SQLite run
+
+Use a fresh PowerShell terminal so these overrides stay separate from normal
+local MySQL work. Select an intentionally nonexistent env file to avoid loading
+private configuration:
+
+```powershell
+$env:TEACHTRACK_ENV_FILE = '.env.isolated-tests-unused'
+$env:DATABASE_URL = 'sqlite:///:memory:'
+$env:DEBUG = 'True'
+$env:SECRET_KEY = 'test-only-isolated-suite-secret-for-22-October-2026'
+$env:UPLOAD_STORAGE = 'local'
+$env:GS_BUCKET_NAME = ''
+.\.venv\Scripts\python.exe manage.py test ClassApp --noinput
+```
+
+Ensure `.env.isolated-tests-unused` does not exist. Close this terminal after the
+run, or use the environment-restoring procedure in
+[handbook section 15](PROJECT_DOCUMENTATION.md#15-testing-and-acceptance).
+Use the same interpreter for Django and migration subprocesses.
 
 ## Automated coverage
 
-The suite covers:
+- Role dashboards/modules, anonymous redirects, original role URLs, password
+  hashing, role-injection rejection and director bootstrap.
+- Login throttle/cooldown, CSRF, POST-only logout, password changes, removed public
+  password-reset routes, deactivation and session revocation.
+- Profile edits for all roles, duplicate account details, student academic fields
+  and staff creation forms.
+- Public headers: the logo targets Home; WORKSPACE targets the dashboard on
+  Campus life/Contact and is initially hidden on Home. Features uses
+  `/#features`; its visibility behavior also requires JavaScript browser checks.
+- Campus life stays internal. Its Google Maps link names Sri Aurobindo Institute
+  of Technology, Indore, and opens a separate tab.
+- Resource upload/search/filter/download, private file access, download counts,
+  unavailable files and absence of a public media route.
+- Local notes without Google Cloud; PDF/TXT/DOCX/PPTX and JPG/JPEG/PNG validation;
+  valid 30 MB text/PNG boundary uploads; oversized/invalid-file rejection.
+  The code's per-file limit is 30 x 1024 x 1024 bytes.
+- Custom categories, whitespace normalization, existing-name reuse,
+  100-character validation and reuse in later uploads/library filters.
+- Quiz creation with 2-26 options, minimum/maximum boundaries, required option
+  text, removed-option rejection and single/multiple correct answers.
+- Quiz timing/publication, required student details, option membership, exact-set
+  multi-select scoring (missing or extra incorrect selections fail), duplicate
+  attempts, ownership and delayed solutions.
+- Original answer/detail tables, invalid legacy quizzes and original score URLs.
+- Private notifications, mark-read actions, unsafe redirects and announcement
+  audiences/documents.
+- Complaint assignment/status/history, doubt reply permissions and private
+  original attachments.
+- Feedback/rating constraints, CSV ordering/formula protection, legacy importer
+  dry runs/password hashing and removal of plaintext pw fields.
 
-- All role dashboards and module pages; anonymous redirects; denial of staff actions to students; correct protection on original role URLs.
-- Registration password hashing, prevention of role injection, retained student academic fields and director account bootstrap.
-- Login throttling/cooldown, CSRF, POST-only logout, password changes and removed reset routes, account deactivation and revocation of existing sessions.
-- Resource upload/search/filters, file content/size validation, authenticated downloads, counting, unavailable files and no public media route.
-- Notification privacy, mark-read actions, unsafe redirect rejection and audience restrictions.
-- Original announcement document upload, author/faculty links and authorized document download.
-- Quiz creation/minimum questions, opening/closing/publication controls, required student details, strict option membership and single/multi-select scoring.
-- One authenticated attempt, preserved original answer/detail tables, student/faculty ownership, delayed solutions, invalid legacy quiz rejection and original score URL access.
-- Complaints, assignment, role-controlled status/history, doubts and assigned replies, private legacy attachments.
-- Feedback updates and database rating constraints; alphabetical CSV exports and formula-text protection.
-- Legacy student importer dry-run, password hashing, source preservation and conflict handling.
-- No plaintext pw fields in current role models.
+## MySQL verification
+
+[Database setup](DATABASE_SETUP.md) describes configured-server connectivity and
+the helper that creates a uniquely named temporary test database. For local
+engine compatibility without PC service credentials:
+
+```powershell
+.\.venv\Scripts\python.exe tools/verify_local_mysql.py --server-executable "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqld.exe"
+```
+
+This helper uses `--no-defaults`, a temporary data directory, a random loopback
+port, disabled MySQL X protocol/TLS and an owned server process. It supplies its
+own connection file, creates/drops a unique `test_teachtrack_...` database, stops
+that process and removes temporary files. It does not use the existing MySQL
+service's data directory or configured credentials.
 
 ## Populated original-schema migration test
 
-An isolated database is first migrated to the original 0006 schema and populated with legacy students, faculty, directors, existing Django/complaint accounts, a username conflict, quiz questions/images/options, repeated submissions with answer/detail M2M relations, repeated ratings, a doubt attachment, an announcement document and a replied complaint.
+An isolated SQLite subprocess migrates to original schema 0006, populates legacy
+students/faculty/directors, existing Django accounts, username conflicts,
+question images/options, repeated submissions with answer/detail M2M relations,
+repeated ratings, attachments, an announcement and a replied complaint. It applies
+every current migration, including 0011, and verifies:
 
-It then applies 0007–0009 and verifies:
+- Original IDs, relationships, file paths, images and selected answers remain.
+- Legacy passwords become hashes; existing hashes work; conflicting legacy names
+  do not take over Django users.
+- Role profiles/logins and student academic fields remain usable.
+- Repeated records remain stored; one newest record receives each unique
+  authenticated link.
+- Complaint text, teacher reply, status and timeline remain.
+- Old sessions/OTPs are cleared and plaintext password columns are removed.
 
-- All original record IDs and relationships remain.
-- Legacy plaintext passwords are converted; recognized hashes remain usable; old Django users are not silently taken over by a conflicting legacy username.
-- Profiles and role login work.
-- Question images, answer selections, submission details and attachment paths remain intact.
-- Ambiguous/repeated historical records remain stored; one newest record receives each unique authenticated link.
-- Complaint text, teacher reply, status and timeline are retained.
-- Old sessions and OTPs are cleared; legacy plaintext password columns no longer exist.
-
-This validates the Django migration path on SQLite. It does not claim validation against an inaccessible external MySQL server.
+This historical upgrade regression remains on SQLite during a MySQL suite run.
+A passing MySQL suite verifies current schema migrations/workflows; it does not
+establish a populated production-MySQL upgrade rehearsal.
 
 ## Browser checks
 
-Chromium checks all three role dashboards at desktop (1440 px) and mobile (390 px), role module navigation, mobile sidebar behavior, resource download, student quiz submission and the dynamic question-builder button. Rendered pages were inspected for overflow and JavaScript errors.
+The current offline Edge/Playwright check passed **59 assertions** at 1440, 768,
+390 and 360 px:
 
-Recent public-page checks used the running local HTTP server in a hidden Chrome preview. The homepage has seven carousel slides/dots; both newly added photos load, arrows wrap between first/last, keyboard and touch controls work, and the removed star/tagline block is absent. The Campus Life header/footer links open a dedicated page, its selected main image is displayed in full, and all 13 current image elements have valid local asset responses. Narrow layouts were checked at 320 and 390 px, with tablet/desktop checks during the public-page changes. These local observations do not replace browser acceptance in a live deployment.
+```powershell
+.\.venv\Scripts\python.exe tools/check_feature_ui.py
+```
 
-## Fresh package checks to repeat for a release
+It renders the current templates with synthetic faculty/guest context and loads
+the real application JavaScript/CSS. It checks the Home/Features/Campus
+life/Contact logo and WORKSPACE behavior, hash navigation, the Maps link target,
+2-26 quiz option controls, automatic multiple-answer selection, removed-answer
+cleanup, adding a question, custom-category controls/100-character limit and
+30 MB help text. Maps navigation is intercepted. No running application server,
+database, real login or external network is used, so this complements the Django
+suite without claiming deployed end-to-end acceptance.
 
-Extract the release into a new directory, create its environment without overwriting an existing configuration, then check migrations, system/migration drift, demo seeding, static collection and all three demo-role logins against a new isolated database. A production `check --deploy --fail-level WARNING` using synthetic values checks configuration only; it does not establish cloud connectivity. Record the commands, release source, interpreter, database engine and result for each release instead of treating a previous package check as current evidence.
+Previous local Edge reviews covered public pages at 390/768/1440 px, role
+navigation, faculty creation, quiz submission/results, keyboard access and theme
+persistence. Earlier homepage/campus checks covered carousel controls, local
+images and narrow layouts. These historical observations were not repeated as a
+live HTTP audit in the 22 October automated suite. Firefox, Safari, real devices
+and the protected live deployment require separate acceptance checks.
 
 ## Documentation checks
 
-Run `.venv\Scripts\python.exe tools/build_documentation.py` to rebuild source-derived model, form, route, colour and test references and the offline HTML handbook. Check local document links, handbook anchors, diagram rendering and the visual colour filter. The generator reads metadata/source without querying live user data. It does not execute the application test suite or automatically refresh the PDF snapshot.
+After editing authored documentation:
 
-The latest SQLite run passed all 71 tests. MySQL-specific verification uses tools/verify_mysql.py and uniquely named isolated databases; see DATABASE_SETUP.md for recorded requirements and commands. Documentation-only changes should be checked through document generation and reference/link validation; they do not require claiming a fresh application-test execution. Windows compatibility handling includes closing temporary SQLite source handles and launching migration subprocesses with the test environment's Python interpreter.
+```powershell
+.\.venv\Scripts\python.exe tools/build_documentation.py
+.\.venv\Scripts\python.exe tools/export_documentation_pdf.py
+.\.venv\Scripts\python.exe tools/check_documentation.py
+```
 
-## Manual acceptance and live production checks
+The builder uses isolated SQLite and source metadata to rebuild references,
+diagrams and the offline HTML handbook. It does not query user records or run
+the suite. The exporter refreshes the PDF with a local browser while blocking
+external HTTP. The checker validates local links, not external URLs. See
+[tools/README.md](../tools/README.md).
 
-1. Create a director, faculty and student; test original login/dashboard links and the new home page.
-2. Upload resource categories, test search/filters and download counts.
-3. Publish a quiz with a single-choice question, multi-select question and image. Test required student details, exact-set grading, duplicate prevention and the answer-review closing time.
-4. Upload an announcement document and a doubt attachment. Confirm that another student's private doubt cannot be opened.
-5. Submit/update feedback, reply to doubts and walk a complaint through all three statuses.
-6. Review director charts, resource totals, historical records and all four CSV reports.
-7. Review the migrated account-name report and any unlinked historical records against your backup.
-8. Rehearse the real MySQL database upgrade separately if using that database. Test media path preservation and backups.
-9. In Google Cloud, verify Cloud SQL connectivity, private bucket reads/writes, HTTPS cookies, CSRF origins, static assets and the health endpoint.
-10. Set ingress body/file-size enforcement, including streamed requests without Content-Length, and load-test your intended student count. Review login throttling behind the actual proxy because peer-IP limits can group several users.
+## Manual acceptance and release checks
 
-Expected Forbidden/Not Found log entries occur during access-denial tests and are not test failures.
+1. Check Home, `/#features`, Campus life and Contact as a guest and after login;
+   follow the logo, WORKSPACE and campus Maps link.
+2. Create test accounts for every role; check profiles, original role logins,
+   deactivation and private access.
+3. Upload documents/pictures through 30 MB, add/reuse custom categories and check
+   filtering, downloads and counts. Back up media with the database.
+4. Create quizzes with 2/26 options and multiple answers. Check option removal,
+   student details, exact-set grading, duplicates and delayed review.
+5. Exercise announcement documents, private doubts, feedback, complaint statuses,
+   director reports and CSV exports.
+6. Rehearse populated upgrades on a separate copy of the actual MySQL database;
+   review migrated accounts, unlinked records and old media paths.
+7. Extract release packages into a fresh directory; check migrations/drift, demo
+   seeding, static collection and role logins on a new database. Synthetic
+   production `check --deploy` checks configuration only.
+8. After deployment, check the actual URL, intended database, static assets,
+   HTTPS cookies, CSRF, health endpoint and persistent private storage.
+9. Verify proxy body limits including streamed requests, cloud permissions,
+   intended user-count load and login-throttle behavior behind the real proxy.

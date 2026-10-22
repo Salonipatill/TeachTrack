@@ -1,58 +1,71 @@
-# Website quality review — 21 October 2026
+# Website quality review - 22 October 2026
 
-This review covers the checked-out source and an isolated local installation. It
-does not certify the protected Vercel deployment or change Aiven records.
+This review covers the checked-out source and isolated local verification. The
+current ClassApp suite has **90 tests**, all passing on isolated SQLite and a
+disposable local MySQL 8.0.46 server. The saved PC MySQL login still returns
+**1045 (Access denied)**. This review does not certify the deployed Vercel website
+or validate that saved account/password.
+
+The current offline Edge/Playwright UI check also passed **59 assertions** at
+1440/768/390/360 px using rendered templates, real JavaScript/CSS and synthetic
+faculty/guest context. It does not start an app server, use a database or log in.
+The Maps destination is intercepted and external network access is not used.
 
 | Area | Implementation and verification |
 | --- | --- |
-| Clear purpose | Homepage explains resources, quizzes and campus conversations, with role-based sign-in links. Added a shared page description. |
-| Consistent design | Shared stylesheet, templates, form controls, spacing and persistent light/dark themes. Quiz question numbering and result detail grid are shared components. |
-| Mobile layouts | Real headless Edge checks at 390, 768 and 1440 pixels: public pages had no horizontal overflow. Added mobile form and toolbar improvements. |
-| Loading | Existing lazy-loaded secondary campus images, explicit image dimensions, compressed static storage and deferred application JavaScript. Added asynchronous image decoding. No production latency or load benchmark was performed. |
-| Navigation | Role-based menus, public navigation, profile link, current-page indicators and a keyboard skip link. |
-| Readability | Improved shared muted-text contrast, explicit date labels, individual student academic fields and clear account headings. |
-| Features | All 57 Django tests pass. Browser flows additionally verified role login, module navigation, student quiz submission and director creating a faculty account. |
-| Actions | Existing named action buttons retained. Submission and search buttons now provide progress feedback and guard against duplicate submissions. |
-| Feedback | Existing validation/success/error messages retained. Added busy states and clear unavailable-upload messages before submission. |
-| Accessibility | Skip-to-content works by keyboard, focus outlines exist, theme button has accessible state/name, images have descriptive alternatives, reduced-motion preferences are respected. This is not a complete WCAG certification. |
-| Security | Production Django deployment checks pass. Existing TLS, CSRF, secure cookies, role restrictions, password hashing and Aiven certificate verification retained. Vercel defaults to debug off unless explicitly configured otherwise. |
-| Relevant features | Academic workspace features retained. Uploads remain unavailable in production without persistent storage, with an explanatory message. |
-| Browser compatibility | Headless installed Microsoft Edge verified; responsive CSS and native form controls used. Firefox and Safari were not executed. |
-| Content and links | Local route/render coverage comes from the suite and browser checks. Added favicon. External institutional facts and third-party link availability need periodic owner review. |
-| Maintenance | This record distinguishes verified checks from remaining operational checks. See the commands below and the existing testing/deployment documentation. |
+| Public navigation | The logo targets Home. Signed-in users get WORKSPACE on Campus life/Contact; Home hides it initially and `/#features` uses JavaScript to reveal it. Guests get sign-in/registration links. Rendered navigation is tested. |
+| Campus life | Campus life remains internal. The location button opens a Google Maps search for Sri Aurobindo Institute of Technology, Indore, with `noopener noreferrer`. Tests verify the target without contacting Google Maps. |
+| Quizzes | Questions support 2-26 options and multiple correct answers. Tests cover boundaries, text/membership, single-choice validation and exact-set grading. |
+| Resource uploads | Local mode saves private files under `media/` without Google Cloud. Documents and JPG/JPEG/PNG are accepted through 30 MB per file; valid boundary and invalid/oversized files are tested. MySQL stores paths/metadata. |
+| Categories | Staff can add custom categories and reuse them in uploads/filters. Tests cover normalization, existing names, blank/reserved values and the 100-character limit. |
+| Accounts/access | Tests cover role dashboards, profiles, role injection, private files, CSRF, sessions and password changes. This is not an independent security audit. |
+| Academic workflows | Announcements, quizzes, complaints, doubts, feedback, notifications and reports are covered, including original tables and legacy migration relationships. |
+| Design/accessibility | Shared themes, responsive styles, skip links, focus states, image alternatives and reduced-motion rules are implemented. Historical Edge checks covered keyboard access/theme persistence. No complete WCAG review was performed. |
+| Mobile layouts | Current offline UI assertions run at 1440/768/390/360 px. Earlier live-local Edge checks also covered narrow campus layouts. These do not establish real-device or production behavior. |
+| Storage/deployment | `UPLOAD_STORAGE=local` supports PCs/persistent writable disks. Hosted uploads need persistent storage; Vercel's filesystem does not preserve them. Behavior depends on configuration. |
+| Browsers | Current offline installed Edge checks cover option controls, multi-answer behavior, removed-answer cleanup, add-question, custom categories/limits, 30 MB help and header/hash navigation. Firefox/Safari and real mobile devices were not run. |
+| Loading/performance | Local images, dimensions/lazy loading, compressed static storage and deferred JavaScript are implemented. Production latency/load benchmarks were not performed. |
+| Content | Institutional details are local content. External link availability and campus facts need periodic owner review. |
 
-## Checks before deployment
+## Repeatable checks before deployment
 
-Use the project virtual environment. For automated tests, explicitly select an
-isolated database; do not run the suite against the production database.
+Use a separate terminal and isolated environment from [TESTING.md](TESTING.md):
 
 ```powershell
-$env:DEBUG = 'True'
-$env:DATABASE_URL = 'sqlite:///:memory:'
-.\.venv\Scripts\python.exe manage.py test
+.\.venv\Scripts\python.exe manage.py test ClassApp --noinput
 .\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
 .\.venv\Scripts\python.exe -m pip check
+.\.venv\Scripts\python.exe tools/check_feature_ui.py
+.\.venv\Scripts\python.exe -m compileall -q ClassApp Classroom tools
 node --check ClassApp/static/ClassApp/app.js
 node --check ClassApp/static/ClassApp/theme.js
 ```
 
-These environment overrides apply to that terminal; close it before resuming
-normal database work. Browser checks used temporary local accounts and databases,
-not production credentials. Playwright was installed locally as an audit tool;
-it is not a runtime dependency.
+The isolated environment is required: a default terminal may select a configured
+MySQL server. Database engine checks use the disposable-server helper documented
+there. Documentation generation, PDF export and link checking are separate checks.
 
-For a production configuration, also run `manage.py check --deploy` and collect
-static assets. Confirm Vercel serves the intended commit, and test its actual
-production URL after deployment. A successful GitHub push alone does not verify
-the live site.
+For production, run deployment checks with explicit production settings, collect
+static files and verify the actual release after deployment. Source checks or a
+Git push do not verify the live website.
 
-## Remaining operational checks
+The dependency, Django system, migration-drift, JavaScript syntax and Python
+compilation checks passed on 22 October. A production deployment check passed
+using synthetic configuration only; no deployment or database connection was
+performed by that check.
 
-- Keep `DEBUG=False` on Vercel and use the intended database and allowed domains.
-- Check the deployed site's theme assets, login, faculty creation, quiz attempt,
-  result layout and mobile navigation after publishing.
-- Public email password resets and SMTP delivery have been removed. Signed-in
-  users can still change their password using the Password link.
-- Configure persistent private storage before enabling uploads.
-- Recheck Safari/Firefox, real mobile devices, external campus links and production
-  performance separately. Deployment protection prevented independent live inspection.
+## Remaining acceptance and operational checks
+
+- Recheck release navigation, WORKSPACE visibility, mobile layout, theme assets
+  and the Maps destination.
+- Verify actual local MySQL credentials separately; engine compatibility does not
+  validate the PC service's account/password.
+- Check persistent private storage, backups, 30 MB ingress limits and cloud
+  permissions on the deployment platform.
+- Check deployed login, faculty creation, resource upload/download, custom
+  categories, quiz option controls, student attempts and results.
+- Recheck Firefox/Safari, real devices, keyboard access and performance.
+- Keep production debug disabled and use the intended database/allowed hosts.
+  Public email password resets remain removed; signed-in users can use Password.
+
+See [TESTING.md](TESTING.md) for exact dated results and their limits.

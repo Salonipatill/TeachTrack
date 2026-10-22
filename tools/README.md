@@ -29,8 +29,26 @@ documentation dependency, not a production dependency:
 An explicit executable is supported with `--browser-executable PATH`.
 
 `check_documentation.py` checks maintained Markdown/HTML links and generated
-profile/reset references. It excludes the historical ORIGINAL_README.md. It does
+profile/reset and current feature references, and compares the generated test
+catalogue count with source discovery. It excludes the historical ORIGINAL_README.md. It does
 not check external URLs or claim a production deployment is healthy.
+
+## Offline feature browser checks
+
+```powershell
+.\.venv\Scripts\python.exe tools/check_feature_ui.py
+```
+
+This optional Playwright/Edge check renders current templates with synthetic
+faculty/guest context and serves their real local CSS/JavaScript through
+intercepted browser requests. It verifies Home/Features WORKSPACE visibility,
+Campus life/Contact navigation, the institute's Maps link, 2-26 quiz options,
+multiple answers, new question controls, custom category input and upload help
+at desktop/mobile widths. All external requests are blocked or intercepted,
+including the Maps destination. It does not start Django's server, submit forms,
+query account data or test live deployment/Google Maps behavior. Server-side
+form, database and scoring behavior belongs to the full application test suite.
+Use `--browser-executable PATH` for another installed Chromium browser.
 
 Authored chapters must be edited before rebuilding: PROJECT_DOCUMENTATION.md,
 DESIGN_SYSTEM.md, CONFIGURATION_REFERENCE.md, RECENT_CHANGES.md, deployment guides

@@ -1,5 +1,6 @@
 """Check local links and required current content in maintained documentation."""
 from html.parser import HTMLParser
+import ast
 from pathlib import Path
 import re
 from urllib.parse import unquote, urlsplit
@@ -43,8 +44,14 @@ def main():
             url = urlsplit(link)
             if url.scheme or url.netloc or not url.path or url.path.startswith('/'):
                 continue
-            if not (path.parent / unquote(url.path)).exists():
+            target = path.parent / unquote(url.path)
+            if not target.exists():
                 errors.append(f'{path.name}: missing local target {link}')
+            elif url.fragment and target.suffix == '.md':
+                headings = re.findall(r'^#{1,6}\s+(.+)$', target.read_text(encoding='utf-8'), re.M)
+                anchors = {re.sub(r'[^a-z0-9]+', '-', heading.lower()).strip('-') for heading in headings}
+                if unquote(url.fragment) not in anchors:
+                    errors.append(f'{path.name}: missing Markdown anchor {link}')
     generated = (ROOT / 'docs/FORM_REFERENCE.md').read_text(encoding='utf-8')
     for role in ('student', 'faculty', 'director'):
         if f'ProfileForm — {role}' not in generated:
@@ -52,6 +59,28 @@ def main():
     routes = (ROOT / 'docs/ROUTE_REFERENCE.md').read_text(encoding='utf-8')
     if '/accounts/profile/' not in routes or '/accounts/password/reset/' in routes:
         errors.append('Generated routes do not match current account features.')
+    required_references = {
+        'FORM_REFERENCE.md': ['`option_count`', '`option_z`', '`custom_category`', '30 MB', '32 MB'],
+        'DATABASE_REFERENCE.md': ['CharField(100)', 'custom name up to 100 characters'],
+        'CONFIGURATION_REFERENCE.md': ['UPLOAD_STORAGE=local', 'UPLOAD_STORAGE=gcs', '32 MB', '0011'],
+        'RECENT_CHANGES.md': ['WORKSPACE', 'Google Maps', '0011'],
+    }
+    for filename, terms in required_references.items():
+        source = (ROOT / 'docs' / filename).read_text(encoding='utf-8')
+        for term in terms:
+            if term not in source:
+                errors.append(f'{filename}: missing current feature reference {term}')
+    methods = sum(
+        1
+        for path in (ROOT / 'ClassApp').glob('test*.py')
+        for cls in ast.parse(path.read_text(encoding='utf-8')).body
+        if isinstance(cls, ast.ClassDef)
+        for method in cls.body
+        if isinstance(method, ast.FunctionDef) and method.name.startswith('test_')
+    )
+    catalogue = (ROOT / 'docs/TEST_CATALOGUE.md').read_text(encoding='utf-8')
+    if f'{methods} test methods are defined' not in catalogue:
+        errors.append('Generated test catalogue does not match current source discovery.')
     for error in errors:
         print(error)
     if errors:

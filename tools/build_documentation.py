@@ -17,11 +17,13 @@ from collections import defaultdict
 
 ROOT = Path(__file__).resolve().parent.parent
 DOCS = ROOT / 'docs'
-REVIEW_DATE = '21 October 2026'
+REVIEW_DATE = '22 October 2026'
 sys.path.insert(0, str(ROOT))
 os.environ['DEBUG'] = 'True'
 os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
 os.environ['SECRET_KEY'] = 'documentation-build-only-not-a-runtime-secret'
+os.environ['UPLOAD_STORAGE'] = 'disabled'
+os.environ['GS_BUCKET_NAME'] = ''
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Classroom.settings')
 
 import django
@@ -57,7 +59,7 @@ MODEL_PURPOSES = {
     'Teacher': 'Original complaint-system faculty wrapper, linked to a Django user.',
     'Complaint': 'A student concern assigned to a teacher, with a current status and latest faculty reply.',
     'ComplaintEvent': 'Chronological complaint messages and the status recorded for each event.',
-    'Resource': 'A private notes, PYQ or assignment upload with descriptive metadata and download count.',
+    'Resource': 'A private document or picture upload with a built-in/custom category, descriptive metadata and download count.',
     'Download': 'An authenticated resource-download initiation. Repeat downloads create additional rows.',
     'Notification': 'An individual recipient inbox item. Broadcasts create a separate row for each recipient.',
     'LoginThrottle': 'Hashed username/IP failure counters for the 15-minute login-attempt window.',
@@ -105,7 +107,7 @@ FIELD_NOTES = {
     'reply_time': 'Time of the latest faculty reply.',
     'status': 'Complaint state: pending, in_progress or resolved.',
     'audience': 'all, student, faculty or director; faculty forms restrict selection to student.',
-    'category': 'Resource category: notes, pyq or assignment.',
+    'category': 'Resource category: notes, pyq, assignment or a custom name up to 100 characters. Existing built-in values retain their display labels.',
     'original_name': 'Uploaded filename after removing directory components; used for attachment downloads.',
     'download_count': 'Download-response initiations, including repeats; not proof of completed transfers.',
     'link': 'Optional notification navigation target; the read endpoint only redirects to safe local paths.',
@@ -255,7 +257,7 @@ def route_reference():
             'Path case matters: `/Director_dashboard/` retains its original capitalization.', '',
             '## Query parameters', '', table(['Page', 'Parameter', 'Behavior'], [
                 ['Resources', 'q', 'Case-insensitive title, description and subject search; stripped to 150 characters.'],
-                ['Resources', 'category', 'notes, pyq or assignment; matches the stored category.'],
+                ['Resources', 'category', 'Built-in value (notes, pyq, assignment) or a saved custom category name; matches the stored category.'],
                 ['Resources', 'subject', 'Case-insensitive exact subject; stripped to 100 characters.'],
                 ['Resources', 'sort=title', 'Alphabetical title, then ID; otherwise model ordering is newest first.'],
                 ['Quizzes', 'code', 'Uppercase exact quiz code, stripped to six characters.'],
@@ -307,9 +309,12 @@ def form_reference():
             '- Email uniqueness is checked case-insensitively in the account form; the email is stored lowercase. Django User.email itself is not made globally unique by a database constraint.',
             '- Passwords use Django’s configured similarity, minimum-length (10), common-password and numeric-only rejection validators.',
             '- The quiz closing time must be later than the opening time.',
-            '- QuestionFormSet requires 1–50 question forms and uses the `questions` prefix. Options A and B are mandatory; C and D are optional.',
+            '- QuestionFormSet requires 1–50 question forms and uses the `questions` prefix. The builder starts with four options and supports 2–26 options (A–Z) per question, controlled by option_count. Every displayed option needs text. Older payloads without option_count retain the four-option compatibility behavior.',
             '- A single-selection question needs exactly one marked correct option. Every marked correct option needs text.',
             '- Multiple-selection questions are also checked by valid_quiz before students can attempt them; a valid quiz needs at least one correct option per question.',
+            '- Correct answers outside the current option count are rejected. Selecting multiple correct checkboxes enables the multiple-answer setting in the browser; the server still validates the single/multiple-choice rule.',
+            '- Resource categories include Notes, PYQs, Assignments and saved custom names. Add custom category requires a nonblank name up to 100 characters, normalizes whitespace and reuses matching existing labels without case differences. Saved categories appear in later upload choices and library filters.',
+            '- Resource files accept PDF, UTF-8 TXT, DOCX, PPTX, JPG, JPEG and PNG, up to 30 MB each. Images are verified with Pillow. The declared total request-body limit is 32 MB, including multipart overhead; the per-file limit is separate.',
             '- Complaint, doubt and feedback faculty choices include only active faculty users with the faculty role, ordered by name then ID.',
             '- Faculty announcement and notification forms permit the Students audience only; directors may choose all configured audiences.',
             '- A complaint reply requires a message up to 5,000 characters. Only directors receive the status input. A complaint body accepts up to 10,000 characters.',

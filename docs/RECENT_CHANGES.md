@@ -1,6 +1,6 @@
 # Current features and recent changes
 
-Updated 21 October 2026. This describes the current repository, not proof that an
+Updated 22 October 2026. This describes the current repository, not proof that an
 older Vercel deployment serves the same commit.
 
 ## Accounts and profiles
@@ -21,6 +21,14 @@ older Vercel deployment serves the same commit.
 - Creation shows title, subject, launch time, deadline and the question builder.
   Publication and the four identity requirements are applied automatically.
   Publication can still be changed by the existing authorized toggle.
+- Each question starts with four options and supports 2–26 options (A–Z). Use
+  **Add option** or **Remove last option** to adjust the count; removed options
+  are also removed from the selected correct answers. Every visible option needs text.
+- Tick every correct answer. Selecting more than one automatically enables
+  **Allow multiple correct options**. Turning that setting off keeps only the
+  first selected correct answer. The server validates answer membership and
+  requires exactly one answer for single-choice questions. Multiple-choice
+  attempts earn the point only when the selected set exactly matches the correct set.
 - Student attempts autofill name, enrollment and email from the account. Course,
   year, semester, section and batch have separate inputs, with existing values
   prefilled. Missing details can be completed before submission.
@@ -35,6 +43,15 @@ older Vercel deployment serves the same commit.
 
 ## Shared website behavior
 
+- TeachTrack logos open the public Home page, including after sign-in.
+- Signed-in users see **WORKSPACE**, linking to their dashboard, on Features,
+  Campus life and Contact. Features is the `/#features` view of Home; JavaScript
+  follows hash changes to show the button there and hide it on the main Home view.
+  Anonymous visitors retain Sign in/Get started navigation.
+- Campus life opens the internal `/campus-life/` page. Its descriptions no longer
+  link to Aurobindo's official website. **View location on Google Maps** in
+  **Find us in Indore** opens a search for Sri Aurobindo Institute of Technology,
+  Indore, Madhya Pradesh in a new tab. Telephone/email contact links remain.
 - Sun/moon button at bottom-right on public, login and dashboard pages. The choice
   persists in browser local storage, syncs across tabs, and initially follows the
   device theme. Restricted local storage does not break the current page.
@@ -46,23 +63,58 @@ older Vercel deployment serves the same commit.
 - Form navigation shows progress and prevents duplicate submissions. Image decoding
   is asynchronous; secondary campus photos retain lazy loading and image dimensions.
 
-## Production and storage
+## Resource uploads and custom categories
+
+- Faculty and directors can upload PDF, UTF-8 TXT, DOCX, PPTX, JPG/JPEG and PNG
+  resources. Image content is verified with Pillow; an image filename alone is
+  insufficient. Downloads remain authenticated.
+- The per-file limit is **30 MB** (30 × 1,024 × 1,024 bytes). The declared request
+  limit is **32 MB**, including multipart/form data and all files combined; adding
+  several individually valid files can still exceed that total.
+- Choose **+ Add custom category** in the upload form, then enter a name of up to
+  100 characters. Saving a resource makes its category available in future uploads
+  and library filters. Extra whitespace is collapsed, and names matching existing
+  category values/labels are reused case-insensitively. Notes, PYQs and Assignments
+  remain available.
+- Migration **0011_resource_custom_category** widens the indexed Resource.category
+  field to 100 characters and removes the fixed model choices; existing category
+  values remain unchanged. Apply `manage.py migrate` to the intended database.
+
+## Database and storage
 
 - Aiven MySQL uses mysql.connector.django and the committed public CA certificate;
   credentials remain private. Local MySQL can explicitly disable SSL; other MySQL servers can use custom CA/client certificates. Timeouts, connection reuse and health checks are configurable. PostgreSQL and local SQLite remain supported.
 - Vercel-provided deployment, production and branch hostnames are added to host
   and CSRF-origin lists. No global wildcard is required.
-- A GCS bucket is optional for startup. In production without a bucket, file
-  uploads are disabled at the form, request and storage layers; text workflows
-  remain available. There is no Supabase integration yet.
+- **UPLOAD_STORAGE=local** saves uploaded files under `media/` without Google
+  Cloud, independently of DEBUG and the database engine. PC MySQL stores the
+  file metadata; local storage keeps the bytes. Back up both database and media.
+- **UPLOAD_STORAGE=auto** is the default: use GCS if GS_BUCKET_NAME is set;
+  otherwise use local files with DEBUG=True and disable uploads with DEBUG=False.
+  **gcs** explicitly requires a bucket, while **disabled** rejects file uploads
+  at the form, request and storage layers. Text workflows remain available.
+  Persistent local disk is required when explicitly using local storage on a host.
+  There is no Supabase integration yet.
 - Local `manage.py runserver` loads the selected TEACHTRACK_ENV_FILE (default .env) with override enabled. Other commands and
   deployed WSGI/ASGI use normal process-environment precedence.
 
 ## Verification record
 
-The feature-removal run passed 57 workflow tests. The database update adds 14 configuration checks: 71 tests passed on SQLite and disposable local MySQL; Aiven workflow coverage plus focused rechecks passed with TLS active (see DATABASE_SETUP.md for run accounting). Earlier local Edge checks
+All 90 automated tests passed on both isolated SQLite and disposable MySQL 8.0.46
+on 22 October 2026. Six new regression cases cover current navigation, Maps,
+26-option quizzes, exact-size image uploads and extra-wrong-answer scoring.
+Two redundant test-only streaming-response closes were removed after the first
+MySQL run exposed them. Offline Edge checks passed 59 assertions across
+1440/768/390/360px using rendered templates and local assets; the Maps target was
+intercepted. No deployed application or existing application database was changed.
+
+Detailed results and limits belong in [TESTING.md](TESTING.md), and discovered
+cases are listed in [TEST_CATALOGUE.md](TEST_CATALOGUE.md). Database verification
+is recorded in [DATABASE_SETUP.md](DATABASE_SETUP.md). Earlier local Edge checks
 covered public pages at 390/768/1440 pixels, role navigation, faculty creation,
 quiz autofill/submission/results, keyboard access and actual dark colours.
-Production checks, static collection and dependency checks passed during the
-quality review. These observations do not certify a protected live Vercel site,
+Current system, migration-drift, dependency, Python/JavaScript syntax and synthetic
+production-configuration checks passed. Static collection is a historical review
+result. The saved PC MySQL login still returns error 1045 and requires valid local
+credentials. These observations do not certify a protected live Vercel site,
 all browser engines, external content, production load or a bug-free application.
