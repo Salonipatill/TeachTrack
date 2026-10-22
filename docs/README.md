@@ -1,19 +1,21 @@
 # TeachTrack documentation
 
-Updated 21 October 2026. The current source and documented behavior include profile
-editing, automatic quiz defaults, separate academic autofill/snapshots, light/dark
-mode, responsive quiz layouts, public Contact layout, Aiven TLS and optional
-production storage. Public password reset and SMTP have been removed.
+Updated 22 October 2026. The current source and documented behavior include profile
+editing, quiz questions with 2–26 options and multiple correct answers, separate
+academic autofill/snapshots, light/dark mode, Home/WORKSPACE navigation, Campus life
+and its Google Maps location search, 30 MB document/image uploads, custom resource
+categories, local storage without Google Cloud and Aiven TLS. Public password
+reset and SMTP have been removed.
 
 | Guide | Contents |
 | --- | --- |
-| [Recent changes](RECENT_CHANGES.md) | Current features, removed behavior, migration 0010 and verification limits |
+| [Recent changes](RECENT_CHANGES.md) | Current features, removed behavior, migrations 0010–0011 and verification limits |
 | [Project handbook](PROJECT_DOCUMENTATION.md) | Architecture, setup, roles, workflows, security and operations |
 | [Database setup](DATABASE_SETUP.md) | Local MySQL/Aiven environment switching, SSL modes and isolated test runner |
 | [Vercel deployment](VERCEL_DEPLOYMENT.md) | Aiven configuration, commit identity, static assets and live acceptance |
 | [Google Cloud deployment](DEPLOYMENT.md) | Optional container, PostgreSQL and private GCS infrastructure |
 | [Configuration reference](CONFIGURATION_REFERENCE.md) | Current variables, defaults, storage modes and disabled email |
-| [Database reference](DATABASE_REFERENCE.md) | All project models/fields, batch and academic_details |
+| [Database reference](DATABASE_REFERENCE.md) | All project models/fields, custom resource categories, batch and academic_details |
 | [Form reference](FORM_REFERENCE.md) | Active forms, per-role profile fields and automatic quiz defaults |
 | [Route reference](ROUTE_REFERENCE.md) | Current routes, authorization and own-account profile endpoint |
 | [Design system](DESIGN_SYSTEM.md) | Shared components, responsive layouts and light/dark themes |
@@ -23,7 +25,7 @@ production storage. Public password reset and SMTP have been removed.
 | [Website review](WEBSITE_REVIEW.md) | Quality checklist and remaining operational checks |
 | [Upgrade guide](UPGRADE.md) | Original schema/account migration and preservation procedure |
 | [Change log](CHANGELOG.md) | Recent features and original upgrade history |
-| [Campus content](CAMPUS_CONTENT.md) | Image/content sources |
+| [Campus content](CAMPUS_CONTENT.md) | Image/content sources and internal navigation/Google Maps behavior |
 | [Tool guide](../tools/README.md) | Build, export and validation commands |
 
 ## Offline deliverables
