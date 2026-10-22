@@ -35,6 +35,7 @@ release, are false. Comma-separated host/origin lists are trimmed.
 | VERCEL_PROJECT_PRODUCTION_URL | Provided production hostname; appended to host/origin lists |
 | VERCEL_BRANCH_URL | Provided branch hostname; appended to host/origin lists |
 | GS_BUCKET_NAME | Optional private Google Cloud Storage bucket; see upload modes below |
+| UPLOAD_STORAGE | auto (default), local, gcs or disabled; independent of the database engine |
 | TRUST_PROXY_HEADERS | False; True accepts HTTP_X_FORWARDED_PROTO=https from a trusted proxy |
 | DEMO_PASSWORD | Explicit chosen password for development seed_demo; never a default production password |
 | PORT | Container bind port, default 8080; not read by the Django settings parser |
@@ -65,11 +66,16 @@ an example URI when it contains reserved URL characters.
 
 | Mode | Default storage | Uploads |
 | --- | --- | --- |
-| DEBUG=True, no bucket | Local MEDIA_ROOT | Enabled for development |
-| GS_BUCKET_NAME configured | Private GCS backend | Enabled; runtime credentials/permissions still required |
-| DEBUG=False, no bucket | ClassApp.storage.DisabledUploadStorage | Disabled |
+| UPLOAD_STORAGE=local | Local MEDIA_ROOT (`media/`) | Enabled, including with DEBUG=False; no cloud credentials needed |
+| UPLOAD_STORAGE=gcs | Private GCS backend | Enabled; GS_BUCKET_NAME and runtime credentials/permissions required |
+| UPLOAD_STORAGE=disabled | ClassApp.storage.DisabledUploadStorage | Disabled |
+| UPLOAD_STORAGE=auto (or unset) | GCS if a bucket exists, otherwise local when DEBUG=True, otherwise disabled | Preserves existing defaults |
 
-UPLOADS_ENABLED is derived from DEBUG or the bucket name. The form explains the
+UPLOADS_ENABLED is derived from the selected storage mode. With local storage,
+MySQL stores resource details and file paths; file contents stay in MEDIA_ROOT.
+Back up both the database and media directory. Use local mode on your PC or a
+server with persistent disk; ephemeral hosting needs persistent external storage.
+The form explains the
 unavailable state, middleware rejects file-bearing mutation requests, and the
 storage backend refuses writes. Text-only workflows remain available. A bucket
 is not required for production startup. Supabase is not implemented.
@@ -87,8 +93,8 @@ is not required for production startup. Supabase is not implemented.
   redirect and HSTS. Only trust forwarded HTTPS headers behind a trusted proxy.
 - Password validation requires at least 10 characters plus Django's similarity,
   common-password and numeric-password checks.
-- Files are limited to 10 MB by form validation; declared request bodies above
-  12 MB are rejected. File content/image validation and private download
+- Files are limited to 30 MB by form validation; declared request bodies above
+  32 MB are rejected. File content/image validation and private download
   authorization remain in place when storage is configured.
 - Lists use 15 records per page. Quiz builders allow 1-50 questions. Login failure
   thresholds are 10 attempts per 15-minute username/peer-IP window.
