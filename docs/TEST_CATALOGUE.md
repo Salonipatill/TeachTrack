@@ -1,9 +1,31 @@
 # Test catalogue
 
-94 test methods are defined in `ClassApp/test*.py`. This catalogue describes source coverage; a successful test execution must be recorded separately.
+116 test methods are defined in `ClassApp/test*.py`. This catalogue describes source coverage; a successful test execution must be recorded separately.
 
 | Source | Test class | Method | Scenario |
 | --- | --- | --- | --- |
+| test_blob_storage.py | BlobProtocolTests | `test_blob_configuration_and_auto_detection` | blob configuration and auto detection |
+| test_blob_storage.py | BlobProtocolTests | `test_signing_matches_official_javascript_sdk_contract` | signing matches official javascript sdk contract |
+| test_blob_storage.py | BlobProtocolTests | `test_signer_rejects_wrong_path_operation_and_expiry` | signer rejects wrong path operation and expiry |
+| test_blob_storage.py | BlobProtocolTests | `test_credential_resolution_never_exposes_token_in_errors` | credential resolution never exposes token in errors |
+| test_blob_storage.py | BlobProtocolTests | `test_blob_path_fits_legacy_fields_and_keeps_extension` | blob path fits legacy fields and keeps extension |
+| test_blob_storage.py | BlobProtocolTests | `test_storage_only_accepts_verified_direct_uploads` | storage only accepts verified direct uploads |
+| test_blob_storage.py | BlobProtocolTests | `test_read_bounds_and_exact_size_are_enforced` | read bounds and exact size are enforced |
+| test_blob_storage.py | DirectBlobUploadTests | `test_upload_token_is_private_scoped_and_size_constrained` | upload token is private scoped and size constrained |
+| test_blob_storage.py | DirectBlobUploadTests | `test_upload_start_requires_login_csrf_and_correct_role` | upload start requires login csrf and correct role |
+| test_blob_storage.py | DirectBlobUploadTests | `test_invalid_files_destinations_and_size_are_rejected_before_storage` | invalid files destinations and size are rejected before storage |
+| test_blob_storage.py | DirectBlobUploadTests | `test_all_supported_form_targets_and_legacy_aliases` | all supported form targets and legacy aliases |
+| test_blob_storage.py | DirectBlobUploadTests | `test_resource_upload_validates_bytes_and_saves_private_blob_path` | resource upload validates bytes and saves private blob path |
+| test_blob_storage.py | DirectBlobUploadTests | `test_full_30_mib_file_is_submitted_by_receipt_without_binary_request` | full 30 mib file is submitted by receipt without binary request |
+| test_blob_storage.py | DirectBlobUploadTests | `test_forged_expired_or_cross_user_receipts_do_not_read_or_save_files` | forged expired or cross user receipts do not read or save files |
+| test_blob_storage.py | DirectBlobUploadTests | `test_duplicate_receipts_raw_uploads_and_invalid_content_are_rejected` | duplicate receipts raw uploads and invalid content are rejected |
+| test_blob_storage.py | DirectBlobUploadTests | `test_storage_failures_are_retryable_and_do_not_create_records` | storage failures are retryable and do not create records |
+| test_blob_storage.py | DirectBlobUploadTests | `test_announcement_and_doubt_attachments_use_existing_permission_checks` | announcement and doubt attachments use existing permission checks |
+| test_blob_storage.py | DirectBlobUploadTests | `test_blob_download_redirect_is_private_and_counted_once` | blob download redirect is private and counted once |
+| test_blob_storage.py | DirectBlobUploadTests | `test_old_database_backed_resource_still_downloads_after_switching_storage` | old database backed resource still downloads after switching storage |
+| test_blob_storage.py | DirectBlobUploadTests | `test_quiz_images_validate_permissions_before_signing_download` | quiz images validate permissions before signing download |
+| test_blob_storage.py | DirectBlobUploadTests | `test_quiz_creation_stores_a_verified_private_image` | quiz creation stores a verified private image |
+| test_blob_storage.py | DirectBlobUploadTests | `test_total_direct_attachment_limit_is_checked_before_read` | total direct attachment limit is checked before read |
 | test_database_config.py | DatabaseConfigurationTests | `test_default_preserves_aiven_certificate_and_hostname_verification` | default preserves aiven certificate and hostname verification |
 | test_database_config.py | DatabaseConfigurationTests | `test_local_mysql_disables_ssl_without_loading_any_certificate` | local mysql disables ssl without loading any certificate |
 | test_database_config.py | DatabaseConfigurationTests | `test_connector_url_uses_the_same_environment_configuration` | connector url uses the same environment configuration |

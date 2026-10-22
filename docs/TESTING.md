@@ -1,7 +1,7 @@
 # Testing and verification
 
 Run from the TeachTrack folder using the project virtual environment. The current
-source defines **94 test methods**, listed in [TEST_CATALOGUE.md](TEST_CATALOGUE.md).
+source defines **116 test methods**, listed in [TEST_CATALOGUE.md](TEST_CATALOGUE.md).
 Tests use a separate database, in-memory storage for most uploads and temporary
 media directories for local-disk tests. Existing application data is not needed.
 
@@ -12,8 +12,8 @@ and Python 3.14.5 from `.venv\Scripts\python.exe`:
 
 | Database | Final result | Test runtime |
 | --- | --- | --- |
-| Isolated in-memory SQLite | 94/94 passed | 41.896 seconds |
-| Disposable local MySQL 8.0.46, loopback, TLS disabled | 94/94 passed | 87.647 seconds |
+| Isolated in-memory SQLite | 116/116 passed | 96.981 seconds |
+| Disposable local MySQL 8.0.46, loopback, TLS disabled | 116/116 passed | 167.222 seconds |
 
 Django's system check reported no issues in both runs. The unique MySQL test
 database was destroyed, the owned MySQL process stopped, and the checked
@@ -27,7 +27,8 @@ second close emitted request-finished cleanup again and invalidated MySQL's
 test transaction, causing cascading connection errors. Removing those two
 redundant test-only calls preserved automatic stream/file closure. Both complete
 90-test suites passed after that correction. The subsequent resource-download
-repair added four regression cases; the final 94-test suites above include them.
+repair added four regression cases. Private Blob integration added 22 more;
+the final 116-test suites above include all of them.
 The SQLite rerun used a fast test-only password hasher; MySQL used normal settings.
 
 Additional source checks passed: `pip check`, Django `check`,
@@ -85,7 +86,7 @@ passed on both engines as recorded above. No application failure was found in
 the exercised workflows. Additional checks passed:
 
 - **139 real HTTP browser assertions** in one standalone workflow test, using
-  a disposable Django test server and SQLite/media (54.055 seconds). The browser
+  a disposable Django test server and SQLite/media (60.242 seconds on the final rerun). The browser
   signed in as director, faculty and student and exercised real form submissions,
   authenticated downloads after removing their local file, quiz creation/grading,
   feedback, doubt replies, complaint resolution/history, announcements,
@@ -99,13 +100,22 @@ the exercised workflows. Additional checks passed:
   320px and absence of browser JavaScript errors. No live form was submitted and
   no signed-in production workflow was performed.
 - Dependency, Python/JavaScript syntax and documentation checks passed again.
+- **16 private Blob browser assertions** passed in 30.468 seconds with a disposable
+  loopback storage service, including private upload headers, a full 30 MiB direct
+  upload/download, exact bytes, failure/retry and application bodies below 4 KB.
+- The pushed Blob implementation commit `a951666` has a successful Vercel status;
+  the public homepage returns 200 but still reports uploads disabled. The private
+  store has not been connected/verified by this session. Final local documentation
+  and private-header changes still need publishing with the intended release.
 
-The live page currently declares `data-uploads-enabled="false"`. New uploads on
-Vercel are disabled by its storage configuration; this review did not silently
-enable them or change live environment variables. Local uploads and shared
-database-backed resource downloads are separate, tested capabilities. Supporting
-the full 30 MB upload requirement on Vercel needs direct persistent file storage;
-the hosting function payload limit remains independent of app validation. See
+At the read-only live check, the page declared `data-uploads-enabled="false"`.
+Private Vercel Blob direct uploads have since been implemented and tested in
+isolated environments. Live activation still requires connecting a private store
+and deploying this source; no live Blob credentials, uploads or downloads were
+verified. Local uploads and preserved database-backed downloads remain supported.
+The separate Blob browser workflow verifies 30 MiB direct upload/download and
+failed-upload retry using a disposable loopback storage service, real Django
+forms and CSRF. It does not prove Vercel account configuration. See
 [deployment storage limits](VERCEL_DEPLOYMENT.md#files-and-email).
 
 Repeat the isolated browser workflow check with:

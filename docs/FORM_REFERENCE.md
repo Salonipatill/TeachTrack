@@ -263,6 +263,7 @@ Public student registration ignores injected role or superuser fields. Director-
 - Complaint, doubt and feedback faculty choices include only active faculty users with the faculty role, ordered by name then ID.
 - Faculty announcement and notification forms permit the Students audience only; directors may choose all configured audiences.
 - A complaint reply requires a message up to 5,000 characters. Only directors receive the status input. A complaint body accepts up to 10,000 characters.
+- Private Vercel Blob mode uploads bytes directly with scoped signed PUT URLs and validates them server-side using user/form/field-bound receipts. Authorized downloads redirect to private GET URLs valid for 5 minutes. See the Vercel deployment guide.
 - Resource, announcement and doubt file validation and image safety checks are detailed in the handbook Security and uploads chapter.
 - New quiz forms automatically publish and require name, enrollment, email and course; these flags are not displayed.
 - StudentInfoForm autofills identity and separate course/year/semester/section/batch fields from the account.

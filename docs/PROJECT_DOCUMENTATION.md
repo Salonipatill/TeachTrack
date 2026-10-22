@@ -1,7 +1,7 @@
 # TeachTrack project handbook
 
 
-Documentation edition: 22 October 2026. Prepared for Zaman & Saloni. This handbook describes the implementation in this workspace, including quiz option controls and multiple correct answers, Home/WORKSPACE navigation, Campus Life location search, local document/image uploads and custom resource categories.
+Documentation edition: 22 October 2026. Prepared for Zaman & Saloni. This handbook describes the implementation in this workspace, including quiz option controls and multiple correct answers, Home/WORKSPACE navigation, Campus Life location search, local/private Vercel Blob document and image uploads and custom resource categories.
 
 The project is a server-rendered Django academic workspace. It has one shared campus workspace and three application roles: Student, Faculty and Director. Its source retains the original ClassApp/Classroom layout, academic relationships and migration history while using Django authentication for current accounts.
 
@@ -630,7 +630,7 @@ Authenticated responses receive private/no-store headers from the custom middlew
 | File size | At most 30 × 1,024 × 1,024 bytes per validated upload |
 | Declared request body | Custom middleware rejects more than 32 × 1,024 × 1,024 bytes, including combined files/form data |
 
-The resources form, doubt attachments and announcement documents permit the document types above and validated JPG/JPEG/PNG images. QuestionEntryForm uses a Django ImageField plus the image-enabled validator. Existing image delivery recognizes selected stored image MIME types, while new uploads remain subject to the current form restrictions. The 32 MiB cap applies to the entire request, so several valid files can exceed it together.
+The resources form, doubt attachments and announcement documents permit the document types above and validated JPG/JPEG/PNG images. QuestionEntryForm uses a Django ImageField plus the image-enabled validator. Existing image delivery recognizes selected stored image MIME types, while new uploads remain subject to the current form restrictions. The 32 MiB cap applies to the entire multipart request; direct Blob receipts also enforce 32 MiB combined attachment content per form.
 
 These checks validate recognizable formats and size; they do not perform antivirus scanning, strip active document content or prove a file harmless. Declared Content-Length checks do not independently enforce a streaming ingress limit when a client omits that header. Production ingress limits and any malware-scanning process are separate operations.
 
@@ -667,18 +667,47 @@ Requirements describe the intended install set. A virtual environment can differ
 
 DATABASE_URL selects SQLite locally or PostgreSQL/MySQL; see CONFIGURATION_REFERENCE.md and VERCEL_DEPLOYMENT.md. Aiven uses MySQL Connector with certificate/hostname verification by default; local development can explicitly disable SSL via MYSQL_SSL_MODE without editing source.
 
-UPLOAD_STORAGE selects file handling independently of DATABASE_URL. Explicit local, gcs and disabled modes apply independently of DEBUG. Local mode saves files under MEDIA_ROOT (media/) without Google Cloud; MySQL/PostgreSQL/SQLite store their metadata. Back up both the database and local media directory.
+UPLOAD_STORAGE selects file handling independently of DATABASE_URL. Explicit local, blob, gcs and disabled modes apply independently of DEBUG. Local mode saves files under MEDIA_ROOT (media/) without Google Cloud; MySQL/PostgreSQL/SQLite store their metadata. Back up both the database and local media directory.
 
 | UPLOAD_STORAGE | Behavior |
 | --- | --- |
-| auto (default) | Use GCS when GS_BUCKET_NAME is set; otherwise local files with DEBUG=True or disabled uploads with DEBUG=False |
+| auto (default) | Use private Blob with credentials, otherwise GCS with GS_BUCKET_NAME, otherwise local with DEBUG=True or disabled with DEBUG=False |
 | local | Use FileSystemStorage under media/; a GCS bucket is unnecessary |
+| blob | Direct transfers to private Vercel Blob; requires server-side Blob credentials |
 | gcs | Use the private GCS backend; requires GS_BUCKET_NAME and runtime credentials |
 | disabled | Reject file uploads at the form, middleware and storage layers; text workflows remain available |
 
-Persistent disk is required for local mode on a hosted server; an ephemeral platform should use GCS or disabled uploads. A bucket remains optional for startup under auto, local or disabled modes. Supabase is not integrated.
+Persistent disk is required for local mode on a hosted server; an ephemeral platform should use private Blob, GCS or disabled uploads. A bucket remains optional for startup under auto, local or disabled modes. Supabase is not integrated.
 
 Outbound email uses the dummy backend. SMTP variables, Forgot password, public reset links and email/phone OTP flows are removed. Signed-in users can change their password with the current password; trusted administrators can use Django changepassword from a private terminal.
+
+### Private Vercel Blob direct transfers
+
+`UPLOAD_STORAGE=blob` enables private storage without Google Cloud for resources,
+announcement documents, doubt attachments and quiz images. The browser sends
+binary data directly to Blob, then submits signed file receipts with the normal
+CSRF-protected form. Django reads back and validates the content and exact size
+before saving the immutable object key. Receipts bind user, form and field and
+expire after 30 minutes; upload URLs expire after 15 minutes. Files remain limited
+to 30 MiB each and 32 MiB combined per form.
+
+Protected download/image views apply their existing access checks and redirect
+to private GET URLs valid for 5 minutes, keeping large downloads outside Function
+payload limits. Blob mode uses `blob/USER_ID/UUID/FILENAME` keys rather than local
+`resources/` paths. Filenames are sanitized/truncated for legacy field limits;
+Resource.original_name retains the full original name. Old local resources still
+use a matching ResourceFile database copy when their file is missing.
+
+Configure a **private** Blob store connected to TeachTrack in Vercel. Authentication
+uses OIDC plus BLOB_STORE_ID or BLOB_READ_WRITE_TOKEN, kept server-side. See
+[Vercel setup](VERCEL_DEPLOYMENT.md#files-and-email). JavaScript is required;
+failures restore the selected file and button for retry. Abandoned or invalid
+forms can leave unreferenced private blobs. Live credentials and transfers need
+checking after activation; isolated tests do not establish live storage access.
+
+The official Python SDK does not expose Signed URLs yet. A small Python adapter
+implements that protocol with no new runtime dependency. Offline contract fixtures
+generated by official `@vercel/blob@2.8.2` verify GET, HEAD and PUT signing.
 
 ## 14. Management commands
 
@@ -785,7 +814,7 @@ Migrations are separate from web startup. This avoids having several web instanc
 
 ### Production startup requirements
 
-With DEBUG=False, settings require SECRET_KEY of at least 50 characters and a PostgreSQL or MySQL configuration. With the default UPLOAD_STORAGE=auto, omitting GS_BUCKET_NAME disables uploads. Explicit local mode enables uploads without a bucket when persistent disk is available; explicit gcs mode requires a bucket.
+With DEBUG=False, settings require SECRET_KEY of at least 50 characters and a PostgreSQL or MySQL configuration. With UPLOAD_STORAGE=auto, omitting both Blob credentials and GS_BUCKET_NAME disables production uploads. Explicit local mode enables uploads without a bucket when persistent disk is available; explicit gcs mode requires a bucket.
 
 On Vercel, DEBUG defaults false and supplied VERCEL_URL, VERCEL_PROJECT_PRODUCTION_URL and VERCEL_BRANCH_URL hostnames are added to ALLOWED_HOSTS and HTTPS CSRF origins. Custom domains still belong in explicit configuration. Process environment wins over .env except local manage.py runserver, which deliberately loads the selected TEACHTRACK_ENV_FILE (default .env) with override=True. See VERCEL_DEPLOYMENT.md for deploy and verification steps.
 

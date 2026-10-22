@@ -22,7 +22,7 @@
 <text x="345.0" y="268" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">SQLite / MySQL / PostgreSQL</text>
 <rect x="510" y="225" width="205" height="70" rx="9" fill="white" stroke="#cbded2"/>
 <text x="612.5" y="249" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Private uploaded files</text>
-<text x="612.5" y="268" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Local media / GCS bucket</text>
+<text x="612.5" y="268" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Local / private Blob / GCS</text>
 <rect x="25" y="225" width="160" height="70" rx="9" fill="white" stroke="#cbded2"/>
 <text x="105.0" y="249" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Light / dark mode</text>
 <text x="105.0" y="268" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Browser preference</text>

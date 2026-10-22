@@ -62,7 +62,7 @@ def main():
     required_references = {
         'FORM_REFERENCE.md': ['`option_count`', '`option_z`', '`custom_category`', '30 MB', '32 MB'],
         'DATABASE_REFERENCE.md': ['CharField(100)', 'custom name up to 100 characters'],
-        'CONFIGURATION_REFERENCE.md': ['UPLOAD_STORAGE=local', 'UPLOAD_STORAGE=gcs', '32 MB', '0011'],
+        'CONFIGURATION_REFERENCE.md': ['UPLOAD_STORAGE=local', 'UPLOAD_STORAGE=blob', 'UPLOAD_STORAGE=gcs', '32 MB', '0011'],
         'RECENT_CHANGES.md': ['WORKSPACE', 'Google Maps', '0011'],
     }
     for filename, terms in required_references.items():

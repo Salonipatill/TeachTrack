@@ -11,6 +11,7 @@ The Methods column describes verbs used by the interface. Explicit method decora
 | Path | URL name | View | Methods | Access | Fixed arguments |
 | --- | --- | --- | --- | --- | --- |
 | `/accounts/profile/` | `profile_edit` | profile_edit | GET, POST | Authenticated; own account only | — |
+| `/uploads/blob/` | `blob_upload_url` | upload_url | POST | Authenticated; permitted role/form/field only; private Blob mode | — |
 | `/dashboard/` | `dashboard` | dashboard | GET | Authenticated | — |
 | `/` | `index` | index | GET | Public | — |
 | `/index/` | `—` | index | GET | Public | — |

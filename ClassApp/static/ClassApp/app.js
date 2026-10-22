@@ -50,7 +50,8 @@ if (document.body.dataset.blobUploadUrl) {
             }
             const details = await response.json();
             const upload = await fetch(details.url, {method: 'PUT', body: file,
-              credentials: 'omit', headers: {'Content-Type': details.content_type}});
+              credentials: 'omit', headers: {'Content-Type': details.content_type,
+                'x-vercel-blob-access': 'private'}});
             if (!upload.ok) throw new Error('The upload failed. Please try again.');
             receipt = {ticket: details.ticket, created: Date.now(), field: input.name};
             uploaded.set(file, receipt);

@@ -2,23 +2,24 @@
 
 ## Post-deployment recheck
 
-Repeated full suites passed: 94/94 SQLite and 94/94 disposable MySQL. Real
+Updated full suites passed: 116/116 SQLite and 116/116 disposable MySQL. Real
 HTTP browser workflows passed 139 assertions against a disposable test server;
 the offline UI check passed 59. A live public/read-only review passed 68 checks,
 including public pages, protected-route redirects, theme/carousel behavior,
 13 campus images and mobile widths 320/390/768/1440px. Authenticated live
 submissions were not performed; synthetic role workflows were exercised locally.
 
-The live site's upload-availability flag is false. New live uploads require
-storage configuration; local uploads and database-backed downloads passed their
-checks. Full-size 30 MB hosted transfers need direct persistent storage, within
-the host's independent payload limits. No deployment/environment/data change
-was made by this review. Detailed commands and limits are in TESTING.md.
+The live site's upload flag was false during read-only review. Private Vercel
+Blob direct uploads/downloads are now implemented, including a tested 30 MiB
+browser transfer and retry flow against disposable storage. Live activation
+requires connecting a private store and deploying this source; actual Vercel Blob
+credentials and signed-in live transfers have not been verified. No production
+environment/data changes were made by these tests. See TESTING.md.
 
 ## Earlier verification scope
 
 This review covers the checked-out source and isolated local verification. The
-current ClassApp suite has **94 tests**, all passing on isolated SQLite and a
+pre-Blob ClassApp suite had **94 tests**, all passing on isolated SQLite and a
 disposable local MySQL 8.0.46 server. The saved PC MySQL login still returns
 **1045 (Access denied)**. This review does not certify the deployed Vercel website
 or validate that saved account/password.

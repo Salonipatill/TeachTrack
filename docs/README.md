@@ -3,7 +3,7 @@
 Updated 22 October 2026. The current source and documented behavior include profile
 editing, quiz questions with 2–26 options and multiple correct answers, separate
 academic autofill/snapshots, light/dark mode, Home/WORKSPACE navigation, Campus life
-and its Google Maps location search, 30 MB document/image uploads, custom resource
+and its Google Maps location search, 30 MB local/private Vercel Blob document and image uploads, custom resource
 categories, local storage without Google Cloud and Aiven TLS. Public password
 reset and SMTP have been removed.
 

@@ -5,6 +5,7 @@ Run with the project Python; optional Playwright and installed Edge are required
 """
 import logging
 import secrets
+import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -48,7 +49,7 @@ class BlobBrowserTests(StaticLiveServerTestCase):
                 self.send_response(status)
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.send_header('Access-Control-Allow-Methods', 'PUT, GET, OPTIONS')
-                self.send_header('Access-Control-Allow-Headers', 'content-type')
+                self.send_header('Access-Control-Allow-Headers', 'content-type, x-vercel-blob-access')
                 self.send_header('Content-Length', str(len(body)))
                 self.send_header('Content-Type', 'application/octet-stream')
                 if self.command == 'GET':
@@ -60,6 +61,8 @@ class BlobBrowserTests(StaticLiveServerTestCase):
                 self.send(204)
 
             def do_PUT(self):
+                if self.headers.get('x-vercel-blob-access') != 'private':
+                    return self.send(400)
                 name = unquote(urlsplit(self.path).path.lstrip('/'))
                 content = self.rfile.read(int(self.headers['Content-Length']))
                 transfers.append(('PUT', name, len(content)))
@@ -119,8 +122,9 @@ class BlobBrowserTests(StaticLiveServerTestCase):
                     page.goto(self.live_server_url+'/resources/upload/')
                     page.locator('#id_title').fill(filename)
                     page.locator('#id_subject').fill('Blob browser check')
-                    page.locator('#id_file').set_input_files({'name': filename,
-                        'mimeType': 'image/png' if filename.endswith('.png') else 'text/plain', 'buffer': body})
+                    local_file = settings.BLOB_TEST_FILE_ROOT / filename
+                    local_file.write_bytes(body)
+                    page.locator('#id_file').set_input_files(str(local_file), timeout=60000)
                     if filename.endswith('.png'):
                         fail_next[0] = True
                         page.get_by_role('button', name='Save & continue', exact=True).click()
@@ -157,4 +161,16 @@ class BlobBrowserTests(StaticLiveServerTestCase):
 if __name__ == '__main__':
     logging.getLogger('django.request').setLevel(logging.CRITICAL)
     settings.PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
-    raise SystemExit(bool(get_runner(settings)(verbosity=1, interactive=False, debug_mode=True).run_tests(['__main__'])))
+    cache = (ROOT / '.pytest_cache').resolve()
+    cache.mkdir(exist_ok=True)
+    assert cache.is_relative_to(ROOT.resolve())
+    with tempfile.TemporaryDirectory(prefix='blob-browser-', dir=cache) as folder:
+        target = Path(folder).resolve()
+        assert target.is_relative_to(cache)
+        settings.BLOB_TEST_FILE_ROOT = target
+        try:
+            failures = get_runner(settings)(verbosity=1, interactive=False, debug_mode=True).run_tests(['__main__'])
+        finally:
+            connections.close_all()
+            assert target.resolve().is_relative_to(cache)
+    raise SystemExit(bool(failures))

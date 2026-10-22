@@ -76,6 +76,30 @@ DESIGN_SYSTEM.md, CONFIGURATION_REFERENCE.md, RECENT_CHANGES.md, deployment guid
 and test/review notes. Generated files should be refreshed through the builder
 rather than edited directly. Re-export the PDF after any handbook change.
 
+## Private Blob browser and signing checks
+
+```powershell
+.\.venv\Scripts\python.exe tools/check_blob_uploads_ui.py
+```
+
+Runs a real Django/CSRF browser workflow with disposable SQLite and a loopback
+storage service. Checks private upload headers, PNG and full 30 MiB direct
+transfers, authenticated redirect downloads, exact bytes, counts and failed-upload
+retry. Application form bodies remain below 4 KB. Requires Edge and Playwright;
+does not use Vercel credentials or verify a live Blob store. External requests
+are blocked. It is separate from the 116 ClassApp tests.
+
+The Python signing protocol is compared with synthetic fixtures produced by the
+official JavaScript SDK. To regenerate those fixtures after a protocol upgrade:
+
+```powershell
+npm.cmd install --prefix .pytest_cache/blob-contract --ignore-scripts --no-audit --no-fund @vercel/blob@2.8.2
+node tools/build_blob_signing_fixture.mjs .pytest_cache/blob-contract/node_modules/@vercel/blob
+```
+
+Installation downloads the official package. Fixture generation is offline and
+uses synthetic keys, not a real account. No Node runtime is needed in production.
+
 ## MySQL verification
 
 `python tools/verify_mysql.py --env-file .env.local-mysql` checks the selected
