@@ -4,6 +4,10 @@ TeachTrack is a Django academic workspace for **students, faculty and directors*
 It brings quizzes, resources, announcements, notifications, doubts, feedback,
 complaints and director reporting into one campus website.
 
+## Live Demo
+
+[Visit TeachTrack](https://teachtrack-gamma.vercel.app/)
+
 ## Current features
 
 - Public home, campus and Contact pages with shared navigation/header/footer.
