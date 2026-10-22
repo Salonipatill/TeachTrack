@@ -35,8 +35,14 @@ a keyboard skip link; reduced-motion preferences are respected. Mobile controls,
 form actions and toolbar wrapping are adjusted at small widths. Form navigation
 shows progress and prevents duplicate submission; back navigation restores it.
 
-Light muted text uses #596b75. Dark mode sets the page background to #10191f,
-surfaces to #1a2831, primary text to #e6edf1 and muted text to #a5b5be. The generated
+Light muted text uses #596b75. Dark mode uses a charcoal/slate background #10151d,
+card surfaces #1a222e, primary text #edf2f7 and muted text #a9b5c5. Mint actions
+use #49c7b2 with dark #092b25 labels; secondary controls use #222d3b surfaces.
+Statistics, complaint counters and the welcome banner have explicit dark surfaces
+so light-theme backgrounds cannot wash out their text. Pending, in-progress and
+resolved states retain amber, blue and green treatments. Carousel arrows and dots
+have their own styling, separate from primary actions. Form controls, charts,
+navigation, campus cards and footer share the same dark palette. The generated
 colour index is authoritative for exact selector/property declarations.
 
 
@@ -62,7 +68,10 @@ The retained original theme and legacy template inline styles are not the active
 
 ## 2. Colour index and theme variables
 
-The active stylesheet contains 111 distinct explicit hex literals, plus named white and transparent values. [COLOUR_INDEX.md](COLOUR_INDEX.md) lists every value, RGB triplet, alpha and direct selector/property usage. colour-index.json provides the same data for tools. The offline HTML handbook includes visual swatches and a filter for colour values or selectors.
+The generated [COLOUR_INDEX.md](COLOUR_INDEX.md) lists every explicit colour value,
+RGB triplet, alpha and selector/property usage across app.css and theme.css.
+colour-index.json provides the same data for tools. The offline HTML handbook
+includes visual swatches and a filter for colour values or selectors.
 
 ### Base tokens
 

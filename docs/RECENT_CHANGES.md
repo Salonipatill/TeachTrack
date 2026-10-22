@@ -3,6 +3,15 @@
 Updated 22 October 2026. This describes the current repository, not proof that an
 older Vercel deployment serves the same commit.
 
+## Dark theme colours
+
+- Dark mode now uses consistent charcoal/slate cards, softer borders and mint
+  actions with dark labels. Statistics, the welcome banner and complaint counters
+  no longer retain bright light-theme backgrounds with unreadable pale text.
+- Form controls, navigation, charts, campus cards and footer follow the same
+  palette. Status badges retain distinct amber, blue and green colours; carousel
+  arrows and dots have separate styling. Theme preference behavior is unchanged.
+
 ## Private Vercel Blob uploads
 
 - `UPLOAD_STORAGE=blob` supports private storage without Google Cloud. The browser
