@@ -227,7 +227,7 @@ def quiz_create(request):
                     if not f.cleaned_data or f.cleaned_data.get('DELETE'):continue
                     data=f.cleaned_data
                     question=Question.objects.create(quiz=quiz,text=data['text'],is_multiple=data['is_multiple'],image=data.get('image'))
-                    for key in 'ABCD':
+                    for key in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
                         text=data.get('option_'+key.lower())
                         if text:Option.objects.create(question=question,text=text,is_correct=key in data['correct'])
                 if quiz.is_active:notify(audience_users('student'),f'New quiz: {quiz.title}',f'Code: {quiz.code}',reverse('quizzes'))
