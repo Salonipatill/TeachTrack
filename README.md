@@ -7,11 +7,21 @@ complaints and director reporting into one campus website.
 ## Current features
 
 - Public home, campus and Contact pages with shared navigation/header/footer.
+- The TeachTrack logo opens Home. Signed-in users get a **WORKSPACE** dashboard
+  shortcut on Features (`/#features`), Campus life and Contact; it is hidden on
+  the main Home view. Campus life stays within TeachTrack and offers a Google
+  Maps location search for Sri Aurobindo Institute of Technology, Indore.
 - Separate role sign-in pages; login uses a **username**, not an email address.
 - **My profile**: click the name/role in the sidebar footer to correct your own
   account details. Students also manage enrollment, year, semester, section and batch.
 - Quiz creation automatically applies publication/identity defaults. Student
   attempts autofill account details and show academic fields separately.
+- Each quiz question supports **2–26 options** with Add option/Remove last option
+  controls and one or more correct answers. Selecting multiple correct answers
+  enables multiple-answer mode; grading requires the exact correct set.
+- Resource uploads accept PDF, TXT, DOCX, PPTX, JPG/JPEG and PNG up to **30 MB**
+  per file, within a **32 MB** total request limit. Staff can add custom resource
+  categories of up to 100 characters and reuse them in uploads and filters.
 - Explicit quiz launch/deadline and submission timestamps in IST, question numbers
   inside cards, scoring, delayed answer reviews and responsive result details.
 - Persistent light/dark mode on shared pages, mobile navigation, keyboard skip
@@ -20,8 +30,8 @@ complaints and director reporting into one campus website.
 
 **Current limits:** Public password reset, email/SMS OTP and SMTP sending are
 removed. Signed-in users can still change their password using the old password.
-Production uploads are disabled without persistent private storage; text workflows
-remain available. Contact submissions are stored in the database and visible in
+Upload storage can be local, GCS, disabled or chosen automatically; local files
+work with PC MySQL without Google Cloud. Contact submissions are stored in the database and visible in
 Django admin, with no automatic email or director-dashboard inbox.
 
 ## Run locally on Windows
@@ -44,7 +54,8 @@ main requirements. Both local MySQL and Aiven use mysql.connector.django. SSL is
 requirements-mysql.txt is retained as a compatibility include of the main set.
 Before upgrading a populated original database, follow [UPGRADE.md](docs/UPGRADE.md).
 Migration 0010 adds batch and separate quiz academic snapshots; it does not guess
-missing historical values. Schema migrations do not transfer data between engines.
+missing historical values. Migration 0011 enables custom resource categories while
+retaining existing values. Schema migrations do not transfer data between engines.
 
 ## Accounts
 
@@ -67,12 +78,19 @@ Use a separate terminal for isolated tests; close it before resuming normal data
 ```powershell
 $env:DEBUG = 'True'
 $env:DATABASE_URL = 'sqlite:///:memory:'
+$env:TEACHTRACK_ENV_FILE = '.env.isolated-tests-unused'
+$env:SECRET_KEY = 'test-only-isolated-suite-secret-22-October-2026'
+$env:UPLOAD_STORAGE = 'local'
+$env:GS_BUCKET_NAME = ''
 .\.venv\Scripts\python.exe manage.py test
 .\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
 .\.venv\Scripts\python.exe -m pip check
 ```
 
-The latest SQLite run passed **71 tests** (57 existing workflow tests plus 14 database/environment configuration checks). The full 71-test suite also passed on a disposable local MySQL instance. Aiven workflow tests and final focused rechecks passed with TLS active; see [database verification](docs/DATABASE_SETUP.md#verification-record-for-this-change) for exact run accounting. Local Edge checks also covered
+See [testing](docs/TESTING.md) for current verification results and the
+[test catalogue](docs/TEST_CATALOGUE.md) for all discovered test methods. Historical
+database checks are recorded in [database verification](docs/DATABASE_SETUP.md#historical-verification-record-21-october-2026).
+Earlier local Edge checks covered
 public mobile/tablet/desktop pages, role navigation, faculty creation, quiz attempts,
 result layouts, keyboard navigation and actual dark colours. This is not a claim
 of zero bugs or independent verification of protected Vercel deployments,
@@ -85,8 +103,11 @@ certificate/migration requirements and deployed-commit troubleshooting. The
 [Google Cloud guide](docs/DEPLOYMENT.md) covers the optional container/GCS route.
 Set DEBUG=False and a private SECRET_KEY in production. For PC MySQL, set
 UPLOAD_STORAGE=local to save notes and attachments in media/ without Google Cloud.
-Back up media/ with the database. Hosted services without persistent disk should
-use UPLOAD_STORAGE=auto (uploads disabled without a bucket), gcs or disabled.
+This explicitly selects local files independently of DEBUG and the database engine.
+MySQL stores resource metadata, while media/ stores the file bytes. Back up both.
+UPLOAD_STORAGE=auto selects GCS when GS_BUCKET_NAME is set; otherwise it selects
+local files with DEBUG=True and disables uploads with DEBUG=False. Hosted services
+without persistent disk should use GCS or disabled uploads; gcs requires a bucket.
 
 After pushing, verify Vercel's active commit and open that deployment's Visit URL.
 Test the actual site, theme assets, login, profile, quiz result and intended roles.
