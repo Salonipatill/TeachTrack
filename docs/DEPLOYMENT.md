@@ -95,7 +95,7 @@ gcloud run deploy teachtrack \
   --max-instances 3
 ```
 
-`--allow-unauthenticated` exposes the Django login page; protected application pages still require Django authentication. If your organization requires Cloud Run IAM access as well, omit this flag and arrange access accordingly. Apply a separate ingress/load-balancer request-size policy suitable for 10 MB files, including requests without Content-Length. The middleware rejects declared request bodies above 12 MB; file validation rejects files above 10 MB after upload parsing. Test this policy with your actual ingress setup.
+`--allow-unauthenticated` exposes the Django login page; protected application pages still require Django authentication. If your organization requires Cloud Run IAM access as well, omit this flag and arrange access accordingly. Apply a separate ingress/load-balancer request-size policy suitable for 30 MB files, including requests without Content-Length. The middleware rejects declared request bodies above 32 MB; file validation rejects files above 30 MB after upload parsing. Test this policy with your actual ingress setup.
 
 ## 7. Validate before submission
 
