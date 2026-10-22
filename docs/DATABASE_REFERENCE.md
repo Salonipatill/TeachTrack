@@ -1,6 +1,6 @@
 # Database reference
 
-Extracted from Django model metadata on 21 October 2026.
+Extracted from Django model metadata on 22 October 2026.
 
 This is the current declared schema. The installed database must also have migrations 0001–0009 applied. Nullable legacy relationships are intentional and do not authorize an arbitrary user to view a historical record.
 
@@ -344,7 +344,7 @@ Table: `ClassApp_complaintevent`. Default ordering: `['created_at', 'id']`.
 
 ## Resource
 
-A private notes, PYQ or assignment upload with descriptive metadata and download count.
+A private document or picture upload with a built-in/custom category, descriptive metadata and download count.
 
 Table: `ClassApp_resource`. Default ordering: `['-created_at', '-id']`.
 
@@ -354,7 +354,7 @@ Table: `ClassApp_resource`. Default ordering: `['-created_at', '-id']`.
 | `title` | CharField(180) | — | null=False; blank=False | — | Title. |
 | `description` | TextField | — | null=False; blank=True | — | Description. |
 | `subject` | CharField(100) | — | indexed; null=False; blank=False | — | Subject. |
-| `category` | CharField(12) | — | indexed; null=False; blank=False; choices: notes, pyq, assignment | — | Resource category: notes, pyq or assignment. |
+| `category` | CharField(100) | — | indexed; null=False; blank=False | — | Resource category: notes, pyq, assignment or a custom name up to 100 characters. Existing built-in values retain their display labels. |
 | `file` | FileField(255) | — | null=False; blank=False | — | File. Upload path: resource_path(). |
 | `original_name` | CharField(255) | — | null=False; blank=False | — | Uploaded filename after removing directory components; used for attachment downloads. |
 | `uploaded_by` | ForeignKey | — | indexed; null=False; blank=False | auth.User; PROTECT | Link to the related record. |
