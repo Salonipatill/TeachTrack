@@ -68,6 +68,7 @@ document.querySelector('#add-question')?.addEventListener('click', () => {
   if (count >= 50) return;
   const markup = document.querySelector('#empty-question').innerHTML.replaceAll('__prefix__', String(count));
   document.querySelector('#question-forms').insertAdjacentHTML('beforeend', markup);
+  setupQuestionOptions(document.querySelector('#question-forms').lastElementChild);
   total.value = String(count + 1);
   if (count + 1 >= 50) document.querySelector('#add-question').disabled = true;
 });
@@ -117,3 +118,49 @@ document.querySelectorAll('[data-carousel]').forEach(carousel => {
   });
   stage.addEventListener('pointercancel', () => { touchStart = null; });
 });
+
+
+function setupQuestionOptions(question) {
+  const countInput = question.querySelector('input[name$="-option_count"]');
+  if (!countInput) return;
+  let count = Math.max(2, Math.min(26, Number(countInput.value) || 4));
+  const controls = document.createElement('div');
+  controls.className = 'form-actions';
+  const status = document.createElement('span');
+  status.setAttribute('aria-live', 'polite');
+  const add = document.createElement('button');
+  add.type = 'button'; add.className = 'secondary'; add.textContent = '+ Add option';
+  const remove = document.createElement('button');
+  remove.type = 'button'; remove.className = 'secondary'; remove.textContent = '? Remove last option';
+  controls.append(add, remove, status);
+  question.querySelector('input[name$="-option_a"]').closest('p').before(controls);
+  const refresh = () => {
+    countInput.value = String(count);
+    status.textContent = `${count} options (minimum 2, maximum 26)`;
+    add.disabled = count >= 26; remove.disabled = count <= 2;
+    for (let i = 0; i < 26; i++) {
+      const input = question.querySelector(`input[name$="-option_${String.fromCharCode(97+i)}"]`);
+      input.closest('p').hidden = i >= count;
+      input.disabled = i >= count;
+      input.required = i < count;
+      const answer = question.querySelector(`input[name$="-correct"][value="${String.fromCharCode(65+i)}"]`);
+      answer.closest('label').parentElement.hidden = i >= count;
+      answer.disabled = i >= count;
+      if (i >= count) answer.checked = false;
+    }
+  };
+  add.addEventListener('click', () => { if (count < 26) { count++; refresh(); } });
+  remove.addEventListener('click', () => { if (count > 2) { count--; refresh(); } });
+  const multiple = question.querySelector('input[name$="-is_multiple"]');
+  const help = document.createElement('p');
+  help.className = 'muted';
+  help.textContent = 'Tick all correct answers below. Selecting more than one enables multiple answers automatically.';
+  question.querySelector('input[name$="-correct"]').closest('div[id]').before(help);
+  question.addEventListener('change', event => {
+    const answers = [...question.querySelectorAll('input[name$="-correct"]:checked')];
+    if (event.target.name.endsWith('-correct') && answers.length > 1) multiple.checked = true;
+    if (event.target === multiple && !multiple.checked) answers.slice(1).forEach(answer => { answer.checked = false; });
+  });
+  refresh();
+}
+document.querySelectorAll('#question-forms .question-form').forEach(setupQuestionOptions);
