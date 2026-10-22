@@ -157,5 +157,3 @@ form[aria-busy="true"] button[aria-disabled="true"] { cursor: progress; opacity:
 }
 
 :root { --muted: #596b75; }
-
-.top-actions .workspace-link{color:#fff}
