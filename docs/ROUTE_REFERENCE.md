@@ -97,7 +97,7 @@ The legacy `/score/<submission_id>/` path looks up a Submission ID; the modern q
 | Page | Parameter | Behavior |
 | --- | --- | --- |
 | Resources | q | Case-insensitive title, description and subject search; stripped to 150 characters. |
-| Resources | category | notes, pyq or assignment; matches the stored category. |
+| Resources | category | Built-in value (notes, pyq, assignment) or a saved custom category name; matches the stored category. |
 | Resources | subject | Case-insensitive exact subject; stripped to 100 characters. |
 | Resources | sort=title | Alphabetical title, then ID; otherwise model ordering is newest first. |
 | Quizzes | code | Uppercase exact quiz code, stripped to six characters. |
