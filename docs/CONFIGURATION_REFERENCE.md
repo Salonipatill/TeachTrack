@@ -1,6 +1,6 @@
 # Configuration reference
 
-Updated 21 October 2026. Values below are placeholders, not live credentials.
+Updated 22 October 2026. Values below are placeholders, not live credentials.
 
 ## Loading and precedence
 
@@ -75,9 +75,9 @@ UPLOADS_ENABLED is derived from the selected storage mode. With local storage,
 MySQL stores resource details and file paths; file contents stay in MEDIA_ROOT.
 Back up both the database and media directory. Use local mode on your PC or a
 server with persistent disk; ephemeral hosting needs persistent external storage.
-The form explains the
-unavailable state, middleware rejects file-bearing mutation requests, and the
-storage backend refuses writes. Text-only workflows remain available. A bucket
+When storage is disabled, forms explain the unavailable state, middleware rejects
+file-bearing mutation requests, and the storage backend refuses writes.
+Text-only workflows remain available. A bucket
 is not required for production startup. Supabase is not implemented.
 
 ## Fixed settings and limits
@@ -96,7 +96,16 @@ is not required for production startup. Supabase is not implemented.
 - Files are limited to 30 MB by form validation; declared request bodies above
   32 MB are rejected. File content/image validation and private download
   authorization remain in place when storage is configured.
-- Lists use 15 records per page. Quiz builders allow 1-50 questions. Login failure
+- Resource uploads accept PDF, UTF-8 TXT, DOCX, PPTX, JPG, JPEG and PNG. A filename
+  extension alone is insufficient: document content and image integrity are checked.
+  FILE_UPLOAD_MAX_MEMORY_SIZE is 1 MB: it controls when uploads spill to temporary
+  disk, not the allowed file size. DATA_UPLOAD_MAX_MEMORY_SIZE is 32 MB and at
+  most 50 files can be parsed per request; the middleware's 32 MB total cap still
+  applies to a multipart request containing several attachments.
+- Resource custom category names allow up to 100 characters. Migration 0011
+  expands the indexed category column; existing notes/pyq/assignment values remain.
+- Lists use 15 records per page. Quiz builders allow 1-50 questions, with 2-26
+  options per question and at least one correct answer. Login failure
   thresholds are 10 attempts per 15-minute username/peer-IP window.
 
 ## Examples
