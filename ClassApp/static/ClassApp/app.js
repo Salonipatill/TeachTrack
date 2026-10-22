@@ -1,5 +1,84 @@
 'use strict';
 
+// Upload file bytes directly to private storage. Only signed file receipts and
+// the form's text fields pass through Django/Vercel Functions.
+if (document.body.dataset.blobUploadUrl) {
+  document.querySelectorAll('form').forEach(form => {
+    const uploaded = new WeakMap();
+    form.addEventListener('submit', async event => {
+      const inputs = [...form.querySelectorAll('input[type="file"]:not(:disabled)')]
+        .filter(input => input.files.length);
+      if (!inputs.length) return;
+      event.preventDefault();
+      if (form.dataset.blobBusy === 'true') return;
+      const files = inputs.map(input => ({input, file: input.files[0]}));
+      let status = form.querySelector('[data-blob-status]');
+      if (!status) {
+        status = document.createElement('p');
+        status.dataset.blobStatus = 'true';
+        status.setAttribute('role', 'status');
+        form.append(status);
+      }
+      if (files.some(({file}) => file.size > 30 * 1024 * 1024 || file.size === 0)) {
+        status.textContent = 'Choose non-empty files up to 30 MB each.';
+        return;
+      }
+      if (files.reduce((size, {file}) => size + file.size, 0) > 32 * 1024 * 1024) {
+        status.textContent = 'Total attachments must be at most 32 MB per form.';
+        return;
+      }
+      form.dataset.blobBusy = 'true';
+      form.setAttribute('aria-busy', 'true');
+      const button = event.submitter;
+      const label = button?.textContent;
+      if (button) { button.disabled = true; button.textContent = 'Uploading...'; }
+      try {
+        for (const [index, {input, file}] of files.entries()) {
+          status.textContent = `Uploading file ${index + 1} of ${files.length}...`;
+          let receipt = uploaded.get(file);
+          if (!receipt || receipt.field !== input.name || Date.now() - receipt.created > 25 * 60 * 1000) {
+            const response = await fetch(document.body.dataset.blobUploadUrl, {
+              method: 'POST', credentials: 'same-origin',
+              headers: {'Content-Type': 'application/json',
+                'X-CSRFToken': form.querySelector('[name="csrfmiddlewaretoken"]').value},
+              body: JSON.stringify({path: new URL(form.action || location.href).pathname,
+                field: input.name, filename: file.name, size: file.size}),
+            });
+            if (!response.ok || response.redirected) {
+              const details = await response.json().catch(() => ({}));
+              throw new Error(details.error || 'Unable to start the upload. Refresh the page and try again.');
+            }
+            const details = await response.json();
+            const upload = await fetch(details.url, {method: 'PUT', body: file,
+              credentials: 'omit', headers: {'Content-Type': details.content_type}});
+            if (!upload.ok) throw new Error('The upload failed. Please try again.');
+            receipt = {ticket: details.ticket, created: Date.now(), field: input.name};
+            uploaded.set(file, receipt);
+          }
+          const hidden = document.createElement('input');
+          hidden.type = 'hidden'; hidden.name = '_blob_' + input.name;
+          hidden.value = receipt.ticket; hidden.dataset.blobTicket = 'true';
+          form.append(hidden);
+        }
+        status.textContent = 'Checking files and saving...';
+        inputs.forEach(input => { input.disabled = true; });
+        // Native submission preserves CSRF and all normal form fields while
+        // omitting the binary inputs; bypass the duplicate-submit listeners.
+        HTMLFormElement.prototype.submit.call(form);
+      } catch (error) {
+        status.textContent = error instanceof TypeError
+          ? 'Upload connection failed. Please check your connection and try again.'
+          : error.message;
+        form.querySelectorAll('[data-blob-ticket]').forEach(input => input.remove());
+        inputs.forEach(input => { input.disabled = false; });
+        delete form.dataset.blobBusy;
+        form.removeAttribute('aria-busy');
+        if (button) { button.disabled = false; button.textContent = label; }
+      }
+    });
+  });
+}
+
 if (document.body.dataset.uploadsEnabled === 'false') {
   document.querySelectorAll('input[type="file"]').forEach(input => {
     input.disabled = true;

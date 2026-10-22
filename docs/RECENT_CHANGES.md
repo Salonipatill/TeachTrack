@@ -3,6 +3,18 @@
 Updated 22 October 2026. This describes the current repository, not proof that an
 older Vercel deployment serves the same commit.
 
+## Private Vercel Blob uploads
+
+- `UPLOAD_STORAGE=blob` supports private storage without Google Cloud. The browser
+  transfers up to 30 MiB directly, keeping binary upload/download payloads outside
+  Vercel Functions. Resources, announcements, doubts and quiz images use this flow.
+- CSRF, role and destination checks precede authorization. Size/type constraints,
+  user/form/field-bound expiring receipts, immutable keys, server-side content and
+  Pillow validation, and existing download access rules apply.
+- Read links expire after 5 minutes. Preserved local resources retain their database
+  fallback. Activation requires a private store and deployment of this source;
+  isolated tests do not prove live storage access. See [setup](VERCEL_DEPLOYMENT.md#files-and-email).
+
 ## Accounts and profiles
 
 - Students, faculty and directors open My profile by clicking their name/role in
@@ -89,7 +101,8 @@ older Vercel deployment serves the same commit.
 - **UPLOAD_STORAGE=local** saves uploaded files under `media/` without Google
   Cloud, independently of DEBUG and the database engine. PC MySQL stores the
   file metadata; local storage keeps the bytes. Back up both database and media.
-- **UPLOAD_STORAGE=auto** is the default: use GCS if GS_BUCKET_NAME is set;
+- **UPLOAD_STORAGE=auto** is the default: use Blob with credentials,
+  otherwise use GCS if GS_BUCKET_NAME is set;
   otherwise use local files with DEBUG=True and disable uploads with DEBUG=False.
   **gcs** explicitly requires a bucket, while **disabled** rejects file uploads
   at the form, request and storage layers. Text workflows remain available.

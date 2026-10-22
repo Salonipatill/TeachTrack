@@ -49,12 +49,44 @@ not run on every web request. See UPGRADE.md for original-schema migrations.
 
 ## Files and email
 
-GS_BUCKET_NAME can be blank. With UPLOAD_STORAGE=auto and DEBUG=False, uploads
-then remain disabled and show
-a clear message; do not rely on Vercel's local filesystem to preserve uploads.
-To enable hosted files, provision private GCS storage and its credentials and use
-UPLOAD_STORAGE=gcs (or auto with a bucket). UPLOAD_STORAGE=local is for the PC or a
-server with persistent disk, and is independent of the selected database.
+For Vercel uploads without Google Cloud, connect a **private Vercel Blob store**:
+
+1. Open TeachTrack in Vercel, then **Storage > Create Storage > Blob**.
+2. Choose **Private** access and connect it to TeachTrack for the intended environments.
+3. Confirm Vercel added `BLOB_READ_WRITE_TOKEN`, or the platform-provided
+   `BLOB_STORE_ID` and `VERCEL_OIDC_TOKEN`. Keep credentials in Vercel; never expose
+   them in frontend variables or paste them into source/chat.
+4. Set `UPLOAD_STORAGE=blob` and redeploy the commit containing this integration.
+   `auto` also selects Blob when its credentials are present. Leave `GS_BUCKET_NAME` blank.
+5. Sign in as faculty/director, upload a PNG and a 30 MB text/PDF resource, then
+   download each as an authorized student. Check a quiz image, announcement
+   document and student doubt attachment, including unauthorized access denial.
+
+The browser sends bytes directly to private Blob using an exact-path, size/type
+constrained, expiring PUT URL. A CSRF-protected endpoint checks role and destination
+first. Django re-reads the bytes, checks the recorded size, and runs existing
+document/Pillow validators before saving metadata. Signed form receipts are bound
+to user, form and field, expiring after 30 minutes. Upload URLs expire after 15
+minutes; read URLs after 5 minutes. Overwrites are disabled. Downloads and quiz
+images apply existing access rules before redirecting to private signed GET URLs.
+Long-lived tokens/signing keys never reach the browser. Blob needs no new migration;
+stored paths use `blob/USER_ID/UUID/FILENAME`.
+
+Each file may be up to 30 MiB; combined direct attachments are limited to 32 MiB per
+form. Form submissions contain receipts and text, not binary files. JavaScript is
+required. Failed uploads restore the button and selected file for retry. Invalid
+or abandoned forms can leave unreferenced private blobs; review these in storage
+before deleting them. Stored filenames are sanitized/truncated to fit legacy
+100-character FileFields; resource metadata keeps the full original filename.
+
+See [Vercel Signed URLs](https://vercel.com/docs/vercel-blob/vercel-signed-urls).
+The official Python SDK does not expose this API yet, so the small Python adapter
+follows the official JS protocol. Offline contract fixtures are generated with
+`@vercel/blob@2.8.2`; see the tools README for regeneration.
+
+Without Blob credentials or a GCS bucket, `auto` with `DEBUG=False` keeps uploads
+disabled. Explicit `gcs` remains available with a private bucket and credentials.
+`local` is for the PC or a server with persistent disk, independently of database.
 After migration 0012, resources uploaded locally also keep a private ResourceFile
 copy in the selected database. A Vercel instance using that same database can
 download those resources even with uploads disabled and no local file. Existing
@@ -64,9 +96,10 @@ still cannot be downloaded. Deploy the updated view after applying the migration
 This fallback covers resource-library files, not every legacy attachment.
 Supabase storage is not integrated.
 
-The application's 30 MB file limit does not override Vercel's own hosting limits.
-Vercel currently limits function request/response payloads to 4.5 MB; larger
-hosted transfers require an external object-storage/direct-transfer design.
+Vercel limits function request/response payloads to 4.5 MB. Blob mode bypasses these
+limits for file bytes using direct transfers. The old database fallback still
+returns bytes through a Function; legacy resources above that response limit need
+moving to Blob. Smaller preserved resources still work after switching storage.
 See [Vercel's function limits](https://vercel.com/docs/functions/limitations).
 
 Public password reset, email/SMS OTP and SMTP sending are removed. EMAIL_*

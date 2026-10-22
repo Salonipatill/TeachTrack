@@ -30,7 +30,7 @@ complaints and director reporting into one campus website.
 
 **Current limits:** Public password reset, email/SMS OTP and SMTP sending are
 removed. Signed-in users can still change their password using the old password.
-Upload storage can be local, GCS, disabled or chosen automatically; local files
+Upload storage can be local, private Vercel Blob, GCS, disabled or chosen automatically; local files
 work with PC MySQL without Google Cloud. Contact submissions are stored in the database and visible in
 Django admin, with no automatic email or director-dashboard inbox.
 
@@ -109,9 +109,12 @@ media/, so another instance using the same database can download it. Apply
 migration 0012. Existing files can be preserved with
 `python manage.py preserve_resource_files --resource-id ID --apply` from the
 machine that holds the original file. Back up the database and media directory.
-UPLOAD_STORAGE=auto selects GCS when GS_BUCKET_NAME is set; otherwise it selects
-local files with DEBUG=True and disables uploads with DEBUG=False. Hosted services
-without persistent disk should use GCS or disabled uploads; gcs requires a bucket.
+For 30 MB Vercel uploads without Google Cloud, connect a **private Vercel Blob**
+store and set `UPLOAD_STORAGE=blob`; see [setup](docs/VERCEL_DEPLOYMENT.md#files-and-email).
+File bytes transfer directly through Blob with expiring scoped URLs; TeachTrack
+still verifies content and user permissions. `auto` selects Blob with credentials,
+otherwise GCS with GS_BUCKET_NAME, otherwise local with DEBUG=True or disabled
+with DEBUG=False. Local PC mode stays explicit.
 
 After pushing, verify Vercel's active commit and open that deployment's Visit URL.
 Test the actual site, theme assets, login, profile, quiz result and intended roles.

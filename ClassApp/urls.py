@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views as v
+from .blob_uploads import upload_url
 urlpatterns = [path('accounts/profile/', v.profile_edit, name='profile_edit')]
+urlpatterns += [path('uploads/blob/', upload_url, name='blob_upload_url')]
 urlpatterns += [path('dashboard/',v.dashboard,name='dashboard'), path('',v.index,name='index'),path('index/',v.index),path('contact/',v.contact,name='contact'), path('health/',v.health,name='health'),
  path('campus-life/',v.campus_life,name='campus_life'),
  path('question-images/<int:pk>/',v.question_image,name='question_image'),path('attachments/<str:kind>/<int:pk>/',v.attachment_download,name='attachment_download'),path('submission-details/',v.submission_detail_list,name='submission_detail_list'),path('resources/',v.resources,name='resources'),path('resources/upload/',v.resource_create,name='resource_create'),

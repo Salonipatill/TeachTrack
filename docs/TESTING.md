@@ -12,8 +12,8 @@ and Python 3.14.5 from `.venv\Scripts\python.exe`:
 
 | Database | Final result | Test runtime |
 | --- | --- | --- |
-| Isolated in-memory SQLite | 94/94 passed | 34.533 seconds |
-| Disposable local MySQL 8.0.46, loopback, TLS disabled | 94/94 passed | 47.381 seconds |
+| Isolated in-memory SQLite | 94/94 passed | 41.896 seconds |
+| Disposable local MySQL 8.0.46, loopback, TLS disabled | 94/94 passed | 87.647 seconds |
 
 Django's system check reported no issues in both runs. The unique MySQL test
 database was destroyed, the owned MySQL process stopped, and the checked
@@ -77,6 +77,42 @@ and dry-run/apply behavior of the existing-file preservation command. Original
 filename, authentication and download statistics remain covered. The database
 repair for the reported existing image required explicit owner approval; code
 redeployment is a separate operational action.
+
+## Post-deployment workflow review (22 October 2026)
+
+The full 94-test suites were repeated after deployment commit `2a42ed6` and
+passed on both engines as recorded above. No application failure was found in
+the exercised workflows. Additional checks passed:
+
+- **139 real HTTP browser assertions** in one standalone workflow test, using
+  a disposable Django test server and SQLite/media (54.055 seconds). The browser
+  signed in as director, faculty and student and exercised real form submissions,
+  authenticated downloads after removing their local file, quiz creation/grading,
+  feedback, doubt replies, complaint resolution/history, announcements,
+  notifications, account creation/deactivation, exports, profiles, registration,
+  password change and mobile navigation. No live records were created.
+- **59 offline feature UI assertions** across 1440/768/390/360px, using current
+  templates, local assets and synthetic account context.
+- **68 live read-only/public assertions** against the deployed site: public
+  pages, authentication redirects, deployment status, theme persistence,
+  carousel photos, all 13 campus images, Maps destination, mobile widths through
+  320px and absence of browser JavaScript errors. No live form was submitted and
+  no signed-in production workflow was performed.
+- Dependency, Python/JavaScript syntax and documentation checks passed again.
+
+The live page currently declares `data-uploads-enabled="false"`. New uploads on
+Vercel are disabled by its storage configuration; this review did not silently
+enable them or change live environment variables. Local uploads and shared
+database-backed resource downloads are separate, tested capabilities. Supporting
+the full 30 MB upload requirement on Vercel needs direct persistent file storage;
+the hosting function payload limit remains independent of app validation. See
+[deployment storage limits](VERCEL_DEPLOYMENT.md#files-and-email).
+
+Repeat the isolated browser workflow check with:
+
+```powershell
+.\.venv\Scripts\python.exe tools/check_workflows_ui.py
+```
 
 ## Automated coverage
 

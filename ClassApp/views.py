@@ -4,6 +4,7 @@ import hashlib
 from io import BytesIO
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
@@ -24,6 +25,22 @@ from .forms import (StudentRegistrationForm, AccountForm, ResourceForm, QuizForm
                     AnnouncementForm, ComplaintForm, FeedbackForm, DoubtForm, ReplyForm, AnswerForm, NotificationForm, StudentInfoForm, ContactForm)
 from .permissions import roles
 from .services import notify, audience_users, ensure_legacy, preserve_resource_file
+from .blob_storage import BlobClient, BlobUnavailable, is_blob_path
+
+
+def blob_file_response(field, *, filename=None):
+    if settings.UPLOAD_STORAGE != 'blob' or not is_blob_path(field.name):
+        return None
+    try:
+        url = BlobClient().url(field.name)
+    except BlobUnavailable:
+        return HttpResponse('File storage is temporarily unavailable. Please try again.', status=503)
+    if filename:
+        url += '&' + urlencode({'download': '1'})
+    response = redirect(url)
+    response['Cache-Control'] = 'private, no-store'
+    response['Referrer-Policy'] = 'no-referrer'
+    return response
 
 def paginated(request, queryset):
     return Paginator(queryset, 15).get_page(request.GET.get('page'))
@@ -144,16 +161,21 @@ def resource_create(request):
 @require_POST
 def resource_download(request, pk):
     item = get_object_or_404(Resource, pk=pk)
-    try:
-        file = item.file.open('rb')
-    except FileNotFoundError:
-        stored=ResourceFile.objects.filter(resource=item,storage_name=item.file.name).first()
-        if stored is None:raise Http404('This file is unavailable. Contact the uploader.')
-        file=BytesIO(bytes(stored.content))
+    response = blob_file_response(item.file, filename=item.original_name)
+    if response is not None and response.status_code != 302:
+        return response
+    if response is None:
+        try:
+            file = item.file.open('rb')
+        except FileNotFoundError:
+            stored=ResourceFile.objects.filter(resource=item,storage_name=item.file.name).first()
+            if stored is None:raise Http404('This file is unavailable. Contact the uploader.')
+            file=BytesIO(bytes(stored.content))
     with transaction.atomic():
         Resource.objects.filter(pk=pk).update(download_count=F('download_count')+1)
         Download.objects.create(resource=item, user=request.user)
-    response = FileResponse(file, as_attachment=True, filename=item.original_name, content_type='application/octet-stream')
+    if response is None:
+        response = FileResponse(file, as_attachment=True, filename=item.original_name, content_type='application/octet-stream')
     response['Cache-Control'] = 'private, no-store'
     return response
 
@@ -504,6 +526,8 @@ def question_image(request,pk):
     if role=='faculty' and quiz.creator_id!=request.user.pk:raise PermissionDenied
     if role=='student' and not Submission.objects.filter(quiz=quiz,student=request.user).exists() and not (quiz.is_active and quiz.starts_at<=timezone.now()<quiz.expiry_time):raise PermissionDenied
     if not question.image:raise Http404
+    response = blob_file_response(question.image)
+    if response is not None:return response
     try:file=question.image.open('rb')
     except FileNotFoundError:raise Http404
     import mimetypes
@@ -524,6 +548,8 @@ def attachment_download(request,kind,pk):
         item=get_object_or_404(Announcement.objects.filter(Q(audience='all')|Q(audience=role)|Q(author=request.user)),pk=pk);field=item.document
     else:raise Http404
     if not field:raise Http404
+    response = blob_file_response(field, filename=Path(field.name).name)
+    if response is not None:return response
     try:file=field.open('rb')
     except FileNotFoundError:raise Http404
     return FileResponse(file,as_attachment=True,filename=Path(field.name).name,content_type='application/octet-stream')

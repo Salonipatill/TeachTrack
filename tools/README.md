@@ -50,6 +50,27 @@ query account data or test live deployment/Google Maps behavior. Server-side
 form, database and scoring behavior belongs to the full application test suite.
 Use `--browser-executable PATH` for another installed Chromium browser.
 
+## Real HTTP workflow browser checks
+
+```powershell
+.\.venv\Scripts\python.exe tools/check_workflows_ui.py
+```
+
+This optional Edge/Playwright check starts a disposable Django test server with
+an isolated SQLite database, synthetic accounts for every role, and temporary
+media under the checked workspace cache. It submits real CSRF-protected forms:
+login/registration, image upload/custom category, download without the local
+file, single/multiple-answer quizzes, feedback, doubts, complaints/resolution,
+announcements, notifications, director account creation/deactivation, CSV exports,
+profiles and password change. It also checks mobile module navigation. All
+external browser requests are blocked. ORM reads use a dedicated synchronous
+thread rather than disabling Django's async-safety checks.
+
+The test server, database, users and media are temporary. The command does not
+log into the live site, use saved database credentials or create live records.
+Requires installed Microsoft Edge and Playwright. This is a separate browser
+workflow test, in addition to the ClassApp test catalogue and offline UI check.
+
 Authored chapters must be edited before rebuilding: PROJECT_DOCUMENTATION.md,
 DESIGN_SYSTEM.md, CONFIGURATION_REFERENCE.md, RECENT_CHANGES.md, deployment guides
 and test/review notes. Generated files should be refreshed through the builder

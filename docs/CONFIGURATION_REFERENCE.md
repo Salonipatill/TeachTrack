@@ -35,7 +35,9 @@ release, are false. Comma-separated host/origin lists are trimmed.
 | VERCEL_PROJECT_PRODUCTION_URL | Provided production hostname; appended to host/origin lists |
 | VERCEL_BRANCH_URL | Provided branch hostname; appended to host/origin lists |
 | GS_BUCKET_NAME | Optional private Google Cloud Storage bucket; see upload modes below |
-| UPLOAD_STORAGE | auto (default), local, gcs or disabled; independent of the database engine |
+| UPLOAD_STORAGE | auto (default), local, blob, gcs or disabled; independent of the database engine |
+| BLOB_READ_WRITE_TOKEN | Private server-side Vercel Blob credential, added when the store is connected |
+| BLOB_STORE_ID / VERCEL_OIDC_TOKEN | Platform-provided alternative Blob authentication; use together |
 | TRUST_PROXY_HEADERS | False; True accepts HTTP_X_FORWARDED_PROTO=https from a trusted proxy |
 | DEMO_PASSWORD | Explicit chosen password for development seed_demo; never a default production password |
 | PORT | Container bind port, default 8080; not read by the Django settings parser |
@@ -67,9 +69,10 @@ an example URI when it contains reserved URL characters.
 | Mode | Default storage | Uploads |
 | --- | --- | --- |
 | UPLOAD_STORAGE=local | Local MEDIA_ROOT (`media/`) | Enabled, including with DEBUG=False; no cloud credentials needed |
+| UPLOAD_STORAGE=blob | ClassApp.blob_storage.PrivateBlobStorage | Enabled; private Vercel Blob credentials required; direct transfers |
 | UPLOAD_STORAGE=gcs | Private GCS backend | Enabled; GS_BUCKET_NAME and runtime credentials/permissions required |
 | UPLOAD_STORAGE=disabled | ClassApp.storage.DisabledUploadStorage | Disabled |
-| UPLOAD_STORAGE=auto (or unset) | GCS if a bucket exists, otherwise local when DEBUG=True, otherwise disabled | Preserves existing defaults |
+| UPLOAD_STORAGE=auto (or unset) | Blob with credentials, otherwise GCS with a bucket, otherwise local when DEBUG=True, otherwise disabled | Credential-based selection |
 
 UPLOADS_ENABLED is derived from the selected storage mode. With local storage,
 Resource files remain in MEDIA_ROOT and, after migration 0012, local resource
@@ -82,6 +85,13 @@ When storage is disabled, forms explain the unavailable state, middleware reject
 file-bearing mutation requests, and the storage backend refuses writes.
 Text-only workflows remain available. A bucket
 is not required for production startup. Supabase is not implemented.
+
+Blob mode requires a **private** store. Authentication prefers OIDC plus store id,
+then a read-write token. Read links expire after 5 minutes; upload links after 15
+minutes and form receipts after 30 minutes. Each file is limited to 30 MiB and
+combined direct attachments to 32 MiB per form. Credentials stay on the server.
+See [Vercel storage setup](VERCEL_DEPLOYMENT.md#files-and-email). Private blobs use
+the `blob/` key prefix; old local resources retain their saved database fallback.
 
 ## Fixed settings and limits
 
