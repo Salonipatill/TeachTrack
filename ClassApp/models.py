@@ -212,7 +212,7 @@ class Resource(models.Model):
     title=models.CharField(max_length=180)
     description=models.TextField(blank=True)
     subject=models.CharField(max_length=100,db_index=True)
-    category=models.CharField(max_length=12,choices=CATEGORIES,db_index=True)
+    category=models.CharField(max_length=100,db_index=True)
     file=models.FileField(upload_to=resource_path,max_length=255)
     original_name=models.CharField(max_length=255)
     uploaded_by=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT)
@@ -220,6 +220,12 @@ class Resource(models.Model):
     created_at=models.DateTimeField(auto_now_add=True)
     class Meta:ordering=['-created_at','-id']
     def __str__(self):return self.title
+    def get_category_display(self):
+        return dict(self.CATEGORIES).get(self.category,self.category)
+    @classmethod
+    def category_choices(cls):
+        custom=cls.objects.exclude(category__in=dict(cls.CATEGORIES)).exclude(category='').order_by('category').values_list('category',flat=True).distinct()
+        return cls.CATEGORIES+[(value,value) for value in custom]
 class Download(models.Model):
     resource=models.ForeignKey(Resource,on_delete=models.CASCADE)
     user=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
