@@ -132,17 +132,137 @@ class WorkspaceTests(TestCase):
         self.login_as('student')
         self.assertContains(self.client.get(reverse('resources'),{'q':'Normalization','category':'notes','subject':'DBMS','sort':'title'}),'Normalization')
         self.assertNotContains(self.client.get(reverse('resources'),{'q':'unmatched'}),'Normal forms')
+    def test_custom_resource_category_can_be_created_reused_and_filtered(self):
+        self.login_as('faculty')
+        self.resource()
+        response=self.client.post(reverse('resource_create'),{
+            'title':'Lab manual','subject':'CS','category':'__custom__',
+            'custom_category':'  Laboratory   Manuals  ',
+            'file':SimpleUploadedFile('lab.txt',b'Laboratory instructions'),
+        })
+        self.assertRedirects(response,reverse('resources'))
+        resource=Resource.objects.get(title='Lab manual')
+        self.assertEqual(resource.category,'Laboratory Manuals')
+        self.assertEqual(resource.get_category_display(),'Laboratory Manuals')
+        page=self.client.get(reverse('resource_create'))
+        self.assertContains(page,'Laboratory Manuals')
+        self.assertContains(page,'Add custom category')
+        response=self.client.post(reverse('resource_create'),{
+            'title':'Second manual','subject':'CS','category':'Laboratory Manuals',
+            'file':SimpleUploadedFile('second.txt',b'More instructions'),
+        })
+        self.assertRedirects(response,reverse('resources'))
+        self.login_as('student')
+        page=self.client.get(reverse('resources'),{'category':'Laboratory Manuals'})
+        self.assertContains(page,'Lab manual')
+        self.assertContains(page,'Second manual')
+        self.assertNotContains(page,'DB notes')
+        self.assertIn(('Laboratory Manuals','Laboratory Manuals'),page.context['categories'])
+        self.assertEqual(Resource.objects.filter(category='Laboratory Manuals').count(),2)
+
+    def test_custom_category_validation_and_existing_category_names(self):
+        for name in ['', '   ', 'x'*101, '__custom__']:
+            with self.subTest(name=name):
+                form=ResourceForm(data={'title':'x','subject':'CS','category':'__custom__','custom_category':name},
+                                  files={'file':SimpleUploadedFile('notes.txt',b'Notes')})
+                self.assertFalse(form.is_valid())
+                self.assertIn('custom_category',form.errors)
+        for name,expected in [(' NOTES ','notes'),('Assignments','assignment')]:
+            form=ResourceForm(data={'title':'x','subject':'CS','category':'__custom__','custom_category':name},
+                              files={'file':SimpleUploadedFile('notes.txt',b'Notes')})
+            self.assertTrue(form.is_valid(),form.errors)
+            self.assertEqual(form.cleaned_data['category'],expected)
+        form=ResourceForm(data={'title':'x','subject':'CS','category':'__custom__','custom_category':'x'*100},
+                          files={'file':SimpleUploadedFile('notes.txt',b'Notes')})
+        self.assertTrue(form.is_valid(),form.errors)
+
+    def test_notes_upload_and_download_using_local_disk(self):
+        with tempfile.TemporaryDirectory() as folder, override_settings(
+            MEDIA_ROOT=folder,
+            UPLOADS_ENABLED=True,
+            STORAGES={
+                'default':{'BACKEND':'django.core.files.storage.FileSystemStorage'},
+                'staticfiles':{'BACKEND':'django.contrib.staticfiles.storage.StaticFilesStorage'},
+            },
+        ):
+            self.login_as('faculty')
+            content=b'Notes saved on this PC without Google Cloud.'
+            response=self.client.post(reverse('resource_create'),{
+                'title':'Local notes','subject':'DBMS','category':'notes',
+                'file':SimpleUploadedFile('local-notes.txt',content),
+            })
+            self.assertRedirects(response,reverse('resources'))
+            resource=Resource.objects.get(title='Local notes')
+            self.assertEqual(Path(resource.file.path).read_bytes(),content)
+            self.assertTrue(Path(resource.file.path).is_relative_to(Path(folder)))
+            self.login_as('student')
+            response=self.client.post(reverse('resource_download',args=[resource.pk]))
+            self.assertEqual(response.status_code,200)
+            self.assertEqual(b''.join(response.streaming_content),content)
+            response.close()
+            self.client.logout()
+            self.assertEqual(self.client.post(reverse('resource_download',args=[resource.pk])).status_code,302)
+
+    def test_picture_notes_upload_and_download(self):
+        from PIL import Image
+        self.login_as('faculty')
+        for extension,image_format in [('jpg','JPEG'),('jpeg','JPEG'),('png','PNG')]:
+            with self.subTest(extension=extension):
+                image=io.BytesIO()
+                Image.new('RGB',(4,4),color='white').save(image,format=image_format)
+                content=image.getvalue()
+                response=self.client.post(reverse('resource_create'),{
+                    'title':'Picture notes '+extension,'subject':'CS','category':'notes',
+                    'file':SimpleUploadedFile('notes.'+extension,content),
+                })
+                self.assertRedirects(response,reverse('resources'))
+                resource=Resource.objects.get(title='Picture notes '+extension)
+                response=self.client.post(reverse('resource_download',args=[resource.pk]))
+                self.assertEqual(response.status_code,200)
+                self.assertEqual(b''.join(response.streaming_content),content)
+                response.close()
+
+    def test_invalid_or_oversized_picture_notes_rejected(self):
+        for filename,content in [
+            ('fake.jpg',b'not a picture'),
+            ('fake.png',b'<script>alert(1)</script>'),
+            ('broken.jpeg',b'\xff\xd8\xff'),
+            ('huge.png',b'x'*(30*1024*1024+1)),
+        ]:
+            with self.subTest(filename=filename):
+                form=ResourceForm(data={'title':'Picture','subject':'CS','category':'notes'},
+                                  files={'file':SimpleUploadedFile(filename,content)})
+                self.assertFalse(form.is_valid())
+                self.assertIn('file',form.errors)
+
     def test_reject_fake_pdf_and_html(self):
         self.login_as('faculty')
         for filename in ['fake.pdf','attack.html']:
             response=self.client.post(reverse('resource_create'),{'title':'Bad file','subject':'CS','category':'notes','file':SimpleUploadedFile(filename,b'<script>alert(1)</script>')})
             self.assertEqual(response.status_code,200)
             self.assertEqual(Resource.objects.count(),0)
+    def test_notes_upload_accepts_30_mb_file(self):
+        with tempfile.TemporaryDirectory() as folder, override_settings(
+            MEDIA_ROOT=folder,
+            STORAGES={
+                'default':{'BACKEND':'django.core.files.storage.FileSystemStorage'},
+                'staticfiles':{'BACKEND':'django.contrib.staticfiles.storage.StaticFilesStorage'},
+            },
+        ):
+            self.login_as('faculty')
+            content=b'x'*(30*1024*1024)
+            response=self.client.post(reverse('resource_create'),{
+                'title':'Large notes','subject':'CS','category':'notes',
+                'file':SimpleUploadedFile('large-notes.txt',content),
+            })
+            self.assertRedirects(response,reverse('resources'))
+            self.assertEqual(Resource.objects.get(title='Large notes').file.size,len(content))
+
     def test_oversized_and_binary_txt_rejected(self):
-        for f in [SimpleUploadedFile('big.txt',b'x'*(10*1024*1024+1)),SimpleUploadedFile('binary.txt',b'\xff\x00')]:
+        for f in [SimpleUploadedFile('big.txt',b'x'*(30*1024*1024+1)),SimpleUploadedFile('binary.txt',b'\xff\x00')]:
             form=ResourceForm(data={'title':'x','subject':'x','category':'notes'},files={'file':f})
             self.assertFalse(form.is_valid())
-        self.assertEqual(self.client.post(reverse('login'),{},CONTENT_LENGTH=str(13*1024*1024)).status_code,413)
+        self.assertEqual(self.client.post(reverse('login'),{},CONTENT_LENGTH=str(33*1024*1024)).status_code,413)
     def test_download_authenticated_and_counted(self):
         r=self.resource()
         self.assertEqual(self.client.post(reverse('resource_download',args=[r.pk])).status_code,302)
