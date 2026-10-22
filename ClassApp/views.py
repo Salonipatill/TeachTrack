@@ -121,11 +121,11 @@ def resources(request):
     if request.GET.get('sort') == 'title':
         qs = qs.order_by('title', 'id')
     return render(request, 'resources.html', {'page_obj':paginated(request, qs), 'q':q, 'category':category, 'subject':subject,
-        'categories':Resource.CATEGORIES, 'subjects':Resource.objects.order_by('subject').values_list('subject',flat=True).distinct()})
+        'categories':Resource.category_choices(), 'subjects':Resource.objects.order_by('subject').values_list('subject',flat=True).distinct()})
 
 @roles('faculty', 'director')
 def resource_create(request):
-    form = ResourceForm(request.POST or None, request.FILES or None)
+    form = ResourceForm(request.POST or None, request.FILES or None,category_choices=Resource.category_choices())
     if request.method == 'POST' and form.is_valid():
         with transaction.atomic():
             item = form.save(commit=False)
