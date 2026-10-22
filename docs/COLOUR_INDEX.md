@@ -1,6 +1,6 @@
 # Complete colour index
 
-Generated from `app.css` and `theme.css` on 21 October 2026: 135 distinct hex literals plus named CSS colours. This is an inventory of the active application stylesheet, not of photographic pixels, browser defaults or the retained legacy theme.
+Generated from `app.css` and `theme.css` on 22 October 2026: 135 distinct hex literals plus named CSS colours. This is an inventory of the active application stylesheet, not of photographic pixels, browser defaults or the retained legacy theme.
 
 ## Theme variables
 
