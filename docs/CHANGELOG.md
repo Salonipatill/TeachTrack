@@ -1,5 +1,37 @@
 # Change log
 
+## 22 October 2026 - quiz controls, public navigation and resource uploads
+
+- Added Add option/Remove last option controls for 2–26 choices per quiz question,
+  starting with four. Removed choices are cleared from the correct-answer list;
+  server validation checks option bounds, text and correct-answer membership.
+- Added correct-answer checkboxes and automatic multiple-answer mode when several
+  answers are selected. Exact-set grading remains in place without partial marks.
+- Linked TeachTrack logos to the public Home page. Signed-in WORKSPACE header
+  shortcuts appear on Campus life, Contact and `/#features`, and remain hidden on
+  the main Home view.
+- Kept Campus life navigation inside TeachTrack and removed official-site links
+  from its descriptions. Added a Google Maps place search for Sri Aurobindo
+  Institute of Technology, Indore, to the Find us in Indore panel.
+- Added UPLOAD_STORAGE=auto/local/gcs/disabled. Explicit local storage works with
+  PC MySQL without Google Cloud, independently of DEBUG; metadata stays in SQL and
+  file bytes stay under media/. Auto retains bucket/DEBUG-based selection.
+- Enabled validated JPG/JPEG/PNG resource uploads alongside PDF, TXT, DOCX and
+  PPTX. Raised the per-file limit to 30 MiB and the declared request cap to 32 MiB;
+  the interface labels these as MB.
+- Added + Add custom category to resource uploads. Names support up to 100
+  characters, normalize whitespace, reuse existing names case-insensitively and
+  appear in later uploads and library filters once saved on a resource.
+- Added migration 0011_resource_custom_category to widen the indexed category
+  field and remove fixed model choices while preserving existing values.
+- Updated maintained feature documentation; current test results and verification
+  limits are recorded in TESTING.md and the generated test catalogue.
+- Added six regression cases; all 90 tests passed on SQLite and disposable
+  MySQL 8.0.46. Removed two redundant streaming-response closes from the test
+  harness that broke MySQL test-transaction cleanup. Offline feature UI checks
+  passed 59 assertions at four desktop/mobile widths. No deployed service or
+  existing application database was modified during this verification.
+
 ## Local MySQL and Aiven environment switching
 
 - Extracted database configuration into Classroom/database.py with strict environment
