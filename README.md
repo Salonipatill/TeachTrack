@@ -83,8 +83,10 @@ Safari/Firefox, external content or production load.
 See [Vercel + Aiven](docs/VERCEL_DEPLOYMENT.md) for current environment variables,
 certificate/migration requirements and deployed-commit troubleshooting. The
 [Google Cloud guide](docs/DEPLOYMENT.md) covers the optional container/GCS route.
-Set DEBUG=False and a private SECRET_KEY in production. A GCS bucket is optional
-for startup; provision storage and credentials before enabling uploads.
+Set DEBUG=False and a private SECRET_KEY in production. For PC MySQL, set
+UPLOAD_STORAGE=local to save notes and attachments in media/ without Google Cloud.
+Back up media/ with the database. Hosted services without persistent disk should
+use UPLOAD_STORAGE=auto (uploads disabled without a bucket), gcs or disabled.
 
 After pushing, verify Vercel's active commit and open that deployment's Visit URL.
 Test the actual site, theme assets, login, profile, quiz result and intended roles.
