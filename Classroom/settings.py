@@ -3,6 +3,7 @@ import os
 import secrets
 from pathlib import Path
 from .database import database_config
+from .uploads import upload_storage_config
 from dotenv import load_dotenv
 from django.core.exceptions import ImproperlyConfigured
 
@@ -67,14 +68,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_ROOT = BASE_DIR / 'media'
-STORAGES = {'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+UPLOAD_STORAGE, upload_backend = upload_storage_config(DEBUG)
+STORAGES = {'default': upload_backend,
             'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'}}
-UPLOADS_ENABLED = DEBUG or bool(os.getenv('GS_BUCKET_NAME'))
-if not UPLOADS_ENABLED:
-    STORAGES['default'] = {'BACKEND': 'ClassApp.storage.DisabledUploadStorage'}
-if os.getenv('GS_BUCKET_NAME'):
-    STORAGES['default'] = {'BACKEND': 'storages.backends.gcloud.GoogleCloudStorage',
-                          'OPTIONS': {'bucket_name': os.environ['GS_BUCKET_NAME'], 'default_acl': None, 'querystring_auth': True}}
+UPLOADS_ENABLED = UPLOAD_STORAGE != 'disabled'
 # Media is streamed through an authenticated view; there is deliberately no public media route.
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'login'
@@ -96,7 +93,7 @@ SECURE_REFERRER_POLICY = 'same-origin'
 if env_bool('TRUST_PROXY_HEADERS'):
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 FILE_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024
-DATA_UPLOAD_MAX_MEMORY_SIZE = 12 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = 32 * 1024 * 1024
 DATA_UPLOAD_MAX_NUMBER_FILES = 50
 # Outbound email and public password reset are disabled.
 EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
