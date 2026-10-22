@@ -10,7 +10,7 @@ from .models import Resource,Quiz,Announcement,Doubt,Rating,Faculty,Profile,Comp
 from .services import ensure_legacy
 
 def validate_attachment(f,images=False):
-    if f.size>10*1024*1024:raise forms.ValidationError('Maximum file size is 10 MB.')
+    if f.size>30*1024*1024:raise forms.ValidationError('Maximum file size is 30 MB.')
     ext=Path(f.name).suffix.lower();header=f.read(8);f.seek(0);valid=False
     try:
         if ext=='.pdf':valid=header.startswith(b'%PDF-')
@@ -24,7 +24,7 @@ def validate_attachment(f,images=False):
                 image=Image.open(f);image.verify();valid=image.format in ('JPEG','PNG')
     except (ValueError,OSError,UnicodeDecodeError,zipfile.BadZipFile,Image.DecompressionBombError,Image.DecompressionBombWarning):valid=False
     finally:f.seek(0)
-    if not valid:raise forms.ValidationError('Choose a valid PDF, UTF-8 TXT, DOCX or PPTX'+(', JPG or PNG' if images else '')+' file, up to 10 MB.')
+    if not valid:raise forms.ValidationError('Choose a valid PDF, UTF-8 TXT, DOCX or PPTX'+(', JPG or PNG' if images else '')+' file, up to 30 MB.')
     return f
 
 class StudentRegistrationForm(UserCreationForm):
@@ -146,11 +146,37 @@ class ProfileForm(forms.ModelForm):
 
 
 class ResourceForm(forms.ModelForm):
+    category=forms.ChoiceField(choices=Resource.CATEGORIES+[('__custom__','+ Add custom category')])
+    custom_category=forms.CharField(max_length=100,required=False,label='Custom category',
+        help_text='Enter a category name when you choose Add custom category.')
     class Meta:
         model=Resource
-        fields=['title','subject','category','description','file']
-        widgets={'description':forms.Textarea(attrs={'rows':3})}
-    def clean_file(self):return validate_attachment(self.cleaned_data['file'])
+        fields=['title','subject','category','custom_category','description','file']
+        widgets={
+            'description':forms.Textarea(attrs={'rows':3}),
+            'file':forms.ClearableFileInput(attrs={'accept':'.pdf,.txt,.docx,.pptx,.jpg,.jpeg,.png'}),
+        }
+        help_texts={'file':'PDF, TXT, DOCX, PPTX, JPG, JPEG or PNG. Maximum file size: 30 MB.'}
+    def __init__(self,*args,category_choices=None,**kwargs):
+        super().__init__(*args,**kwargs)
+        if category_choices is not None:
+            self.fields['category'].choices=list(category_choices)+[('__custom__','+ Add custom category')]
+    def clean(self):
+        data=super().clean()
+        if data.get('category')=='__custom__':
+            name=' '.join(data.get('custom_category','').split())
+            if not name:
+                self.add_error('custom_category','Enter a name for your custom category.')
+            elif name=='__custom__':
+                self.add_error('custom_category','Choose another category name.')
+            else:
+                for value,label in self.fields['category'].choices:
+                    if value!='__custom__' and name.casefold() in (value.casefold(),label.casefold()):
+                        name=value
+                        break
+                data['category']=name
+        return data
+    def clean_file(self):return validate_attachment(self.cleaned_data['file'],images=True)
 class QuizForm(forms.ModelForm):
     class Meta:
         model=Quiz
