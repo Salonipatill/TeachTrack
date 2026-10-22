@@ -26,14 +26,34 @@ Select the private file from the TeachTrack folder:
 
 ```powershell
 $env:TEACHTRACK_ENV_FILE = '.env.local-mysql'
+Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue
 .\.venv\Scripts\python.exe manage.py migrate
-.\.venv\Scripts\python.exe manage.py runserver
+.\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8001
 ```
 
-CMD equivalent: `set TEACHTRACK_ENV_FILE=.env.local-mysql`. Close the terminal or
+CMD equivalent, from the TeachTrack folder:
+
+```cmd
+set "TEACHTRACK_ENV_FILE=.env.local-mysql"
+set "DATABASE_URL="
+.venv\Scripts\python.exe manage.py migrate
+.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8001
+```
+
+Open `http://127.0.0.1:8001/`. Before migrating, verify the private file's URL uses
+`127.0.0.1` and the intended local database name. These commands operate on that
+local database; they do not deploy source changes or synchronize records with
+the hosted database. Close the terminal or
 remove the selector to return to `.env`. Management commands give existing process
 variables precedence; local runserver deliberately loads the selected file with
 override=True. Avoid stale DATABASE_URL/MYSQL_* variables in the shell.
+
+Passwords containing URL-reserved characters must be encoded once in DATABASE_URL
+(for example, `@` becomes `%40`). To distinguish a credential problem from an app
+problem, run `mysql -h 127.0.0.1 -P 3306 -u YOUR_USER -p` and enter the password
+at its prompt. MySQL error 1045 means the server rejected that login; correct the
+local account/password/host permissions before running migrations. Do not put
+passwords on the command line or in documentation.
 
 Migrate creates the schema in the selected database; it does not import Aiven
 accounts or quiz records. Restore a reviewed backup if you need the same data.
@@ -43,7 +63,10 @@ Notes and attachments upload directly to `TeachTrack/media/` in local mode.
 Google Cloud and its credentials are not required. MySQL stores file paths and
 resource details; back up the media directory along with the database. Faculty
 and directors can upload notes from **Resource library → Upload a resource**;
-signed-in students can download them through TeachTrack.
+signed-in students can download them through TeachTrack. Supported resources are
+PDF, TXT, DOCX, PPTX, JPG, JPEG and PNG up to 30 MB each. The total request cap is
+32 MB. Custom categories can be created during upload and reused in library filters.
+Run `migrate` to apply 0011_resource_custom_category before using that feature.
 
 ## Aiven on Vercel
 
@@ -122,7 +145,24 @@ new temporary data directory and separate loopback port, not the existing servic
 or its accounts. See tools/README.md. This proves local engine compatibility but
 does not verify a still-unconfigured application's local username/password.
 
-## Verification record for this change
+## Current verification record (22 October 2026)
+
+- All 90 tests passed on isolated in-memory SQLite (87.130 seconds).
+- All 90 tests passed on a disposable MySQL 8.0.46 server (52.993 seconds).
+  TLS was disabled for its loopback-only connection. The generated test database,
+  owned server and checked workspace scratch directory were cleaned up.
+- The first MySQL run exposed a test-only double close of streamed responses.
+  Fully consuming Django's test-client stream already closes it; the redundant
+  explicit close incorrectly triggered connection cleanup inside the test
+  transaction. Both redundant calls were removed before the successful full runs.
+- A read-only check of the saved PC MySQL configuration still returned error
+  1045 (access denied). Disposable-engine compatibility does not correct that
+  account/password setup. No existing application database was migrated or
+  modified during these checks; no deployed site was changed.
+
+See [TESTING.md](TESTING.md) for coverage, browser checks and reproduction commands.
+
+## Historical verification record (21 October 2026)
 
 - SQLite: all 71 tests passed. The rating/configuration checks were rerun after
   the portable exception expectation was corrected; all 15 focused checks passed.
@@ -140,7 +180,7 @@ does not verify a still-unconfigured application's local username/password.
 
 Tests used unique disposable databases. Existing application databases were not
 migrated or modified. The original-schema migration regression remains isolated
-on SQLite. The user's existing PC MySQL username/password is not verified while
-.env.local-mysql has no real DATABASE_URL; the separate disposable instance proves
-local server compatibility. These checks do not certify all possible user inputs,
+on SQLite. The separate disposable instance proves local server compatibility
+without verifying the application's saved PC MySQL username/password. These
+historical checks do not certify all possible user inputs,
 cloud storage permissions or the currently deployed Vercel version.
