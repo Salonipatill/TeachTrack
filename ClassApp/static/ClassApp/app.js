@@ -164,3 +164,14 @@ function setupQuestionOptions(question) {
   refresh();
 }
 document.querySelectorAll('#question-forms .question-form').forEach(setupQuestionOptions);
+
+
+// Features shares the home URL; show its dashboard shortcut only in that view.
+const featuresWorkspace = document.querySelector('[data-features-workspace]');
+if (featuresWorkspace) {
+  const updateWorkspaceVisibility = () => {
+    featuresWorkspace.hidden = window.location.hash !== '#features';
+  };
+  window.addEventListener('hashchange', updateWorkspaceVisibility);
+  updateWorkspaceVisibility();
+}
