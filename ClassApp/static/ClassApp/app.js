@@ -131,7 +131,7 @@ function setupQuestionOptions(question) {
   const add = document.createElement('button');
   add.type = 'button'; add.className = 'secondary'; add.textContent = '+ Add option';
   const remove = document.createElement('button');
-  remove.type = 'button'; remove.className = 'secondary'; remove.textContent = '? Remove last option';
+  remove.type = 'button'; remove.className = 'secondary'; remove.textContent = 'Remove last option';
   controls.append(add, remove, status);
   question.querySelector('input[name$="-option_a"]').closest('p').before(controls);
   const refresh = () => {
