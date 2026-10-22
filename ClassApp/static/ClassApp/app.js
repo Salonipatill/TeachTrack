@@ -175,3 +175,17 @@ if (featuresWorkspace) {
   window.addEventListener('hashchange', updateWorkspaceVisibility);
   updateWorkspaceVisibility();
 }
+
+
+const resourceCategory = document.querySelector('select[name="category"]');
+const customCategory = document.querySelector('input[name="custom_category"]');
+if (resourceCategory && customCategory) {
+  const updateCustomCategory = () => {
+    const isCustom = resourceCategory.value === '__custom__';
+    customCategory.closest('p').hidden = !isCustom;
+    customCategory.disabled = !isCustom;
+    customCategory.required = isCustom;
+  };
+  resourceCategory.addEventListener('change', updateCustomCategory);
+  updateCustomCategory();
+}
