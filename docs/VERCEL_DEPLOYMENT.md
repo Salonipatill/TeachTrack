@@ -15,6 +15,7 @@ SECRET_KEY=YOUR_PRIVATE_RANDOM_KEY_AT_LEAST_50_CHARACTERS
 DATABASE_URL=mysql://USER:URL_ENCODED_PASSWORD@YOUR_AIVEN_HOST:PORT/DATABASE
 MYSQL_SSL_MODE=VERIFY_IDENTITY
 MYSQL_SSL_CA=certs/aiven-ca.pem
+UPLOAD_STORAGE=auto
 ALLOWED_HOSTS=YOUR_CUSTOM_OR_STABLE_HOSTNAME
 CSRF_TRUSTED_ORIGINS=https://YOUR_CUSTOM_OR_STABLE_HOSTNAME
 ```
@@ -42,14 +43,18 @@ Run migrations through a trusted terminal configured for the intended database:
 ```
 
 Migration 0010 adds batch and separate submission academic snapshots. Preserve
-existing records and back up populated databases before upgrades. Migrations are
+existing records and back up populated databases before upgrades. Migration 0011
+expands resource categories to 100 characters for custom category names. Migrations are
 not run on every web request. See UPGRADE.md for original-schema migrations.
 
 ## Files and email
 
-GS_BUCKET_NAME can be blank. In production, uploads then remain disabled and show
+GS_BUCKET_NAME can be blank. With UPLOAD_STORAGE=auto and DEBUG=False, uploads
+then remain disabled and show
 a clear message; do not rely on Vercel's local filesystem to preserve uploads.
-To enable files, provision private GCS storage and its credentials first. Aiven
+To enable hosted files, provision private GCS storage and its credentials and use
+UPLOAD_STORAGE=gcs (or auto with a bucket). UPLOAD_STORAGE=local is for the PC or a
+server with persistent disk, and is independent of the selected database. Aiven
 stores application records, not the uploaded file bodies. Supabase storage is
 not integrated.
 
