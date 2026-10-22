@@ -176,19 +176,34 @@ class QuestionEntryForm(forms.Form):
     text=forms.CharField(label='Question',max_length=5000,widget=forms.Textarea(attrs={'rows':2}))
     image=forms.ImageField(required=False,label='Question image (JPG/PNG, optional)')
     is_multiple=forms.BooleanField(required=False,label='Allow multiple correct options')
+    option_count=forms.IntegerField(min_value=2,max_value=26,initial=4,required=False,widget=forms.HiddenInput())
     option_a=forms.CharField(max_length=255)
     option_b=forms.CharField(max_length=255)
     option_c=forms.CharField(max_length=255,required=False)
     option_d=forms.CharField(max_length=255,required=False)
-    correct=forms.MultipleChoiceField(choices=[(c,c) for c in 'ABCD'],widget=forms.CheckboxSelectMultiple)
+    correct=forms.MultipleChoiceField(choices=[(chr(65+i),chr(65+i)) for i in range(26)],widget=forms.CheckboxSelectMultiple)
     DELETE=forms.BooleanField(required=False,label='Remove this question')
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        for key in 'efghijklmnopqrstuvwxyz':
+            self.fields['option_'+key]=forms.CharField(max_length=255,required=False)
+        names=['text','image','is_multiple','option_count']+['option_'+chr(97+i) for i in range(26)]+['correct','DELETE']
+        self.order_fields(names)
+
     def clean_image(self):
         f=self.cleaned_data.get('image')
         return validate_attachment(f,images=True) if f else None
     def clean(self):
         data=super().clean()
         if data.get('DELETE'):return data
+        count=data.get('option_count') or 4
+        keys=[chr(65+i) for i in range(count)]
+        if self.add_prefix('option_count') in self.data:
+            for key in keys:
+                if not data.get('option_'+key.lower()):self.add_error('option_'+key.lower(),'Enter option text.')
+        for i in range(count,26):data.pop('option_'+chr(97+i),None)
         correct=data.get('correct',[])
+        if any(key not in keys for key in correct):self.add_error('correct','Choose correct answers only from the current options.')
         if not data.get('is_multiple') and len(correct)!=1:self.add_error('correct','Choose exactly one correct option for a single-choice question.')
         for key in correct:
             if not data.get('option_'+key.lower()):self.add_error('correct','Every selected correct option needs option text.')
