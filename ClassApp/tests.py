@@ -200,6 +200,35 @@ class WorkspaceTests(TestCase):
         self.assertTrue(all([quiz.is_active, quiz.require_name, quiz.require_roll, quiz.require_email, quiz.require_class]))
         self.assertEqual(len(quiz.code),6);self.assertEqual(quiz.questions.count(),1)
         self.assertTrue(Notification.objects.filter(recipient=self.student,title='New quiz: New quiz').exists())
+    def test_variable_quiz_options_and_multiple_answers(self):
+        self.login_as('faculty')
+        data={'title':'Flexible quiz','subject':'Python','starts_at':timezone.now().isoformat(),
+              'expiry_time':(timezone.now()+timedelta(hours=1)).isoformat(),
+              'questions-TOTAL_FORMS':'1','questions-INITIAL_FORMS':'0',
+              'questions-0-text':'Choose both','questions-0-option_count':'6',
+              'questions-0-is_multiple':'on','questions-0-correct':['A','F']}
+        for key in 'abcdef':data['questions-0-option_'+key]=key
+        self.assertRedirects(self.client.post(reverse('quiz_create'),data),reverse('quizzes'))
+        question=Quiz.objects.get(title='Flexible quiz').questions.get()
+        self.assertTrue(question.is_multiple)
+        self.assertEqual(question.options.count(),6)
+        self.assertSetEqual(set(question.options.filter(is_correct=True).values_list('text',flat=True)),{'a','f'})
+        data['title']='Two options'
+        data['questions-0-option_count']='2'
+        data['questions-0-correct']=['B']
+        self.assertRedirects(self.client.post(reverse('quiz_create'),data),reverse('quizzes'))
+        self.assertEqual(Quiz.objects.get(title='Two options').questions.get().options.count(),2)
+        for title, changes in [
+            ('Removed answer',{'questions-0-correct':['F']}),
+            ('Blank option',{'questions-0-option_b':''}),
+            ('Too many options',{'questions-0-option_count':'27'}),
+            ('No correct answer',{'questions-0-correct':[]}),
+            ('Single choice',{'questions-0-option_count':'6','questions-0-is_multiple':'','questions-0-correct':['A','F']}),
+        ]:
+            invalid={**data,**changes,'title':title}
+            self.assertEqual(self.client.post(reverse('quiz_create'),invalid).status_code,200)
+            self.assertFalse(Quiz.objects.filter(title=title).exists())
+
     def test_quiz_rejects_empty_questions(self):
         self.login_as('faculty')
         data={'title':'No questions','subject':'CS','starts_at':timezone.now().isoformat(),'expiry_time':(timezone.now()+timedelta(days=1)).isoformat(),
