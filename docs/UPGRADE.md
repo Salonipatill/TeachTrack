@@ -21,7 +21,10 @@ The process below is for a **consistent populated database matching the original
 - Original MySQL: install `requirements-mysql.txt`, which includes the main requirements and MySQL Connector. Set DATABASE_URL to your staging MySQL URL. Do not paste its credentials into settings.py.
 - PostgreSQL: use the normal requirements and a PostgreSQL URL. Django schema migrations do not copy data automatically from MySQL to PostgreSQL; first perform and validate a separate database-engine migration if that is your chosen path.
 
-Use `DEBUG=True` for the local staging rehearsal. Production requires DEBUG=False, a strong secret, a supported production database and the private bucket settings described in DEPLOYMENT.md.
+Use `DEBUG=True` for the local staging rehearsal. Production requires DEBUG=False,
+a strong secret and a supported production database. Select upload storage
+explicitly: local for a server with persistent private disk, gcs for private
+Google Cloud Storage, or auto/disabled when file uploads are unavailable.
 
 ## Run the upgrade
 
@@ -44,6 +47,8 @@ Before upgrade, the first six ClassApp migrations should accurately match your e
 | 0007_secure_academic_modules | Adds secure user links, profiles, quiz metadata, resource/notification tables, complaint events and other module fields. Existing IDs and relationships remain. |
 | 0008_migrate_secure_accounts | Converts legacy role accounts, hashes plaintext passwords, preserves recognized Django hashes, assigns roles, links unambiguous historical records, fills quiz codes/reviews, converts complaint statuses/history and clears old sessions/OTPs. |
 | 0009_remove_plaintext_passwords | Drops the legacy pw columns and adds uniqueness/rating constraints. |
+| 0010_student_batch_submission_academic_details | Adds student batch and separate submission academic-detail snapshots without inferring missing historical values. |
+| 0011_resource_custom_category | Expands Resource.category from 12 to 100 characters and allows custom category names. Existing category values and files remain unchanged. |
 
 New quiz submissions still create the original SubmissionAnswer and SubmissionDetail records, including their selected Option relations. Question images, doubt attachments and announcement document paths are retained.
 
@@ -67,7 +72,11 @@ Complaint Pending becomes pending; Replied becomes in_progress, since a reply al
 
 ## Media and rollback
 
-Local development uses the copied media directory with original relative paths. Production requires these files in the configured private Google Cloud Storage bucket under the same keys. There is no public `/media/` route; attachments are served by authenticated views.
+Local mode uses the copied media directory with original relative paths, including
+when the database is MySQL. GCS mode requires the same files in the private bucket
+under their existing keys. Back up the database and file storage together before
+changing modes. There is no public `/media/` route; attachments are served by
+authenticated views.
 
 The credential-conversion migration is intentionally irreversible. Once plaintext fields are removed, rolling back by unapplying migrations is not supported. To revert a failed rehearsal, restore the database backup and old code together. Keep backups private because pre-upgrade backups can contain plaintext passwords.
 
@@ -81,7 +90,12 @@ summary; no separate historical values are inferred. New submissions retain all
 separate academic fields in JSON. Profile edits synchronize linked current role
 records while preserving already-recorded submission snapshots.
 
-A private bucket is optional for production startup, but existing files must be
-preserved separately. Production without persistent storage deliberately disables
-uploads and cannot restore missing historical media. See VERCEL_DEPLOYMENT.md for
+Migration 0011 allows resource category names up to 100 characters. Apply it before
+uploading or filtering custom categories. The built-in category values retain
+their existing labels; this migration does not move uploaded files.
+
+A private bucket is optional for startup, but existing files must be preserved
+separately. UPLOAD_STORAGE=local enables persistent local disk independently of
+DEBUG; auto keeps uploads disabled with DEBUG=False and no bucket. Disabled
+storage cannot restore missing historical media. See VERCEL_DEPLOYMENT.md for
 the current Aiven/TLS setup. Public password reset and SMTP are removed.
