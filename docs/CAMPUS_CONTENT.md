@@ -1,6 +1,25 @@
 # Campus Life page
 
-The public `/campus-life/` page is linked from the shared homepage/campus header and footer. Its campus descriptions were checked against the official SAIT pages on 21 October 2026 and paraphrased for TeachTrack. The page links to the corresponding official facility pages.
+Updated 22 October 2026. The public `/campus-life/` page is linked from the shared
+public header and footer and stays within TeachTrack. Its campus descriptions
+were checked against the official SAIT pages on 21 October 2026 and paraphrased
+for TeachTrack; the sources below are documentation references. The product page
+does not link its descriptions or navigation to Aurobindo's official website.
+
+## Navigation and location
+
+The TeachTrack logo opens Home. Signed-in visitors see a **WORKSPACE** button in
+the Campus life header that opens their dashboard. The same button appears on
+Contact and the `/#features` view, while it is hidden on the main Home view.
+
+The **Find us in Indore** panel shows the campus address, telephone and email.
+**View location on Google Maps** opens a new tab using this place search:
+
+[Sri Aurobindo Institute of Technology, Indore, Madhya Pradesh on Google Maps](https://www.google.com/maps/search/?api=1&query=Sri+Aurobindo+Institute+of+Technology+Indore+Madhya+Pradesh).
+
+The link is a Google Maps search rather than an exact coordinate or a verified
+directions route. It uses `rel="noopener noreferrer"` and an accessible label
+announcing the new tab. Telephone/email links remain available.
 
 ## Information sources
 
