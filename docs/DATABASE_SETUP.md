@@ -14,6 +14,8 @@ DEBUG=True
 DATABASE_URL=mysql://USER:URL_ENCODED_PASSWORD@127.0.0.1:3306/teachtrack
 MYSQL_SSL_MODE=DISABLED
 MYSQL_CONNECT_TIMEOUT=10
+UPLOAD_STORAGE=local
+GS_BUCKET_NAME=
 ```
 
 Use SSL disabled only for trusted local development. It skips all CA/client-key
@@ -36,6 +38,12 @@ override=True. Avoid stale DATABASE_URL/MYSQL_* variables in the shell.
 Migrate creates the schema in the selected database; it does not import Aiven
 accounts or quiz records. Restore a reviewed backup if you need the same data.
 Keep `.env.local-mysql` and credentials out of Git.
+
+Notes and attachments upload directly to `TeachTrack/media/` in local mode.
+Google Cloud and its credentials are not required. MySQL stores file paths and
+resource details; back up the media directory along with the database. Faculty
+and directors can upload notes from **Resource library → Upload a resource**;
+signed-in students can download them through TeachTrack.
 
 ## Aiven on Vercel
 
