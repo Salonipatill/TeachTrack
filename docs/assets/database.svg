@@ -18,7 +18,7 @@
 <text x="367.5" y="204" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Quiz → Question → Option</text>
 <text x="367.5" y="223" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Creator and answer structure</text>
 <rect x="515" y="180" width="205" height="65" rx="9" fill="white" stroke="#cbded2"/>
-<text x="617.5" y="204" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Resource / Download</text>
+<text x="617.5" y="204" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Resource / File / Download</text>
 <text x="617.5" y="223" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Uploader and reader</text>
 <rect x="275" y="305" width="185" height="65" rx="9" fill="white" stroke="#cbded2"/>
 <text x="367.5" y="329" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#172d35">Submission</text>

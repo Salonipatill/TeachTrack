@@ -49,6 +49,7 @@ Before upgrade, the first six ClassApp migrations should accurately match your e
 | 0009_remove_plaintext_passwords | Drops the legacy pw columns and adds uniqueness/rating constraints. |
 | 0010_student_batch_submission_academic_details | Adds student batch and separate submission academic-detail snapshots without inferring missing historical values. |
 | 0011_resource_custom_category | Expands Resource.category from 12 to 100 characters and allows custom category names. Existing category values and files remain unchanged. |
+| 0012_resourcefile | Adds an optional one-to-one private file copy for resource downloads across app instances. Existing resource rows and file paths are unchanged; existing files need explicit preservation on the machine holding them. |
 
 New quiz submissions still create the original SubmissionAnswer and SubmissionDetail records, including their selected Option relations. Question images, doubt attachments and announcement document paths are retained.
 

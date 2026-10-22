@@ -100,6 +100,31 @@ older Vercel deployment serves the same commit.
 
 ## Verification record
 
+### Shared resource downloads
+
+Migration 0012 adds ResourceFile, a private database copy of a locally uploaded
+resource. When the filesystem file is missing on another instance, the existing
+authenticated download view serves the matching database copy. Downloads retain
+the original filename and normal count/history behavior. A copy for a different
+file key is never served. File bytes stay out of resource list-page queries.
+
+New local resource uploads preserve their copy automatically. For an existing
+resource, run `python manage.py preserve_resource_files --resource-id ID` for a
+dry-run on the machine holding the file; add `--apply` to save its database copy.
+This command does not recreate an unavailable original or publish a public URL.
+The Vercel code must be redeployed to use the fallback. Host-specific transfer
+limits still apply even though the application accepts 30 MB files locally.
+
+### Current download-fix verification
+
+All 94 tests passed on isolated SQLite (34.533 seconds, fast test-only password
+hasher) and disposable MySQL 8.0.46 (47.381 seconds). The four new cases cover
+missing local files, disabled storage, stale file-key copies and preservation
+commands. Migration 0012 and the approved existing-image copy are prepared for
+the deployed app; the new download view requires a code redeploy.
+
+### Earlier full verification
+
 All 90 automated tests passed on both isolated SQLite and disposable MySQL 8.0.46
 on 22 October 2026. Six new regression cases cover current navigation, Maps,
 26-option quizzes, exact-size image uploads and extra-wrong-answer scoring.

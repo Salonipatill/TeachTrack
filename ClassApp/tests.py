@@ -16,7 +16,7 @@ from django.db import DatabaseError, IntegrityError, connection, transaction
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
-from .models import (Profile, Resource, Notification, Download, Quiz, Question, Submission,
+from .models import (Profile, Resource, ResourceFile, Notification, Download, Quiz, Question, Submission,
                      Complaint, ComplaintEvent, Rating as Feedback, Doubt, Announcement, LoginThrottle, Faculty, Student, Option, AuthenticatedStudent, Teacher, SubmissionAnswer, SubmissionDetail)
 from .forms import ResourceForm
 from .services import ensure_legacy
@@ -341,6 +341,60 @@ class WorkspaceTests(TestCase):
         self.login_as('student')
         self.assertEqual(self.client.post(reverse('resource_download',args=[r.pk])).status_code,404)
         r.refresh_from_db();self.assertEqual(r.download_count,0)
+    def test_resource_download_survives_missing_local_file(self):
+        self.login_as('faculty')
+        content=b'Notes shared through the database.'
+        self.assertRedirects(self.client.post(reverse('resource_create'),{
+            'title':'Shared notes','subject':'CS','category':'notes',
+            'file':SimpleUploadedFile('shared.txt',content),
+        }),reverse('resources'))
+        resource=Resource.objects.get(title='Shared notes')
+        self.assertEqual(bytes(resource.stored_file.content),content)
+        self.assertEqual(resource.stored_file.storage_name,resource.file.name)
+        resource.file.storage.delete(resource.file.name)
+        self.login_as('student')
+        response=self.client.post(reverse('resource_download',args=[resource.pk]))
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(b''.join(response.streaming_content),content)
+        self.assertIn('shared.txt',response['Content-Disposition'])
+        resource.refresh_from_db()
+        self.assertEqual(resource.download_count,1)
+        self.assertEqual(Download.objects.filter(resource=resource,user=self.student).count(),1)
+
+    def test_stored_resource_download_without_local_storage(self):
+        resource=self.resource()
+        ResourceFile.objects.create(resource=resource,storage_name=resource.file.name,content=b'Knowledge')
+        self.login_as('student')
+        with override_settings(UPLOADS_ENABLED=False,STORAGES={
+            'default':{'BACKEND':'ClassApp.storage.DisabledUploadStorage'},
+            'staticfiles':{'BACKEND':'django.contrib.staticfiles.storage.StaticFilesStorage'},
+        }):
+            response=self.client.post(reverse('resource_download',args=[resource.pk]))
+            self.assertEqual(response.status_code,200)
+            self.assertEqual(b''.join(response.streaming_content),b'Knowledge')
+
+    def test_resource_backup_does_not_serve_a_different_file(self):
+        resource=self.resource()
+        ResourceFile.objects.create(resource=resource,storage_name='resources/old.txt',content=b'Old copy')
+        resource.file.storage.delete(resource.file.name)
+        self.login_as('student')
+        self.assertEqual(self.client.post(reverse('resource_download',args=[resource.pk])).status_code,404)
+        resource.refresh_from_db()
+        self.assertEqual(resource.download_count,0)
+
+    def test_preserve_existing_resource_dry_run_and_apply(self):
+        resource=self.resource()
+        output=io.StringIO()
+        call_command('preserve_resource_files',resource_id=resource.pk,stdout=output)
+        self.assertIn('Dry-run',output.getvalue())
+        self.assertFalse(ResourceFile.objects.filter(resource=resource).exists())
+        call_command('preserve_resource_files',resource_id=resource.pk,apply=True,stdout=io.StringIO())
+        self.assertEqual(bytes(resource.stored_file.content),b'Knowledge')
+        resource.file.storage.delete(resource.file.name)
+        with self.assertRaises(CommandError):
+            call_command('preserve_resource_files',resource_id=resource.pk,apply=True,stdout=io.StringIO())
+        self.assertEqual(bytes(resource.stored_file.content),b'Knowledge')
+
     def test_notifications_are_private_and_mutations_post_only(self):
         n=Notification.objects.create(recipient=self.student,title='Private notice')
         self.login_as('other_student')

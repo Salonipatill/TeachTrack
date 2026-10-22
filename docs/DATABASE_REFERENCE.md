@@ -254,7 +254,7 @@ Table: `ClassApp_announcement`. Default ordering: `['-created_at', '-id']`.
 | --- | --- | --- | --- | --- | --- |
 | `id` | BigAutoField | — | primary key; null=False; blank=True | — | Automatically generated primary key. |
 | `title` | CharField(200) | — | null=False; blank=False | — | Title. |
-| `content` | TextField | — | null=False; blank=False | — | Content. |
+| `content` | TextField | — | null=False; blank=False | — | Private resource file bytes, stored separately from list-page metadata and read only for an unavailable file download. |
 | `posted_by` | ForeignKey | — | indexed; null=True; blank=True | ClassApp.Faculty; SET_NULL | Link to the related record. |
 | `document` | FileField(100) | — | null=True; blank=True | — | Document. Upload path: announcements/. |
 | `created_at` | DateTimeField | Automatic | null=False; blank=True | — | Creation timestamp, set automatically. |
@@ -372,6 +372,20 @@ Table: `ClassApp_download`. Default ordering: `database default`.
 | `id` | BigAutoField | — | primary key; null=False; blank=True | — | Automatically generated primary key. |
 | `resource` | ForeignKey | — | indexed; null=False; blank=False | ClassApp.Resource; CASCADE | Link to the related record. |
 | `user` | ForeignKey | — | indexed; null=False; blank=False | auth.User; CASCADE | Link to the related record. |
+| `created_at` | DateTimeField | Automatic | null=False; blank=True | — | Creation timestamp, set automatically. |
+
+## ResourceFile
+
+A private database copy of a locally uploaded resource, allowing other instances to serve it when their filesystem lacks the original.
+
+Table: `ClassApp_resourcefile`. Default ordering: `database default`.
+
+| Field | Type / length | Default | Rules | Relation / deletion | Meaning |
+| --- | --- | --- | --- | --- | --- |
+| `id` | BigAutoField | — | primary key; null=False; blank=True | — | Automatically generated primary key. |
+| `resource` | OneToOneField | — | unique; indexed; null=False; blank=False | ClassApp.Resource; CASCADE | Link to the related record. |
+| `storage_name` | CharField(255) | — | null=False; blank=False | — | Resource file key that this database copy belongs to; a copy is served only when this key matches the current resource. |
+| `content` | BinaryField | — | null=False; blank=False | — | Private resource file bytes, stored separately from list-page metadata and read only for an unavailable file download. |
 | `created_at` | DateTimeField | Automatic | null=False; blank=True | — | Creation timestamp, set automatically. |
 
 ## Notification

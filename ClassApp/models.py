@@ -230,6 +230,11 @@ class Download(models.Model):
     resource=models.ForeignKey(Resource,on_delete=models.CASCADE)
     user=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
     created_at=models.DateTimeField(auto_now_add=True)
+class ResourceFile(models.Model):
+    resource=models.OneToOneField(Resource,on_delete=models.CASCADE,related_name='stored_file')
+    storage_name=models.CharField(max_length=255)
+    content=models.BinaryField()
+    created_at=models.DateTimeField(auto_now_add=True)
 class Notification(models.Model):
     recipient=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name='notifications')
     title=models.CharField(max_length=180)

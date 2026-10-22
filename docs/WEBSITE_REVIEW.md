@@ -1,7 +1,7 @@
 # Website quality review - 22 October 2026
 
 This review covers the checked-out source and isolated local verification. The
-current ClassApp suite has **90 tests**, all passing on isolated SQLite and a
+current ClassApp suite has **94 tests**, all passing on isolated SQLite and a
 disposable local MySQL 8.0.46 server. The saved PC MySQL login still returns
 **1045 (Access denied)**. This review does not certify the deployed Vercel website
 or validate that saved account/password.
@@ -16,7 +16,7 @@ The Maps destination is intercepted and external network access is not used.
 | Public navigation | The logo targets Home. Signed-in users get WORKSPACE on Campus life/Contact; Home hides it initially and `/#features` uses JavaScript to reveal it. Guests get sign-in/registration links. Rendered navigation is tested. |
 | Campus life | Campus life remains internal. The location button opens a Google Maps search for Sri Aurobindo Institute of Technology, Indore, with `noopener noreferrer`. Tests verify the target without contacting Google Maps. |
 | Quizzes | Questions support 2-26 options and multiple correct answers. Tests cover boundaries, text/membership, single-choice validation and exact-set grading. |
-| Resource uploads | Local mode saves private files under `media/` without Google Cloud. Documents and JPG/JPEG/PNG are accepted through 30 MB per file; valid boundary and invalid/oversized files are tested. MySQL stores paths/metadata. |
+| Resource uploads | Local mode saves private files under `media/` without Google Cloud. Documents and JPG/JPEG/PNG are accepted through 30 MB per file; valid boundary and invalid/oversized files are tested. Local resources also retain a private database copy; missing local files use a matching copy after migration 0012. A real deployed authenticated download still needs release verification. |
 | Categories | Staff can add custom categories and reuse them in uploads/filters. Tests cover normalization, existing names, blank/reserved values and the 100-character limit. |
 | Accounts/access | Tests cover role dashboards, profiles, role injection, private files, CSRF, sessions and password changes. This is not an independent security audit. |
 | Academic workflows | Announcements, quizzes, complaints, doubts, feedback, notifications and reports are covered, including original tables and legacy migration relationships. |

@@ -1,7 +1,7 @@
 # Testing and verification
 
 Run from the TeachTrack folder using the project virtual environment. The current
-source defines **90 test methods**, listed in [TEST_CATALOGUE.md](TEST_CATALOGUE.md).
+source defines **94 test methods**, listed in [TEST_CATALOGUE.md](TEST_CATALOGUE.md).
 Tests use a separate database, in-memory storage for most uploads and temporary
 media directories for local-disk tests. Existing application data is not needed.
 
@@ -12,8 +12,8 @@ and Python 3.14.5 from `.venv\Scripts\python.exe`:
 
 | Database | Final result | Test runtime |
 | --- | --- | --- |
-| Isolated in-memory SQLite | 90/90 passed | 87.130 seconds |
-| Disposable local MySQL 8.0.46, loopback, TLS disabled | 90/90 passed | 52.993 seconds |
+| Isolated in-memory SQLite | 94/94 passed | 34.533 seconds |
+| Disposable local MySQL 8.0.46, loopback, TLS disabled | 94/94 passed | 47.381 seconds |
 
 Django's system check reported no issues in both runs. The unique MySQL test
 database was destroyed, the owned MySQL process stopped, and the checked
@@ -26,8 +26,9 @@ client's streaming iterator had already closed two download responses. The
 second close emitted request-finished cleanup again and invalidated MySQL's
 test transaction, causing cascading connection errors. Removing those two
 redundant test-only calls preserved automatic stream/file closure. Both complete
-90-test suites above passed after that correction; application behavior did not
-need a change.
+90-test suites passed after that correction. The subsequent resource-download
+repair added four regression cases; the final 94-test suites above include them.
+The SQLite rerun used a fast test-only password hasher; MySQL used normal settings.
 
 Additional source checks passed: `pip check`, Django `check`,
 `makemigrations --check --dry-run`, JavaScript syntax checks and
@@ -66,6 +67,16 @@ Ensure `.env.isolated-tests-unused` does not exist. Close this terminal after th
 run, or use the environment-restoring procedure in
 [handbook section 15](PROJECT_DOCUMENTATION.md#15-testing-and-acceptance).
 Use the same interpreter for Django and migration subprocesses.
+
+## Resource download repair
+
+Migration 0012 and ResourceFile preserve local resource bytes in the database.
+New regression cases verify fallback when the local file is missing, downloads
+with local storage disabled, rejection of a stored copy for a different file key,
+and dry-run/apply behavior of the existing-file preservation command. Original
+filename, authentication and download statistics remain covered. The database
+repair for the reported existing image required explicit owner approval; code
+redeployment is a separate operational action.
 
 ## Automated coverage
 

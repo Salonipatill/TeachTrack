@@ -72,7 +72,10 @@ an example URI when it contains reserved URL characters.
 | UPLOAD_STORAGE=auto (or unset) | GCS if a bucket exists, otherwise local when DEBUG=True, otherwise disabled | Preserves existing defaults |
 
 UPLOADS_ENABLED is derived from the selected storage mode. With local storage,
-MySQL stores resource details and file paths; file contents stay in MEDIA_ROOT.
+Resource files remain in MEDIA_ROOT and, after migration 0012, local resource
+uploads also keep a private ResourceFile database copy. Downloads fall back to
+that copy if an instance lacks the matching file key. Resource list queries do
+not load the binary content. Other attachments still use the selected backend.
 Back up both the database and media directory. Use local mode on your PC or a
 server with persistent disk; ephemeral hosting needs persistent external storage.
 When storage is disabled, forms explain the unavailable state, middleware rejects

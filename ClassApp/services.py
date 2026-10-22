@@ -1,5 +1,21 @@
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from .models import (Notification,Profile,Student,Faculty,Director,AuthenticatedStudent,Teacher)
+
+
+def preserve_resource_file(resource):
+    """Keep locally uploaded resource bytes available to other app instances."""
+    from .models import Resource,ResourceFile
+    with transaction.atomic():
+        current=Resource.objects.select_for_update().get(pk=resource.pk)
+        with current.file.open('rb') as source:
+            content=source.read(30*1024*1024+1)
+        if len(content)>30*1024*1024:
+            raise ValueError('Resource files must be at most 30 MB.')
+        saved,_=ResourceFile.objects.update_or_create(resource=current,defaults={
+            'storage_name':current.file.name,'content':content,
+        })
+    return saved
 
 def notify(users,title,message='',link=''):
     Notification.objects.bulk_create([Notification(recipient_id=pk,title=title,message=message,link=link)

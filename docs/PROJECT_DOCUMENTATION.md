@@ -234,7 +234,7 @@ set "DATABASE_URL="
 .venv\Scripts\python.exe manage.py runserver 127.0.0.1:8001
 ```
 
-Open http://127.0.0.1:8001/. Migrate uses the selected local database; it does not transfer production data. Local uploads go to media/, while MySQL stores their metadata. Confirm other inherited database/storage settings do not override your chosen file when running management commands; see [database setup](DATABASE_SETUP.md).
+Open http://127.0.0.1:8001/. Migrate uses the selected local database; it does not transfer production data. Local resource uploads go to media/ and retain a private database file copy after migration 0012. Confirm other inherited database/storage settings do not override your chosen file when running management commands; see [database setup](DATABASE_SETUP.md).
 
 ### Fresh Windows setup
 
@@ -407,11 +407,11 @@ The public Contact page uses public_base.html, retaining the homepage header, fo
 
 Resources have a title, optional description, subject, category, file, safe original filename, uploader, count and timestamp. Built-in categories are notes, pyq and assignment. Faculty/directors can choose + Add custom category and enter a name of up to 100 characters. Successful uploads save the category on the resource; saved values are reused in later upload choices and library filters. Whitespace is collapsed, and a case-insensitive match against an existing category value or label reuses that category. There is no separate category-management table or deletion screen. New resource uploads notify active students. Uploaded resource keys use a random UUID and the lowercased file extension under resources/.
 
-The resource form accepts PDF, UTF-8 TXT, DOCX, PPTX, JPG/JPEG and PNG, with recognizable content validation. A file may be up to 30 MiB (labelled 30 MB in the interface), within the combined 32 MiB request limit. Local storage works without Google Cloud: UPLOAD_STORAGE=local saves bytes under media/ while the selected SQL database stores resource details.
+The resource form accepts PDF, UTF-8 TXT, DOCX, PPTX, JPG/JPEG and PNG, with recognizable content validation. A file may be up to 30 MiB (labelled 30 MB in the interface), within the combined 32 MiB request limit. Local storage works without Google Cloud: UPLOAD_STORAGE=local saves bytes under media/ and a private ResourceFile database copy, in addition to resource details.
 
 Search matches title, description or subject. Category filters use the stored code; subject uses a case-insensitive exact match. The title sort orders title then ID; the default is newest creation time then ID. Lists use 15 records per page.
 
-The download view first opens the file. A missing file returns 404 before incrementing its count. Successful initiation creates a Download row and increments Resource.download_count with a database F expression. Repeat downloads count again; the system does not measure whether the client completed the entire transfer.
+The download view first opens the configured file. If it is missing, a ResourceFile copy with the same current file key is used. If both are unavailable, the view returns 404 before incrementing its count. The backup is stored separately, so list queries do not load binary content. Successful initiation creates a Download row and increments Resource.download_count with a database F expression. Repeat downloads count again; the system does not measure whether the client completed the entire transfer.
 
 ### Building a quiz
 

@@ -104,7 +104,11 @@ certificate/migration requirements and deployed-commit troubleshooting. The
 Set DEBUG=False and a private SECRET_KEY in production. For PC MySQL, set
 UPLOAD_STORAGE=local to save notes and attachments in media/ without Google Cloud.
 This explicitly selects local files independently of DEBUG and the database engine.
-MySQL stores resource metadata, while media/ stores the file bytes. Back up both.
+Local resource uploads keep a private database copy as well as the file in
+media/, so another instance using the same database can download it. Apply
+migration 0012. Existing files can be preserved with
+`python manage.py preserve_resource_files --resource-id ID --apply` from the
+machine that holds the original file. Back up the database and media directory.
 UPLOAD_STORAGE=auto selects GCS when GS_BUCKET_NAME is set; otherwise it selects
 local files with DEBUG=True and disables uploads with DEBUG=False. Hosted services
 without persistent disk should use GCS or disabled uploads; gcs requires a bucket.

@@ -1,6 +1,6 @@
 # Test catalogue
 
-90 test methods are defined in `ClassApp/test*.py`. This catalogue describes source coverage; a successful test execution must be recorded separately.
+94 test methods are defined in `ClassApp/test*.py`. This catalogue describes source coverage; a successful test execution must be recorded separately.
 
 | Source | Test class | Method | Scenario |
 | --- | --- | --- | --- |
@@ -48,6 +48,10 @@
 | tests.py | WorkspaceTests | `test_oversized_and_binary_txt_rejected` | oversized and binary txt rejected |
 | tests.py | WorkspaceTests | `test_download_authenticated_and_counted` | download authenticated and counted |
 | tests.py | WorkspaceTests | `test_missing_resource_does_not_increment` | missing resource does not increment |
+| tests.py | WorkspaceTests | `test_resource_download_survives_missing_local_file` | resource download survives missing local file |
+| tests.py | WorkspaceTests | `test_stored_resource_download_without_local_storage` | stored resource download without local storage |
+| tests.py | WorkspaceTests | `test_resource_backup_does_not_serve_a_different_file` | resource backup does not serve a different file |
+| tests.py | WorkspaceTests | `test_preserve_existing_resource_dry_run_and_apply` | preserve existing resource dry run and apply |
 | tests.py | WorkspaceTests | `test_notifications_are_private_and_mutations_post_only` | notifications are private and mutations post only |
 | tests.py | WorkspaceTests | `test_notification_open_redirect_blocked` | notification open redirect blocked |
 | tests.py | WorkspaceTests | `test_announcement_audience` | announcement audience |

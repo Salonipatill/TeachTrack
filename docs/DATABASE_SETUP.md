@@ -60,8 +60,11 @@ accounts or quiz records. Restore a reviewed backup if you need the same data.
 Keep `.env.local-mysql` and credentials out of Git.
 
 Notes and attachments upload directly to `TeachTrack/media/` in local mode.
-Google Cloud and its credentials are not required. MySQL stores file paths and
-resource details; back up the media directory along with the database. Faculty
+Google Cloud and its credentials are not required. After migration 0012, local
+resource uploads also preserve a private ResourceFile database copy for downloads
+on another app instance. Existing local files can be preserved with
+`python manage.py preserve_resource_files --resource-id ID --apply`. Back up the
+media directory along with the database. Faculty
 and directors can upload notes from **Resource library → Upload a resource**;
 signed-in students can download them through TeachTrack. Supported resources are
 PDF, TXT, DOCX, PPTX, JPG, JPEG and PNG up to 30 MB each. The total request cap is

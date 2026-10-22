@@ -54,9 +54,20 @@ then remain disabled and show
 a clear message; do not rely on Vercel's local filesystem to preserve uploads.
 To enable hosted files, provision private GCS storage and its credentials and use
 UPLOAD_STORAGE=gcs (or auto with a bucket). UPLOAD_STORAGE=local is for the PC or a
-server with persistent disk, and is independent of the selected database. Aiven
-stores application records, not the uploaded file bodies. Supabase storage is
-not integrated.
+server with persistent disk, and is independent of the selected database.
+After migration 0012, resources uploaded locally also keep a private ResourceFile
+copy in the selected database. A Vercel instance using that same database can
+download those resources even with uploads disabled and no local file. Existing
+local resources require `preserve_resource_files --resource-id ID --apply` on
+the machine that holds the file. A missing file without a saved database copy
+still cannot be downloaded. Deploy the updated view after applying the migration.
+This fallback covers resource-library files, not every legacy attachment.
+Supabase storage is not integrated.
+
+The application's 30 MB file limit does not override Vercel's own hosting limits.
+Vercel currently limits function request/response payloads to 4.5 MB; larger
+hosted transfers require an external object-storage/direct-transfer design.
+See [Vercel's function limits](https://vercel.com/docs/functions/limitations).
 
 Public password reset, email/SMS OTP and SMTP sending are removed. EMAIL_*
 variables are unused and can be removed from Vercel. If an App Password was

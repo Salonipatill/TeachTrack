@@ -1,12 +1,14 @@
 import csv
 from .forms import ProfileForm
 import hashlib
+from io import BytesIO
 from datetime import timedelta
 from pathlib import Path
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import transaction, IntegrityError
@@ -16,12 +18,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST, require_http_methods
-from .models import (Profile, Resource, Download, Notification, Announcement, Quiz, Question, Submission,
+from .models import (Profile, Resource, ResourceFile, Download, Notification, Announcement, Quiz, Question, Submission,
                      Complaint, ComplaintEvent, Rating as Feedback, Doubt, LoginThrottle, Student, Faculty, Teacher, AuthenticatedStudent, Option, SubmissionAnswer, SubmissionDetail)
 from .forms import (StudentRegistrationForm, AccountForm, ResourceForm, QuizForm, QuestionFormSet,
                     AnnouncementForm, ComplaintForm, FeedbackForm, DoubtForm, ReplyForm, AnswerForm, NotificationForm, StudentInfoForm, ContactForm)
 from .permissions import roles
-from .services import notify, audience_users, ensure_legacy
+from .services import notify, audience_users, ensure_legacy, preserve_resource_file
 
 def paginated(request, queryset):
     return Paginator(queryset, 15).get_page(request.GET.get('page'))
@@ -132,6 +134,7 @@ def resource_create(request):
             item.uploaded_by = request.user
             item.original_name = Path(form.cleaned_data['file'].name).name
             item.save()
+            if settings.UPLOAD_STORAGE=='local':preserve_resource_file(item)
             notify(audience_users('student'), f'New resource: {item.title}', item.subject, reverse('resources'))
         messages.success(request, 'Resource uploaded successfully.')
         return redirect('resources')
@@ -144,7 +147,9 @@ def resource_download(request, pk):
     try:
         file = item.file.open('rb')
     except FileNotFoundError:
-        raise Http404('This file is unavailable. Contact the uploader.')
+        stored=ResourceFile.objects.filter(resource=item,storage_name=item.file.name).first()
+        if stored is None:raise Http404('This file is unavailable. Contact the uploader.')
+        file=BytesIO(bytes(stored.content))
     with transaction.atomic():
         Resource.objects.filter(pk=pk).update(download_count=F('download_count')+1)
         Download.objects.create(resource=item, user=request.user)

@@ -1,5 +1,17 @@
 # Change log
 
+## 22 October 2026 - resource download persistence repair
+
+- Added migration 0012 and ResourceFile to preserve a private database copy of
+  locally uploaded resources. Authenticated downloads use the matching copy when
+  another app instance lacks the filesystem file, without loading binary content
+  in library list queries.
+- Added `preserve_resource_files --resource-id ID` with explicit `--apply` for
+  existing local files. Added four regressions; all 94 tests passed on isolated
+  SQLite and disposable MySQL 8.0.46.
+- Documented Vercel's separate payload limits and the redeployment required for
+  the new download view. Recovery of an existing image used explicit owner approval.
+
 ## 22 October 2026 - quiz controls, public navigation and resource uploads
 
 - Added Add option/Remove last option controls for 2–26 choices per quiz question,
