@@ -56,6 +56,7 @@ DEBUG: "False"
 ALLOWED_HOSTS: "YOUR_SERVICE_HOST.run.app"
 CSRF_TRUSTED_ORIGINS: "https://YOUR_SERVICE_HOST.run.app"
 GS_BUCKET_NAME: "YOUR_PRIVATE_BUCKET"
+UPLOAD_STORAGE: "gcs"
 TRUST_PROXY_HEADERS: "True"
 ```
 
@@ -76,7 +77,16 @@ gcloud run jobs create teachtrack-migrate \
 gcloud run jobs execute teachtrack-migrate --region REGION --wait
 ```
 
-On later releases, update the job image and execute it before switching traffic. Use a Cloud SQL Auth Proxy connection from a trusted local terminal to run the interactive `create_director` command against the new production database. Configure DATABASE_URL for that proxy and the production environment, using environment variables rather than source changes. create_director does not read media. A bucket is optional for startup; uploads stay disabled in production when no bucket is configured.
+On later releases, update the job image and execute it before switching traffic.
+Migration 0011 expands resource category names for custom categories. Use a
+Cloud SQL Auth Proxy connection from a trusted local terminal to run the interactive
+`create_director` command against the new production database. Configure DATABASE_URL
+for that proxy and the production environment, using environment variables rather
+than source changes. create_director does not read media. A bucket is optional
+for startup with UPLOAD_STORAGE=auto or disabled; gcs requires a bucket. On a PC or
+server with persistent private disk, UPLOAD_STORAGE=local enables files without GCS
+and works with local MySQL. Cloud Run instances should use persistent external
+storage for uploads.
 
 Do not create initial accounts using the local demo command in production. Keep the legacy student import optional and run it only against a backed-up database with reviewed source data.
 
