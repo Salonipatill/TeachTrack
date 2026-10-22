@@ -7,6 +7,7 @@ import tempfile
 from contextlib import closing
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
@@ -62,6 +63,54 @@ class WorkspaceTests(TestCase):
     def test_guests_require_login(self):
         for name in ['dashboard','resources','quizzes','complaints','feedback','reports','notifications']:
             self.assertEqual(self.client.get(reverse(name)).status_code,302)
+    def test_signed_in_public_pages_keep_home_and_workspace_navigation(self):
+        for role in ['student','faculty','director']:
+            self.login_as(role)
+            for name in ['index','campus_life','contact']:
+                with self.subTest(role=role,page=name):
+                    response=self.client.get(reverse(name))
+                    self.assertEqual(response.status_code,200)
+                    header=response.content.decode().split('<header',1)[1].split('</header>',1)[0]
+                    self.assertIn(f'href="{reverse("index")}" aria-label="TeachTrack home"',header)
+                    self.assertIn(f'href="{reverse("dashboard")}">WORKSPACE</a>',header)
+                    if name=='index':
+                        self.assertIn('data-features-workspace hidden',header)
+                        self.assertIn(f'href="{reverse("index")}#features"',header)
+                    else:
+                        self.assertNotIn(' hidden',header)
+            dashboard=self.client.get(reverse('dashboard'))
+            self.assertContains(dashboard,f'href="{reverse("index")}" aria-label="TeachTrack home"')
+
+    def test_guest_public_pages_offer_sign_in_without_workspace_button(self):
+        for name in ['index','campus_life','contact']:
+            with self.subTest(page=name):
+                response=self.client.get(reverse(name))
+                self.assertEqual(response.status_code,200)
+                header=response.content.decode().split('<header',1)[1].split('</header>',1)[0]
+                self.assertNotIn('WORKSPACE',header)
+                self.assertIn(f'href="{reverse("login")}"',header)
+
+    def test_campus_location_link_opens_institute_on_google_maps(self):
+        from html.parser import HTMLParser
+        class Links(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.links=[]
+            def handle_starttag(self,tag,attrs):
+                if tag=='a':self.links.append(dict(attrs))
+        response=self.client.get(reverse('campus_life'))
+        parser=Links();parser.feed(response.content.decode())
+        map_links=[link for link in parser.links if urlparse(link.get('href','')).netloc=='www.google.com']
+        self.assertEqual(len(map_links),1)
+        link=map_links[0]
+        destination=urlparse(link['href'])
+        self.assertEqual(destination.scheme,'https')
+        self.assertEqual(destination.path,'/maps/search/')
+        self.assertEqual(parse_qs(destination.query),{'api':['1'],'query':['Sri Aurobindo Institute of Technology Indore Madhya Pradesh']})
+        self.assertEqual(link.get('target'),'_blank')
+        self.assertIn('noopener',link.get('rel','').split())
+        self.assertFalse(any(urlparse(item.get('href','')).netloc.endswith('aurogroup.ac') for item in parser.links))
+        self.assertContains(response,f'href="{reverse("campus_life")}"')
     def test_student_cannot_access_staff_actions(self):
         self.login_as('student')
         for name in ['resource_create','quiz_create','announcement_create','notification_create','accounts','account_create','reports']:
@@ -199,7 +248,6 @@ class WorkspaceTests(TestCase):
             response=self.client.post(reverse('resource_download',args=[resource.pk]))
             self.assertEqual(response.status_code,200)
             self.assertEqual(b''.join(response.streaming_content),content)
-            response.close()
             self.client.logout()
             self.assertEqual(self.client.post(reverse('resource_download',args=[resource.pk])).status_code,302)
 
@@ -220,7 +268,6 @@ class WorkspaceTests(TestCase):
                 response=self.client.post(reverse('resource_download',args=[resource.pk]))
                 self.assertEqual(response.status_code,200)
                 self.assertEqual(b''.join(response.streaming_content),content)
-                response.close()
 
     def test_invalid_or_oversized_picture_notes_rejected(self):
         for filename,content in [
@@ -234,6 +281,19 @@ class WorkspaceTests(TestCase):
                                   files={'file':SimpleUploadedFile(filename,content)})
                 self.assertFalse(form.is_valid())
                 self.assertIn('file',form.errors)
+
+    def test_picture_notes_accepts_valid_png_at_30_mb_limit(self):
+        from PIL import Image
+        from PIL.PngImagePlugin import PngInfo
+        image=Image.new('RGB',(4,4),color='white')
+        metadata=PngInfo();metadata.add_text('Description','')
+        baseline=io.BytesIO();image.save(baseline,format='PNG',pnginfo=metadata)
+        metadata=PngInfo();metadata.add_text('Description','x'*(30*1024*1024-len(baseline.getvalue())))
+        content=io.BytesIO();image.save(content,format='PNG',pnginfo=metadata)
+        self.assertEqual(len(content.getvalue()),30*1024*1024)
+        form=ResourceForm(data={'title':'Large picture','subject':'CS','category':'notes'},
+                          files={'file':SimpleUploadedFile('notes.png',content.getvalue(),content_type='image/png')})
+        self.assertTrue(form.is_valid(),form.errors)
 
     def test_reject_fake_pdf_and_html(self):
         self.login_as('faculty')
@@ -355,6 +415,25 @@ class WorkspaceTests(TestCase):
               'questions-TOTAL_FORMS':'0','questions-INITIAL_FORMS':'0'}
         self.client.post(reverse('quiz_create'),data)
         self.assertFalse(Quiz.objects.exists())
+    def test_quiz_option_count_accepts_26_and_rejects_less_than_two(self):
+        self.login_as('faculty')
+        data={'title':'All alphabet options','subject':'CS','starts_at':timezone.now().isoformat(),
+              'expiry_time':(timezone.now()+timedelta(hours=1)).isoformat(),
+              'questions-TOTAL_FORMS':'1','questions-INITIAL_FORMS':'0',
+              'questions-0-text':'Select the final option','questions-0-option_count':'26',
+              'questions-0-correct':['Z']}
+        for key in 'abcdefghijklmnopqrstuvwxyz':data['questions-0-option_'+key]=key
+        self.assertRedirects(self.client.post(reverse('quiz_create'),data),reverse('quizzes'))
+        question=Quiz.objects.get(title='All alphabet options').questions.get()
+        self.assertEqual(question.options.count(),26)
+        self.assertEqual(question.options.get(is_correct=True).text,'z')
+        for count in ['0','1','-1','invalid']:
+            with self.subTest(count=count):
+                invalid={**data,'title':'Invalid options '+count,'questions-0-option_count':count}
+                response=self.client.post(reverse('quiz_create'),invalid)
+                self.assertEqual(response.status_code,200)
+                self.assertIn('option_count',response.context['formset'].forms[0].errors)
+                self.assertFalse(Quiz.objects.filter(title=invalid['title']).exists())
     def test_quiz_scoring_and_duplicate_submission(self):
         quiz,q=self.make_quiz();self.login_as('student')
         response=self.client.post(reverse('quiz_attempt',args=[quiz.pk]),{f'q_{q.pk}':str(q.options.get(is_correct=True).pk),'score':'999','student':self.users['other_student'].pk})
@@ -618,6 +697,19 @@ class WorkspaceTests(TestCase):
         self.login_as('other_student')
         self.client.post(reverse('quiz_attempt',args=[quiz.pk]),{f'q_{q.pk}':[selected[0]]})
         self.assertEqual(Submission.objects.get(student=self.users['other_student']).score,0)
+    def test_multi_select_extra_incorrect_option_scores_zero_and_records_selection(self):
+        quiz,q=self.make_quiz();q.is_multiple=True;q.save(update_fields=['is_multiple'])
+        extra=q.options.filter(is_correct=False).first();extra.is_correct=True;extra.save(update_fields=['is_correct'])
+        selected=list(q.options.filter(is_correct=True).values_list('pk',flat=True))
+        selected.append(q.options.filter(is_correct=False).first().pk)
+        self.login_as('student')
+        self.assertRedirects(self.client.post(reverse('quiz_attempt',args=[quiz.pk]),{f'q_{q.pk}':selected}),reverse('quiz_result',args=[quiz.pk]))
+        submission=Submission.objects.get(student=self.student,quiz=quiz)
+        self.assertEqual(submission.score,0)
+        self.assertSetEqual(set(submission.answers.get().selected_options.values_list('pk',flat=True)),set(selected))
+        detail=SubmissionDetail.objects.get(submission=submission,question=q)
+        self.assertEqual(detail.score,0)
+        self.assertSetEqual(set(detail.selected_options.values_list('pk',flat=True)),set(selected))
     def test_forged_options_from_other_question_rejected(self):
         quiz,q=self.make_quiz();other,q2=self.make_quiz();self.login_as('student')
         response=self.client.post(reverse('quiz_attempt',args=[quiz.pk]),{f'q_{q.pk}':q2.options.first().pk})
