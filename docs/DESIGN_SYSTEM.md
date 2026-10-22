@@ -13,6 +13,23 @@ at 900px and two at 480px. Labels sit above values with no browser default dd in
 Question numbers are inside cards above question text; the attempt form is at most
 800px wide and long text/options wrap. Launch/deadline labels explicitly show IST.
 
+The question builder starts with four options and adds/removes the final option
+within 2–26 (A–Z). A polite live status announces the count; controls disable at
+the bounds. Hidden options are disabled and their correct-answer selections are
+cleared. Correct-answer checkboxes support multiple answers and enable the
+multiple-answer setting automatically when more than one is checked.
+
+TeachTrack logos open Home in both public and signed-in shells. The public
+header's signed-in WORKSPACE button opens the dashboard on Campus life, Contact
+and the `/#features` view. It is hidden on the main Home view; app.js follows hash
+changes because Features shares the Home page. Campus descriptions stay in
+TeachTrack, while the location button opens a Google Maps place search in a new tab.
+
+Resource upload forms expose + Add custom category and conditionally show its
+100-character name field. Saved categories appear in later upload/filter choices.
+File hints and the library summary describe document/JPG/JPEG/PNG uploads up to
+30 MB per file; the server's combined request limit is 32 MB.
+
 The public Contact page retains the homepage header/footer. All shared pages have
 a keyboard skip link; reduced-motion preferences are respected. Mobile controls,
 form actions and toolbar wrapping are adjusted at small widths. Form navigation
@@ -23,7 +40,7 @@ surfaces to #1a2831, primary text to #e6edf1 and muted text to #a5b5be. The gene
 colour index is authoritative for exact selector/property declarations.
 
 
-Design reference for the source reviewed on 21 October 2026. The active visual implementation is ClassApp/static/ClassApp/app.css plus theme.css, loaded by base.html. This guide explains the design decisions expressed by that stylesheet; it does not introduce an additional theme framework.
+Design reference for the source reviewed on 22 October 2026. The active visual implementation is ClassApp/static/ClassApp/app.css plus theme.css, loaded by base.html. This guide explains the design decisions expressed by that stylesheet; it does not introduce an additional theme framework.
 
 ## 1. Visual direction and source files
 
@@ -230,7 +247,7 @@ Use component classes for meaning rather than duplicating inline styles. The CSS
 | Filtering | .filter-bar | Search/category/subject/sort controls with responsive wrapping |
 | Form | .form-panel, .form-actions, .helptext, .errorlist | Labelled fields, validation and save/navigation actions |
 | Role links | .role-switch | GET navigation between sign-in or account-creation roles; current item is teal |
-| Question builder | .question-form, .question-image | Formset question groups and bounded images |
+| Question builder | .question-form, .question-image | Formset question groups, 2–26 option controls and bounded images |
 | Quiz choices | .option, .option:has(input:checked) | Clickable labels; selected option uses a pale surface and teal border |
 | Status | .status, .pending, .in_progress, .resolved | Textual semantic state with colour |
 | Alerts | .alert, .alert.error | Messages and errors announced through template status/alert roles |
@@ -250,7 +267,7 @@ Use component classes for meaning rather than duplicating inline styles. The CSS
 
 Primary hover changes to --teal-dark and stays white. Secondary hover uses --pale with teal text/border. Links normally underline on hover, while button-like links suppress that underline. Standard links, buttons, inputs, textareas and selects receive a focus-visible outline. Checkbox/radio accents use --teal. Selected role links and carousel dots use aria-current-driven selectors.
 
-Hidden carousel figures use the native hidden attribute; there is no fade/slide animation or autoplay timer. The question builder disables Add question at 50 forms. A disabled add control is not a replacement for the formset’s server-side maximum.
+Hidden carousel figures use the native hidden attribute; there is no fade/slide animation or autoplay timer. The question builder disables Add question at 50 forms, Add option at 26 and Remove last option at two. Disabled controls are backed by server-side form/formset bounds. Turning Allow multiple correct options off keeps only the first selected correct answer.
 
 ## 7. Complete responsive breakpoint index
 
@@ -308,7 +325,7 @@ Use real buttons for actions and links for navigation. Keep visible text alongsi
 
 Public pages include a skip link. The sidebar menu exposes aria-controls and aria-expanded. The carousel exposes labels, selected-dot state, a polite live status and keyboard controls. Headings, form labels, field errors and table headings provide structure. Keep arrow and dot hit areas usable when adding photos; the current seven-dot layout was checked at 320px and 390px widths.
 
-Student year/semester fields belong to student forms, not staff forms. Faculty sign-in should explain director-managed account creation rather than direct a new staff user to public student registration. Campus descriptions should use verified official information with source links. Keep internal implementation details out of ordinary product prompts unless they help the person complete the task.
+Student year/semester fields belong to student forms, not staff forms. Faculty sign-in should explain director-managed account creation rather than direct a new staff user to public student registration. Campus descriptions should use verified official information with source references retained in CAMPUS_CONTENT.md; product descriptions do not navigate to the official website. Keep internal implementation details out of ordinary product prompts unless they help the person complete the task.
 
 ## 10. Safe design-change workflow
 
