@@ -1,0 +1,53 @@
+{% extends 'public_base.html' %}
+{% load static %}
+{% block title %}Campus life at SAIT{% endblock %}
+{% block public_content %}
+<div class="campus-page">
+  <nav class="campus-breadcrumb" aria-label="Breadcrumb"><a href="{% url 'index' %}">Home</a><span aria-hidden="true">/</span><span aria-current="page">Campus life</span></nav>
+
+  <section class="campus-hero" aria-labelledby="campus-heading">
+    <div class="campus-hero-copy">
+      <div class="campus-identity"><img decoding="async" src="{% static 'img/sait-logo.jpg' %}" alt="SAIT logo" width="447" height="447"><div><span class="eyebrow">OUR CAMPUS · INDORE</span><strong>Sri Aurobindo Institute of Technology</strong></div></div>
+      <h1 id="campus-heading">Life at SAIT.<br><span class="accent">Beyond the<br>classroom.</span></h1>
+      <p class="muted">Study, sport and friendships, all in the same day. Discover a community with shared learning spaces, cultural activities and places to unwind between classes.</p>
+      <div class="head-actions"><a class="button" href="#campus-spaces">Discover the campus <span aria-hidden="true">↓</span></a></div>
+      <div class="campus-location-tag"><span aria-hidden="true">◎</span> Sri Aurobindo Edupark · Indore, Madhya Pradesh</div>
+    </div>
+    <figure class="campus-cover"><img decoding="async" src="{% static 'img/sait-campus-main.jpg' %}" alt="Sri Aurobindo Institute of Technology campus building beneath the title Campus" width="399" height="501" fetchpriority="high"><figcaption>A place to learn. A community to call your own.</figcaption></figure>
+  </section>
+
+  <section class="campus-spaces" id="campus-spaces" aria-labelledby="spaces-heading">
+    <div class="home-section-heading"><div><div class="eyebrow">MAKE YOURSELF AT HOME</div><h2 id="spaces-heading">Places that make the day.</h2></div><p class="muted">Your next study spot.<br>Your favourite place to take a break.</p></div>
+    <div class="campus-spaces-grid">
+      <article class="campus-space-card"><img decoding="async" src="{% static 'img/about-img2.jpg' %}" alt="Entrance and service desk of the campus Knowledge Resource Center" width="1080" height="654" loading="lazy"><div><span class="eyebrow">READ · RESEARCH · DISCOVER</span><h3>SAIT Central Library</h3><p>The institute’s top floor houses the central library, with reading areas, books, research journals and digital resources for students and faculty.</p></div></article>
+      <article class="campus-space-card"><img decoding="async" src="{% static 'img/about-img1.jpg' %}" alt="Common Ground café with colourful seating and tables for students" width="1080" height="693" loading="lazy"><div><span class="eyebrow">MEET · RECHARGE · CONNECT</span><h3>Common Ground</h3><p>Close to the engineering and pharmacy colleges, Common Ground brings students together over food, coffee and conversation.</p></div></article>
+    </div>
+    <div class="campus-facilities">
+      <article><span class="file-icon" aria-hidden="true">◇</span><h3>Sport &amp; recreation</h3><p>Indoor and outdoor options include badminton, table tennis, cricket, football, volleyball, chess and carrom.</p></article>
+      <article><span class="file-icon" aria-hidden="true">◉</span><h3>Events &amp; the auditorium</h3><p>The campus auditorium hosts seminars, workshops and performances, supported by projection and audio facilities.</p></article>
+      <article><span class="file-icon" aria-hidden="true">⌁</span><h3>A connected campus</h3><p>Wi-Fi connects classrooms, laboratories, libraries and the auditorium to online learning resources.</p></article>
+      <article><span class="file-icon" aria-hidden="true">↔</span><h3>Getting to campus</h3><p>City bus services and institute bus routes connect the campus with Indore and nearby areas.</p></article>
+    </div>
+  </section>
+
+  <section class="campus-moments" aria-labelledby="moments-heading">
+    <div class="home-section-heading"><div><div class="eyebrow">THE PEOPLE. THE POSSIBILITIES.</div><h2 id="moments-heading">A glimpse of life here.</h2></div><p class="muted">Learning happens in more<br>places than a classroom.</p></div>
+    <div class="campus-photo-grid">
+      <figure><img decoding="async" src="{% static 'img/Slider-img4.jpg' %}" alt="Students studying together outside on the campus lawn" width="1600" height="1066" loading="lazy"><figcaption>Learning, together.</figcaption></figure>
+      <figure><img decoding="async" src="{% static 'img/Slider-img1.jpg' %}" alt="Students playing guitar and spending time together on campus" width="1600" height="1066" loading="lazy"><figcaption>Creativity &amp; connection.</figcaption></figure>
+      <figure class="campus-photo-portrait"><img decoding="async" src="{% static 'img/Slider-img2.jpg' %}" alt="Students speaking at a campus panel discussion" width="864" height="1152" loading="lazy"><figcaption>Finding your voice.</figcaption></figure>
+      <figure><img decoding="async" src="{% static 'img/Slider-img3.jpg' %}" alt="Students and faculty gathered for a campus group photograph" width="1600" height="1200" loading="lazy"><figcaption>Our campus community.</figcaption></figure>
+      <figure><img decoding="async" src="{% static 'img/Slider-img5.jpg' %}" alt="Students and faculty at an event in the campus auditorium" width="1080" height="890" loading="lazy"><figcaption>Moments worth celebrating.</figcaption></figure>
+      <figure><img decoding="async" src="{% static 'img/sait-industry-visit.jpg' %}" alt="Students posing for a group photograph during an industry visit" width="678" height="452" loading="lazy"><figcaption>Learning beyond campus.</figcaption></figure>
+      <figure><img decoding="async" src="{% static 'img/sait-campus-extra-1.jpg' %}" alt="Sri Aurobindo Institute of Technology building and the campus lawn" width="559" height="357" loading="lazy"><figcaption>A place to begin.</figcaption></figure>
+      <figure><img decoding="async" src="{% static 'img/sait-campus-extra-2.jpg' %}" alt="Students working at desktop computers in the campus computer lab" width="447" height="447" loading="lazy"><figcaption>Hands-on learning.</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="campus-visit" aria-labelledby="visit-heading">
+    <div class="campus-visit-copy"><div class="eyebrow">COME SAY HELLO</div><h2 id="visit-heading">Find us in Indore.</h2><p>SAIMS Campus, near MR-10 Crossing,<br>Indore, Madhya Pradesh.</p><div class="campus-contact-links"><a href="tel:+919685026688">+91 96850 26688</a><a href="mailto:connect@aurogroup.ac">connect@aurogroup.ac</a></div><a class="button small" href="https://www.google.com/maps/search/?api=1&amp;query=Sri+Aurobindo+Institute+of+Technology+Indore+Madhya+Pradesh" target="_blank" rel="noopener noreferrer" aria-label="View location on Google Maps (opens in a new tab)">View location on Google Maps</a></div>
+    <img decoding="async" src="{% static 'img/sait-campus-building.jpg' %}" alt="Front entrance and landscaped grounds of Sri Aurobindo Institute of Technology" width="372" height="299" loading="lazy">
+  </section>
+  <p class="campus-source">Campus information is based on SAIT's official website.</p>
+</div>
+{% endblock %}

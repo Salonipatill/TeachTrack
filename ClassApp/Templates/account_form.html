@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><div class="eyebrow">ADMINISTRATION</div><h1>{{ title }}</h1><p class="muted">Choose the account role, then enter their details.</p></div></div>
+<section class="panel form-panel">
+  <nav class="role-switch" aria-label="Account role">
+    {% for value, label in role_choices %}
+    <a href="{% url 'account_create' %}?role={{ value }}"{% if account_role == value %} aria-current="page"{% endif %}>{{ label }}</a>
+    {% endfor %}
+  </nav>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div class="form-actions"><button>Create account</button><a href="{% url 'accounts' %}">Back to accounts</a></div>
+  </form>
+</section>
+{% endblock %}

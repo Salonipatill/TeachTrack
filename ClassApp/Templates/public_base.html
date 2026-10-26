@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block page_layout %}
+<div class="public-site" id="top">
+  <header class="site-header">
+    <div class="site-container header-inner">
+      <a class="brand" href="{% url 'index' %}" aria-label="TeachTrack home"><span class="brand-icon">T</span> TeachTrack<span class="brand-dot">.</span></a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="{% url 'index' %}"{% if public_page == 'home' %} aria-current="page"{% endif %}>Home</a>
+        <a href="{% url 'index' %}#features">Features</a>
+        <a href="{% url 'campus_life' %}"{% if public_page == 'campus' %} aria-current="page"{% endif %}>Campus life</a>
+        <a href="{% url 'contact' %}"{% if public_page == 'contact' %} aria-current="page"{% endif %}>Contact</a>
+      </nav>
+      {% if user.is_authenticated %}
+      <div class="site-header-actions"{% if public_page == 'home' %} data-features-workspace hidden{% endif %}>
+        <a class="button small" href="{% url 'dashboard' %}">WORKSPACE</a>
+      </div>
+      {% else %}
+      <div class="site-header-actions">
+        <a class="header-sign-in" href="{% url 'login' %}">Sign in</a>
+        <a class="button small header-register" href="{% url 'student_registration' %}">Get started <span aria-hidden="true">↗</span></a>
+      </div>
+      {% endif %}
+    </div>
+  </header>
+  <main class="site-container site-main" id="content" tabindex="-1">
+    {% for message in messages %}<div role="status" class="alert {{ message.tags }}">{{ message }}</div>{% endfor %}
+    {% block public_content %}{% endblock %}
+  </main>
+  <footer class="site-footer">
+    <div class="site-container">
+      <div class="footer-grid">
+        <div class="footer-about"><a class="brand" href="{% url 'index' %}"><span class="brand-icon">T</span> TeachTrack<span class="brand-dot">.</span></a><p>A connected space for a campus<br>that learns and grows together.</p><span>Sri Aurobindo Institute of Technology<br>Indore, Madhya Pradesh</span></div>
+        <nav aria-label="Footer navigation"><h2>Explore</h2><a href="{% url 'index' %}">Home</a><a href="{% url 'index' %}#features">Platform features</a><a href="{% url 'campus_life' %}">Campus life</a><a href="{% url 'contact' %}">Contact us <span aria-hidden="true">↗</span></a></nav>
+        <nav aria-label="Campus account access"><h2>Your workspace</h2><a href="{% url 'student_login' %}">Student sign in</a><a href="{% url 'faculty_login' %}">Faculty sign in</a><a href="{% url 'director_login' %}">Director sign in</a><a href="{% url 'student_registration' %}">Create a student account</a></nav>
+      </div>
+      <div class="footer-bottom"><span>© {% now "Y" %} TeachTrack. Created by Zaman &amp; Saloni.</span><a href="#top">Back to top <span aria-hidden="true">↑</span></a></div>
+    </div>
+  </footer>
+</div>
+{% endblock %}

@@ -1,849 +1,578 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
-from django.contrib.auth import authenticate,login
-from .models import Student, Faculty, Director, Contact, Doubt, ImageUploader, Announcement,Rating
-from django.http import HttpResponseRedirect
-from django.core.mail import send_mail
+import csv
+from .forms import ProfileForm
+import hashlib
+from io import BytesIO
+from datetime import timedelta
+from pathlib import Path
+from urllib.parse import urlencode
 from django.contrib import messages
-from .models import PasswordResetOTP
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes
-from django.contrib.auth.tokens import default_token_generator
-from django.contrib.auth.models import User
-import random
-from django.shortcuts import render,get_object_or_404,redirect
+from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
-import json
+from django.contrib.auth.forms import AuthenticationForm
+from django.conf import settings
+from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
+from django.db import transaction, IntegrityError
+from django.db.models import Avg, Count, F, Q
+from django.http import FileResponse, HttpResponse, Http404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.utils import timezone
-import pytz
-from .models import Quiz, Question, Option, Submission, SubmissionAnswer, Faculty, Student, Director, SubmissionDetail
-from .forms import QuizCreateForm, QuestionForm, StudentInfoForm
-from django.db import transaction
- 
-from django.contrib.auth.decorators import login_required, user_passes_test
- 
-from django.db.models import Q
-
-# Create your views here.
-
-# Main Page
-def index(request):
-    return render(request, 'index.html')
-
-# Student Registration
-def student_registration(request):
-    if request.method == "POST":
-        sname = request.POST['sname']
-        sen = request.POST['sen']
-        sphone = request.POST['sphone']
-        semail = request.POST['semail']
-        unm = request.POST['unm']
-        pw = request.POST['pw']
-        course = request.POST['course']
-        year = request.POST['year']
-        sem = request.POST['sem']
-        section = request.POST['section']
-
-        student = Student(
-            sname=sname, sen=sen, sphone=sphone, semail=semail,
-            unm=unm, pw=pw, course=course, year=year, sem=sem, section=section
-        )
-        student.save()
-        messages.success(request, "Student registered successfully!")
-        return redirect('student_login')
-
-    return render(request, 'student_registration.html')
-
-# Faculty Registration
-def faculty_registration(request):
-    if request.method == "POST":
-        fname = request.POST.get("fname")
-        fphone = request.POST.get("fphone")
-        femail = request.POST.get("femail")
-        unm = request.POST.get("unm")
-        pw = request.POST.get("pw")
-
-        Faculty.objects.create(
-            fname=fname, fphone=fphone, femail=femail,
-            unm=unm, pw=pw
-        )
-        messages.success(request, "Faculty registered successfully!")
-        return redirect('faculty_login')
-
-    return render(request, 'faculty_registration.html')
-
-# Director Registration
-def director_registration(request):
-    if request.method == "POST":
-        dname = request.POST.get("dname")
-        dphone = request.POST.get("dphone")
-        demail = request.POST.get("demail")
-        unm = request.POST.get("unm")
-        pw = request.POST.get("pw")
-
-        Director.objects.create(
-            dname=dname, dphone=dphone, demail=demail,
-            unm=unm, pw=pw
-        )
-        messages.success(request, "Director registered successfully!")
-        return redirect('director_login')
-
-    return render(request, 'director_registration.html')
-
-def student_login(request):
-    if request.method == "POST":
-        # Get email & password from all possible field names
-        email = request.POST.get("semail")
-        password = request.POST.get("pw")
-
-        if not email or not password:
-            messages.error(request, "Please enter email and password")
-            return redirect("student_login")
-
-        user = None
-        user_type = None
-
-        # Check Student
-        try:
-            student = Student.objects.get(semail=email, pw=password)
-            user = student
-            user_type = "student"
-        except Student.DoesNotExist:
-            pass
-
-        if user:
-            # Set session
-            if user:
-                request.session['user_id'] = user.id
-                request.session['user_type'] = user_type
-                request.session['student_name'] = user.sname   # SAVE NAME HERE
-                return redirect('student_dashboard')
-
-        # Failed login
-        messages.error(request, "Incorrect email or password")
-        return redirect("student_login")
-    return render(request, "student_login.html")
-
-def faculty_login(request):
-    if request.method == "POST":
-        # Accept email & password from any field name you use
-        email = (
-            request.POST.get("femail")
-        )
-        password = request.POST.get("pw")
-
-        if not email or not password:
-            messages.error(request, "Please enter email and password")
-            return redirect("faculty_login")
-
-        user = None
-
-        # Check Faculty
-        try:
-            faculty = Faculty.objects.get(femail=email, pw=password)
-            user = faculty
-        except Faculty.DoesNotExist:
-            pass
-
-        if user:
-            request.session["user_id"] = user.id
-            request.session["user_type"] = "faculty"
-            request.session["faculty_name"] = faculty.fname    
-            return redirect("faculty_dashboard")
-
-        messages.error(request, "Incorrect email or password")
-        return redirect("faculty_login")
-
-    return render(request, "faculty_login.html")
-
-def director_login(request):
-    if request.method == "POST":
-        # Accept email & password from any field name used in form
-        email = (
-            request.POST.get("email")
-            or request.POST.get("demail")
-            or request.POST.get("username")
-        )
-        password = request.POST.get("password") or request.POST.get("pw")
-
-        if not email or not password:
-            messages.error(request, "Please enter email and password")
-            return redirect("director_login")
-
-        user = None
-
-        # Check Director
-        try:
-            director = Director.objects.get(demail=email, pw=password)
-            user = director
-        except Director.DoesNotExist:
-            pass
-
-        if user:
-            request.session["user_id"] = user.id
-            request.session["user_type"] = "director"
-            request.session["director_name"] = director.dname
-            return redirect("Director_dashboard")
-
-        messages.error(request, "Incorrect email or password")
-        return redirect("director_login")
-
-    return render(request, "director_login.html")
-    
-def student_forgot_password(request):
-    if request.method == "POST":
-        email = request.POST.get("semail")
-        # You can add email checking or mail sending logic here
-        return render(request, "student_forgot_password.html", {"msg": "Reset link sent if email exists"})
-    return render(request, "student_forgot_password.html")
-
-def faculty_forgot_password(request):
-    if request.method == "POST":
-        email = request.POST.get("femail")
-        # You can add email checking or mail sending logic here
-        return render(request, "faculty_forgot_password.html", {"msg": "Reset link sent if email exists"})
-    return render(request, "faculty_forgot_password.html")
-
-def director_forgot_password(request):
-    if request.method == "POST":
-        email = request.POST.get("demail")
-        # You can add email checking or mail sending logic here
-        return render(request, "director_forgot_password.html", {"msg": "Reset link sent if email exists"})
-    return render(request, "director_forgot_password.html")
-
-# Conatact
-def contact(request):
-    if request.method == "POST":
-        name = request.POST.get("name")
-        email = request.POST.get("email")
-        title = request.POST.get("title")
-        message = request.POST.get("message")
-
-        Contact.objects.create(
-            name=name,
-            email=email,
-            title=title,
-            message=message
-        )
-        messages.success(request, "Message sent successfully")
-        return redirect("/")  # redirect wherever you want
-    return render(request, "index.html")
-
-def student_dashboard(request):
-    quiz = Quiz.objects.filter(is_active=True).last()  # latest active quiz
-    name = request.session.get("student_name", "Student")
-    announcements = Announcement.objects.all().order_by('-created_at')  # fetch all announcements
-    return render(request, 'student_dashboard.html', {
-    'quiz': quiz,
-    'name': name,
-    'announcements': announcements,
-})
-     
-def Director_dashboard(request):
-    name = request.session.get("director_name", "Director")
-    return render(request, 'Director_dashboard.html', { 'name': name, })
-
-def faculty_dashboard(request):
-    name = request.session.get('faculty_name', 'Faculty')
-    return render(request, 'faculty_dashboard.html', {'name': name})
-
-def deactivate_expired_quizzes():
-    now_utc = timezone.now()
-    expired = Quiz.objects.filter(is_active=True, expiry_time__lte=now_utc)
-    if expired.exists():
-        expired.update(is_active=False)
-
-# @transaction.atomic
-# def create_quiz(request):
-#     faculty_obj, created = Faculty.objects.get_or_create(unm=request.user)
-
-#     deactivate_expired_quizzes()
-
-#     if request.method == "POST":
-#         form = QuizCreateForm(request.POST)
-#         if form.is_valid():
-#             quiz = form.save(commit=False)
-#             quiz.save()
-
-#             q_json = request.POST.get('questions_data')
-#             if q_json:
-#                 try:
-#                     questions_data = json.loads(q_json)
-#                 except json.JSONDecodeError:
-#                     transaction.set_rollback(True)
-#                     return HttpResponseBadRequest("Invalid questions JSON.")
-
-#                 for idx, qd in enumerate(questions_data):
-#                     q = Question.objects.create(
-#                         quiz=quiz,
-#                         text=qd.get('text', ''),
-#                         is_multiple=qd.get('is_multiple', False)
-#                     )
-
-#                     img_field_name = qd.get('image_field_name')
-#                     if img_field_name and img_field_name in request.FILES:
-#                         q.image = request.FILES[img_field_name]
-#                         q.save()
-
-#                     for opt in qd.get('options', []):
-#                         Option.objects.create(
-#                             question=q,
-#                             text=opt.get('text', ''),
-#                             is_correct=bool(opt.get('is_correct', False))
-#                         )
-
-#                 messages.success(request, "Quiz created successfully.")
-#                 return redirect(reverse('teacher_quiz_list'))
-
-#             else:
-#                 # Fallback legacy parser
-#                 questions = request.POST.getlist('question[]')
-#                 optionA = request.POST.getlist('optionA[]')
-#                 optionB = request.POST.getlist('optionB[]')
-#                 optionC = request.POST.getlist('optionC[]')
-#                 optionD = request.POST.getlist('optionD[]')
-#                 correct = request.POST.getlist('correct[]')
-
-#                 for i, q_text in enumerate(questions):
-#                     q = Question.objects.create(
-#                         quiz=quiz,
-#                         text=q_text,
-#                         is_multiple=False
-#                     )
-
-#                     if i < len(optionA) and optionA[i].strip():
-#                         Option.objects.create(
-#                             question=q,
-#                             text=optionA[i].strip(),
-#                             is_correct=(correct[i].upper() == 'A' if i < len(correct) else False)
-#                         )
-#                     if i < len(optionB) and optionB[i].strip():
-#                         Option.objects.create(
-#                             question=q,
-#                             text=optionB[i].strip(),
-#                             is_correct=(correct[i].upper() == 'B' if i < len(correct) else False)
-#                         )
-#                     if i < len(optionC) and optionC[i].strip():
-#                         Option.objects.create(
-#                             question=q,
-#                             text=optionC[i].strip(),
-#                             is_correct=(correct[i].upper() == 'C' if i < len(correct) else False)
-#                         )
-#                     if i < len(optionD) and optionD[i].strip():
-#                         Option.objects.create(
-#                             question=q,
-#                             text=optionD[i].strip(),
-#                             is_correct=(correct[i].upper() == 'D' if i < len(correct) else False)
-#                         )
-
-#                 messages.success(request, "Quiz created (legacy parser).")
-#                 return redirect(reverse('teacher_quiz_list'))
-
-#         else:
-#             messages.error(request, "Please fix errors in the form.")
-
-#     else:
-#         form = QuizCreateForm()
-
-#     return render(request, 'quiz/create_quiz.html', {'form': form})
-
-def create_quiz(request):
-    faculty_id = request.session.get('user_id')  # or request.user.id if using Django auth
-    faculty = Faculty.objects.get(id=faculty_id)
-
-    if request.method == "POST":
-        title = request.POST.get("title")
-        require_name = bool(request.POST.get("require_name"))
-        require_roll = bool(request.POST.get("require_roll"))
-        require_email = bool(request.POST.get("require_email"))
-        require_class = bool(request.POST.get("require_class"))
-
-        quiz = Quiz.objects.create(
-            title=title,
-            faculty=faculty,
-            require_name=require_name,
-            require_roll=require_roll,
-            require_email=require_email,
-            require_class=require_class
-        )
-
-        questions_data = json.loads(request.POST.get("questions_data", "[]"))
-        for q in questions_data:
-            question = Question.objects.create(
-                quiz=quiz,
-                text=q.get("text"),
-                is_multiple=q.get("is_multiple", False)
-            )
-
-            image_field_name = q.get("image_field_name")
-            if image_field_name and image_field_name in request.FILES:
-                question.image = request.FILES[image_field_name]
-                question.save()
-
-            for opt in q.get("options", []):
-                Option.objects.create(
-                    question=question,
-                    text=opt.get("text"),
-                    is_correct=opt.get("is_correct", False)
-                )
-
-        return redirect("faculty_dashboard")  # adjust as needed
-
-    return render(request, "quiz/create_quiz.html")
-
-# def teacher_quiz_list(request):
-#     # Deactivate any expired quizzes
-#     deactivate_expired_quizzes()
-
-#     # Fetch all quizzes ordered by most recent
-#     quizzes = Quiz.objects.all().order_by('-created_at')
-
-#     # Render the teacher quiz list template
-#     return render(request, 'quiz/teacher_list.html', {'quizzes': quizzes})
-
-def teacher_quiz_list(request):
-    faculty_id = request.session.get('user_id')
-    if not faculty_id:
-        messages.error(request, "Please log in first.")
-        return redirect('faculty_login')
-
-    # Only fetch quizzes created by this faculty
-    quizzes = Quiz.objects.filter(faculty_id=faculty_id).order_by('-created_at')
-
-    return render(request, 'quiz/teacher_list.html', {'quizzes': quizzes})
-
-def student_quiz_list(request):
-    deactivate_expired_quizzes()
-    now = timezone.now()
-    quizzes = Quiz.objects.filter(is_active=True, expiry_time__gt=now).order_by('-created_at')
-    return render(request, 'quiz/student_list.html', {'quizzes': quizzes})
-
-def attempt_quiz(request, quiz_id):
-    deactivate_expired_quizzes()
-    quiz = get_object_or_404(Quiz, pk=quiz_id)
-
-    # block if inactive or expired
-    if not quiz.is_active or timezone.now() >= quiz.expiry_time:
-        messages.error(request, "Quiz Expired.")
-        return render(request, 'quiz/expired.html', {'quiz': quiz})
-
-    # build question/option context
-    questions = quiz.questions.prefetch_related('options').all()
-
-    # Dynamically build student info form and require selected fields
-    if request.method == "POST":
-        # Validate expiry again at submission time
-        if timezone.now() >= quiz.expiry_time:
-            messages.error(request, "Quiz Expired at submission.")
-            return render(request, 'quiz/expired.html', {'quiz': quiz})
-
-        # Validate student details according to quiz flags
-        student_form = StudentInfoForm(request.POST)
-        # enforce required flags
-        if quiz.require_name:
-            student_form.fields['student_name'].required = True
-        if quiz.require_roll:
-            student_form.fields['roll_no'].required = True
-        if quiz.require_email:
-            student_form.fields['email'].required = True
-        if quiz.require_class:
-            student_form.fields['class_div'].required = True
-
-        if not student_form.is_valid():
-            messages.error(request, "Please fill required student details.")
-            return render(request, 'quiz/attempt.html', {'quiz': quiz, 'questions': questions, 'student_form': student_form})
-        
-        submission = student_form.save(commit=False)
-        submission.quiz = quiz
-        submission.save()
-
-        total_score = 0
-        for q in questions:
-            # For each question, get selected option ids from POST.
-            # Frontend should name inputs like "q_<id>" (single) or "q_<id>_multi" (multiple)
-            if q.is_multiple:
-                key = f"q_{q.id}"
-                selected_ids = request.POST.getlist(key)  # list of option ids as strings
-            else:
-                key = f"q_{q.id}"
-                sel = request.POST.get(key)
-                selected_ids = [sel] if sel else []
-
-            # create SubmissionAnswer
-            if selected_ids:
-                sa = SubmissionAnswer.objects.create(submission=submission, question=q)
-                # convert to ints and add ManyToMany
-                opts = Option.objects.filter(question=q, id__in=[int(x) for x in selected_ids if x])
-                sa.selected_options.set(opts)
-                sa.save()
-
-            # Evaluate correctness
-            correct_opts = q.options.filter(is_correct=True)
-            selected_opts = Option.objects.filter(question=q, id__in=[int(x) for x in selected_ids if x])
-            # For scoring: require exact match of correct option set
-            correct_set = set(correct_opts.values_list('id', flat=True))
-            selected_set = set(selected_opts.values_list('id', flat=True))
-            if correct_set and selected_set == correct_set:
-                total_score += 1
-
-        submission.score = total_score
-        submission.save()
-
-        messages.success(request, f"Submitted successfully. Score: {total_score}/{questions.count()}")
-        return redirect(reverse('student_quiz_list'))
-
-    else:
-        # GET - show quiz; student form fields are empty but required rules applied in template or on POST
-        student_form = StudentInfoForm()
-        # make fields required in template by passing flags
-        required_flags = {
-            'require_name': quiz.require_name,
-            'require_roll': quiz.require_roll,
-            'require_email': quiz.require_email,
-            'require_class': quiz.require_class
-        }
-        return render(request, 'quiz/attempt.html', {
-            'quiz': quiz,
-            'questions': questions,
-            'student_form': student_form,
-            'required_flags': required_flags
-        })
-
-def quiz_submissions(request, quiz_id):
-    # Fetch the quiz
-    quiz = get_object_or_404(Quiz, pk=quiz_id)
-
-    # Fetch all submissions for this quiz, newest first
-    submissions = Submission.objects.filter(quiz=quiz).order_by('-submitted_at').prefetch_related('answers__selected_options')
-
-    # Render submissions template
-    return render(request, 'quiz/submissions.html', {'quiz': quiz, 'submissions': submissions})
-
-# def view_score(request, submission_id):
-#     submission = get_object_or_404(Submission, id=submission_id)
-#     quiz = submission.quiz
-
-#     answers = []
-
-#     for ans in submission.answers.all():
-#         selected = ans.selected_options.all()
-#         correct_options = ans.question.options.filter(is_correct=True)
-
-#         # Compare selected vs correct option IDs
-#         is_correct = set(o.id for o in selected) == set(o.id for o in correct_options)
-
-#         answers.append({
-#             "question": ans.question,
-#             "your_answer": selected,
-#             "correct_answer": correct_options,
-#             "is_correct": is_correct
-#         })
-
-#     context = {
-#         "quiz": quiz,
-#         "submission": submission,
-#         "answers": answers
-#     }
-#     return render(request, "quiz/view_score.html", context)
-
-def view_score(request, submission_id):
-    submission = get_object_or_404(Submission, id=submission_id)
-    quiz = submission.quiz
-    answers = []
-    for ans in submission.answers.all():
-        selected = ans.selected_options.all()
-        correct_options = ans.question.options.filter(is_correct=True)
-        is_correct = set(o.id for o in selected) == set(o.id for o in correct_options)
-
-        answers.append({
-            "question": ans.question,
-            "your_answer": selected,
-            "correct_answer": correct_options,
-            "is_correct": is_correct
-        })
-
-    context = {
-        "quiz": quiz,
-        "submission": submission,
-        "answers": answers
-    }
-    return render(request, 'quiz/submitted.html', context)
-
-def submit_quiz(request, quiz_id):
-    quiz = get_object_or_404(Quiz, pk=quiz_id)
-
-    if request.method == "POST":
-        submission = Submission.objects.create(
-            quiz=quiz,
-            student_name=request.POST.get("student_name"),
-            roll_no=request.POST.get("roll_no"),
-            email=request.POST.get("email"),
-            class_div=request.POST.get("class_div"),
-        )
-        score = 0
-
-        for question in quiz.questions.all():
-            selected_ids = request.POST.getlist(f'question_{question.id}')
-            if selected_ids:
-                # Save SubmissionAnswer (optional, if you want both)
-                ans = SubmissionAnswer.objects.create(submission=submission, question=question)
-                ans.selected_options.set([int(x) for x in selected_ids])
-
-                # Calculate correctness
-                correct_ids = list(question.options.filter(is_correct=True).values_list('id', flat=True))
-                if set(map(int, selected_ids)) == set(correct_ids):
-                    score += 1
-                 
-                submission.score = score
-                submission.save()
-                 
-                detail = SubmissionDetail.objects.create(
-                    student_name=submission.student_name,
-                    roll_no=submission.roll_no,
-                    email=submission.email,
-                    class_div=submission.class_div,
-                    score=score,   # overall score (or use 1/0 for per-question)
-                    question=question,
-                    quiz=quiz,
-                    submission=submission
-                )
-                detail.selected_options.set([int(x) for x in selected_ids])  # ✅ options saved here
-               
-        messages.success(request, "Quiz submitted successfully!")
-        return redirect('view_score', submission_id=submission.id)
-
-    return render(request, 'quiz/attempt_quiz.html', {'quiz': quiz})
-
-def doubt(request):
-    faculties = Faculty.objects.all()  # Fetch all registered faculties
-
+from django.views.decorators.http import require_POST, require_http_methods
+from .models import (Profile, Resource, ResourceFile, Download, Notification, Announcement, Quiz, Question, Submission,
+                     Complaint, ComplaintEvent, Rating as Feedback, Doubt, LoginThrottle, Student, Faculty, Teacher, AuthenticatedStudent, Option, SubmissionAnswer, SubmissionDetail)
+from .forms import (StudentRegistrationForm, AccountForm, ResourceForm, QuizForm, QuestionFormSet,
+                    AnnouncementForm, ComplaintForm, FeedbackForm, DoubtForm, ReplyForm, AnswerForm, NotificationForm, StudentInfoForm, ContactForm)
+from .permissions import roles
+from .services import notify, audience_users, ensure_legacy, preserve_resource_file
+from .blob_storage import BlobClient, BlobUnavailable, is_blob_path
+
+
+def blob_file_response(field, *, filename=None):
+    if settings.UPLOAD_STORAGE != 'blob' or not is_blob_path(field.name):
+        return None
+    try:
+        url = BlobClient().url(field.name)
+    except BlobUnavailable:
+        return HttpResponse('File storage is temporarily unavailable. Please try again.', status=503)
+    if filename:
+        url += '&' + urlencode({'download': '1'})
+    response = redirect(url)
+    response['Cache-Control'] = 'private, no-store'
+    response['Referrer-Policy'] = 'no-referrer'
+    return response
+
+def paginated(request, queryset):
+    return Paginator(queryset, 15).get_page(request.GET.get('page'))
+def form_page(request, form, title):
+    return render(request, 'form.html', {'form':form, 'title':title})
+def display_name(user):
+    return user.get_full_name() or user.username
+
+def sign_in(request, role=None):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    form = AuthenticationForm(request, data=request.POST or None)
+    context = {'form':form, 'login_role':role, 'login_role_label':Profile.Role(role).label if role else ''}
     if request.method == 'POST':
-        # Use the same names as in your form
-        student_name = request.POST.get('name')        # form input name="name"
-        student_email = request.POST.get('email')      # form input name="email"
-        doubt_text = request.POST.get('doubt')         # form textarea name="doubt"
-        faculty_id = request.POST.get('faculty')       # form select name="faculty"
-        attachment = request.FILES.get('attachment')   # form file input
+        # Use the trusted peer address, never a client-controlled forwarded header.
+        ip = request.META.get('REMOTE_ADDR', '')
+        username = request.POST.get('username', '').casefold()[:150]
+        keys = [hashlib.sha256(v.encode()).hexdigest() for v in [f'ip:{ip}', f'user:{username}']]
+        blocked = False
+        with transaction.atomic():
+            counters = []
+            for key in sorted(keys):
+                obj, _ = LoginThrottle.objects.get_or_create(key=key, defaults={'window_start':timezone.now()})
+                obj = LoginThrottle.objects.select_for_update().get(pk=obj.pk)
+                if obj.window_start < timezone.now() - timedelta(minutes=15):
+                    obj.failures = 0
+                    obj.window_start = timezone.now()
+                    obj.save()
+                counters.append(obj)
+            blocked = any(c.failures >= 10 for c in counters)
+            if not blocked:
+                if form.is_valid():
+                    user = form.get_user()
+                    if role and user.profile.role != role:
+                        form.add_error(None, f'Use the {user.profile.get_role_display().lower()} login for this account.')
+                    else:
+                        LoginThrottle.objects.filter(key=keys[1]).delete()
+                        login(request, user)
+                        return redirect('dashboard')
+                else:
+                    for counter in counters:
+                        counter.failures = F('failures') + 1
+                        counter.save(update_fields=['failures'])
+        if blocked:
+            form.add_error(None, 'Too many login attempts. Please try again in 15 minutes.')
+            return render(request, 'registration/login.html', context, status=429)
+    return render(request, 'registration/login.html', context)
 
-        if not faculty_id:
-            messages.error(request, "Please select a faculty.")
-            return redirect('doubt')
+def register(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    form = StudentRegistrationForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        with transaction.atomic():
+            user = form.save()
+            notify([user], 'Welcome to TeachTrack', 'Your student account is ready.', reverse('dashboard'))
+        login(request, user)
+        return redirect('dashboard')
+    return form_page(request, form, 'Create your student account')
 
-        selected_faculty = Faculty.objects.get(id=faculty_id)
-
-        # Save the doubt using the correct field names
-        Doubt.objects.create(
-            student_name=student_name,
-            student_email=student_email,
-            doubt=doubt_text,
-            faculty=selected_faculty,
-            attachment=attachment
-        )
-
-        messages.success(request, "Your doubt has been submitted successfully!")
-        return redirect('doubt')
-
-    return render(request, 'doubt.html', {'faculties': faculties})
-
-def doubt_viewer(request):
-    faculty_id = request.session.get('user_id')
-    if not faculty_id:
-        messages.error(request, "Please log in first.")
-        return redirect('faculty_login')
-
-    # Fetch doubts for this faculty
-    doubts = Doubt.objects.filter(faculty_id=faculty_id).order_by('-submitted_at')
-
-    # Convert each timestamp to local time
-    for doubt in doubts:
-        doubt.submitted_at = timezone.localtime(doubt.submitted_at)
-
-    return render(request, 'doubt_viewer.html', {'doubts': doubts})
-
-
-def rating(request):
-    faculties = Faculty.objects.all()
-
-    if request.method == 'POST' :
-
-        student_name = request.POST.get('name')
-        student_email = request.POST.get('email')
-        rating = request.POST.get('rating')
-        faculty_id = request.POST.get('faculty')
-
-
-        if not faculty_id:
-            messages.error(request, "Please select a faculty.")
-            return redirect('rating')
-        
-        selected_faculty = Faculty.objects.get(id=faculty_id)
-
-        Rating.objects.create(
-            student_name = student_name,
-            student_email = student_email,
-            rating = rating,
-            faculty = selected_faculty,
-        )
-
-
-        messages.success(request, "Your Feedback has been submitted successfully!")
-        return redirect('rating')
-    
-    return render(request, 'Rating.html', {'faculties' : faculties})
-
-
-
-
-def submission_detail_list(request):
-    details = SubmissionDetail.objects.all()
-    for d in details:
-     print(d.student_name, d.quiz.title, d.question.text, d.score)
-
-    return render(request, "submission_detail_list.html", {"details": details})
-
-from .models import Announcement, Faculty
-from .forms import AnnouncementForm
-from django.contrib import messages
-
-def announcement(request):
-    announcements = Announcement.objects.all().order_by('-created_at')
-    user_type = request.session.get("user_type")
-    return render(request, 'announcement.html', {
-        'announcements': announcements,
-        'user_type': user_type
-    })
-
-def add_announcement(request):
-    if request.session.get("user_type") != "faculty":
-        return HttpResponseForbidden("You are not allowed")
-
-    faculty_id = request.session.get("user_id")
-    faculty = get_object_or_404(Faculty, id=faculty_id)
-
-    if request.method == "POST":
-        form = AnnouncementForm(request.POST, request.FILES)
-        if form.is_valid():
-            announcement = form.save(commit=False)
-            announcement.posted_by = faculty
-            announcement.save()
-            messages.success(request, "Announcement posted successfully!")
-            return redirect('announcement')
+@login_required
+def dashboard(request):
+    role=request.user.profile.role;now=timezone.now()
+    quizzes=Quiz.objects.all();submissions=Submission.objects.all();complaints=visible_complaints(request.user)
+    if role=='student':
+        submissions=submissions.filter(student=request.user)
+        quizzes=quizzes.filter(is_active=True,starts_at__lte=now,expiry_time__gt=now).exclude(submissions__student=request.user)
+        cards=[('Available quizzes',quizzes.count()),('My submissions',submissions.count()),('Total resources',Resource.objects.count()),('Open complaints',complaints.exclude(status='resolved').count())]
+    elif role=='faculty':
+        quizzes=quizzes.filter(creator=request.user);submissions=submissions.filter(quiz__creator=request.user)
+        cards=[('My quizzes',quizzes.count()),('Quiz submissions',submissions.count()),('My resources',Resource.objects.filter(uploaded_by=request.user).count()),('Open complaints',complaints.exclude(status='resolved').count())]
     else:
-        form = AnnouncementForm()
+        cards=[('Students',Profile.objects.filter(role='student',user__is_active=True).count()),('Faculty',Profile.objects.filter(role='faculty',user__is_active=True).count()),('Total resources',Resource.objects.count()),('Open complaints',complaints.exclude(status='resolved').count())]
+    students=Profile.objects.filter(role='student',user__is_active=True).count()
+    participation=[{'title':q.title,'count':q.attempts,'percentage':min(100,round(q.attempts*100/students)) if students else 0} for q in quizzes.annotate(attempts=Count('submissions')).order_by('-created_at')[:6]]
+    ratings=Feedback.objects.all()
+    if role=='faculty':ratings=ratings.filter(faculty__user=request.user)
+    stats=[{'label':str(i),'count':ratings.filter(rating=i).count()} for i in range(1,6)]
+    return render(request,'dashboard.html',{'cards':cards,'participation':participation,
+      'status_stats':[{'label':label,'key':key,'count':complaints.filter(status=key).count()} for key,label in Complaint.STATUSES],
+      'feedback_stats':stats,'feedback_max':max([x['count'] for x in stats]+[1]),'average_feedback':ratings.aggregate(avg=Avg('rating'))['avg'],
+      'announcements':Announcement.objects.filter(Q(audience='all')|Q(audience=role))[:4],
+      'recent_resources':Resource.objects.select_related('uploaded_by')[:4],'recent_submissions':submissions.select_related('quiz')[:5]})
 
-    return render(request, 'add_announcement.html', {'form': form})
-
-
-
- 
-
-from .models import Complaint, Teacher
-
-
-# 🔐 Role checks
-def is_student(user):
-    return hasattr(user, "student")
-
-
-def is_teacher(user):
-    return hasattr(user, "teacher")
-
-
-def is_admin(user):
-    return user.is_superuser
-
-
-# 📊 COMPLAINT LIST (Admin/Director view)
 @login_required
-@user_passes_test(is_admin)
-def complaints_list(request):
+def resources(request):
+    qs = Resource.objects.select_related('uploaded_by')
+    q = request.GET.get('q', '').strip()[:150]
+    category = request.GET.get('category', '')
+    subject = request.GET.get('subject', '').strip()[:100]
+    if q:
+        qs = qs.filter(Q(title__icontains=q) | Q(description__icontains=q) | Q(subject__icontains=q))
+    if category:
+        qs = qs.filter(category=category)
+    if subject:
+        qs = qs.filter(subject__iexact=subject)
+    if request.GET.get('sort') == 'title':
+        qs = qs.order_by('title', 'id')
+    return render(request, 'resources.html', {'page_obj':paginated(request, qs), 'q':q, 'category':category, 'subject':subject,
+        'categories':Resource.category_choices(), 'subjects':Resource.objects.order_by('subject').values_list('subject',flat=True).distinct()})
 
-    complaints = Complaint.objects.select_related("student", "teacher").all()
+@roles('faculty', 'director')
+def resource_create(request):
+    form = ResourceForm(request.POST or None, request.FILES or None,category_choices=Resource.category_choices())
+    if request.method == 'POST' and form.is_valid():
+        with transaction.atomic():
+            item = form.save(commit=False)
+            item.uploaded_by = request.user
+            item.original_name = Path(form.cleaned_data['file'].name).name
+            item.save()
+            if settings.UPLOAD_STORAGE=='local':preserve_resource_file(item)
+            notify(audience_users('student'), f'New resource: {item.title}', item.subject, reverse('resources'))
+        messages.success(request, 'Resource uploaded successfully.')
+        return redirect('resources')
+    return form_page(request, form, 'Upload a resource')
 
-    # 🔍 Filters
-    search = request.GET.get("search")
-    teacher_id = request.GET.get("teacher")
-    status = request.GET.get("status")
-    start_date = request.GET.get("start_date")
-    end_date = request.GET.get("end_date")
+@login_required
+@require_POST
+def resource_download(request, pk):
+    item = get_object_or_404(Resource, pk=pk)
+    response = blob_file_response(item.file, filename=item.original_name)
+    if response is not None and response.status_code != 302:
+        return response
+    if response is None:
+        try:
+            file = item.file.open('rb')
+        except FileNotFoundError:
+            stored=ResourceFile.objects.filter(resource=item,storage_name=item.file.name).first()
+            if stored is None:raise Http404('This file is unavailable. Contact the uploader.')
+            file=BytesIO(bytes(stored.content))
+    with transaction.atomic():
+        Resource.objects.filter(pk=pk).update(download_count=F('download_count')+1)
+        Download.objects.create(resource=item, user=request.user)
+    if response is None:
+        response = FileResponse(file, as_attachment=True, filename=item.original_name, content_type='application/octet-stream')
+    response['Cache-Control'] = 'private, no-store'
+    return response
 
-    if search:
-        complaints = complaints.filter(
-            Q(student__name__icontains=search) |
-            Q(teacher__name__icontains=search)
-        )
+@login_required
+def notifications(request):
+    return render(request, 'notifications.html', {'page_obj':paginated(request, request.user.notifications.all())})
 
-    if teacher_id:
-        complaints = complaints.filter(teacher_id=teacher_id)
+@login_required
+@require_POST
+def notification_read(request, pk):
+    note = get_object_or_404(Notification, pk=pk, recipient=request.user)
+    if note.read_at is None:
+        note.read_at = timezone.now()
+        note.save(update_fields=['read_at'])
+    return redirect(note.link if note.link.startswith('/') and not note.link.startswith('//') and '\\' not in note.link else reverse('notifications'))
 
+@login_required
+@require_POST
+def notifications_read_all(request):
+    request.user.notifications.filter(read_at__isnull=True).update(read_at=timezone.now())
+    return redirect('notifications')
+
+@roles('faculty', 'director')
+def notification_create(request):
+    form = NotificationForm(request.POST or None)
+    if request.user.profile.role == 'faculty':
+        form.fields['audience'].choices = [('student', 'Students')]
+    if request.method == 'POST' and form.is_valid():
+        notify(audience_users(form.cleaned_data['audience']), form.cleaned_data['title'], form.cleaned_data['message'], reverse('notifications'))
+        messages.success(request, 'Notification sent.')
+        return redirect('notifications')
+    return form_page(request, form, 'Send a notification')
+
+@login_required
+def announcements(request):
+    qs = Announcement.objects.select_related('author').filter(Q(audience='all') | Q(audience=request.user.profile.role) | Q(author=request.user))
+    return render(request, 'announcements.html', {'page_obj':paginated(request, qs)})
+
+@roles('faculty', 'director')
+def announcement_create(request):
+    form = AnnouncementForm(request.POST or None, request.FILES or None)
+    if request.user.profile.role == 'faculty':
+        form.fields['audience'].choices = [('student','Students')]
+    if request.method == 'POST' and form.is_valid():
+        with transaction.atomic():
+            item = form.save(commit=False)
+            item.author = request.user
+            if request.user.profile.role == 'faculty': item.posted_by = ensure_legacy(request.user)
+            item.save()
+            notify(audience_users(item.audience), item.title, item.content[:250], reverse('announcements'))
+        messages.success(request, 'Announcement published.')
+        return redirect('announcements')
+    return form_page(request, form, 'Post an announcement')
+
+@login_required
+def quizzes(request):
+    role=request.user.profile.role
+    qs=Quiz.objects.select_related('creator','faculty').annotate(attempts=Count('submissions')).order_by('-created_at','-id')
+    if role=='student':qs=qs.filter(is_active=True)
+    elif role=='faculty':qs=qs.filter(creator=request.user)
+    code=request.GET.get('code','').strip().upper()[:6]
+    if code:qs=qs.filter(code=code)
+    return render(request,'quizzes.html',{'page_obj':paginated(request,qs),'my_ids':set(Submission.objects.filter(student=request.user).values_list('quiz_id',flat=True)),'now':timezone.now(),'code':code})
+
+@roles('faculty','director')
+def quiz_create(request):
+    form=QuizForm(request.POST or None)
+    formset=QuestionFormSet(request.POST or None,request.FILES or None,prefix='questions')
+    if request.method=='POST' and form.is_valid() and formset.is_valid():
+        try:
+            with transaction.atomic():
+                quiz=form.save(commit=False);quiz.creator=request.user
+                if request.user.profile.role=='faculty':quiz.faculty=ensure_legacy(request.user)
+                quiz.save()
+                for f in formset:
+                    if not f.cleaned_data or f.cleaned_data.get('DELETE'):continue
+                    data=f.cleaned_data
+                    question=Question.objects.create(quiz=quiz,text=data['text'],is_multiple=data['is_multiple'],image=data.get('image'))
+                    for key in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+                        text=data.get('option_'+key.lower())
+                        if text:Option.objects.create(question=question,text=text,is_correct=key in data['correct'])
+                if quiz.is_active:notify(audience_users('student'),f'New quiz: {quiz.title}',f'Code: {quiz.code}',reverse('quizzes'))
+        except IntegrityError:form.add_error(None,'A code collision occurred. Please submit again.')
+        else:
+            messages.success(request,f'Quiz created. Code: {quiz.code}');return redirect('quizzes')
+    return render(request,'quiz_create.html',{'form':form,'formset':formset})
+
+@roles('faculty','director')
+@require_POST
+def quiz_toggle(request,pk):
+    with transaction.atomic():
+        quiz=get_object_or_404(Quiz.objects.select_for_update(),pk=pk)
+        if request.user.profile.role=='faculty' and quiz.creator_id!=request.user.pk:raise PermissionDenied
+        if not quiz.is_active and not valid_quiz(quiz):
+            messages.error(request,'This legacy quiz has incomplete questions or answer keys. Ask an administrator to correct it before publishing.')
+        else:
+            quiz.is_active=not quiz.is_active;quiz.save(update_fields=['is_active'])
+            if quiz.is_active:notify(audience_users('student'),f'Quiz published: {quiz.title}',f'Code: {quiz.code}',reverse('quizzes'))
+    return redirect('quizzes')
+
+@roles('student')
+@require_http_methods(['GET','POST'])
+def quiz_attempt(request,pk):
+    with transaction.atomic():
+        quiz=get_object_or_404(Quiz.objects.select_for_update(),pk=pk,is_active=True)
+        if Submission.objects.filter(quiz=quiz,student=request.user).exists():return redirect('quiz_result',pk=pk)
+        if not quiz.starts_at<=timezone.now()<quiz.expiry_time:
+            messages.error(request,'This quiz is not open for submissions.');return redirect('quizzes')
+        if not valid_quiz(quiz):
+            messages.error(request,'This quiz is incomplete. Contact the faculty member.');return redirect('quizzes')
+        questions=list(quiz.questions.prefetch_related('options').all())
+        student=ensure_legacy(request.user)
+        initial={'student_name':display_name(request.user),'email':request.user.email,
+                 'roll_no':request.user.profile.enrollment or student.sen,
+                 'course':request.user.profile.department or student.course,
+                 'year':student.year,'semester':student.sem,'section':student.section,'batch':student.batch}
+        info=StudentInfoForm(request.POST if request.method=='POST' else None,initial=initial)
+        for field,required in [('student_name',quiz.require_name),('roll_no',quiz.require_roll),('email',quiz.require_email),('course',quiz.require_class)]:info.fields[field].required=required
+        error=None;rows=[]
+        for q in questions:
+            selected=request.POST.getlist(f'q_{q.pk}')
+            rows.append({'question':q,'options':list(q.options.all()),'selected':selected})
+        if request.method=='POST':
+            valid=info.is_valid()
+            for row in rows:
+                q=row['question'];allowed={str(o.pk) for o in row['options']};selected=row['selected']
+                if not selected or not set(selected)<=allowed or len(selected)!=len(set(selected)) or (not q.is_multiple and len(selected)!=1):valid=False
+            if not valid:error='Complete the required details and answer every question using valid options.'
+            else:
+                review=[];score=0
+                for row in rows:
+                    q=row['question'];selected=sorted(int(v) for v in row['selected']);correct=sorted(o.pk for o in row['options'] if o.is_correct)
+                    score+=selected==correct
+                    review.append({'question':q.text,'selected':selected,'correct':correct,'options':{str(o.pk):o.text for o in row['options']},'selected_text':[o.text for o in row['options'] if o.pk in selected],'correct_text':[o.text for o in row['options'] if o.is_correct]})
+                try:
+                    with transaction.atomic():
+                        data=info.cleaned_data
+                        academic_details={field:data[field] or initial[field] for field in ['course','year','semester','section','batch']}
+                        class_div=' '.join(value for value in academic_details.values() if value)[:50]
+                        submission=Submission.objects.create(quiz=quiz,student=request.user,student_name=data['student_name'] or initial['student_name'],email=data['email'] or initial['email'],roll_no=data['roll_no'] or initial['roll_no'],class_div=class_div,academic_details=academic_details,score=score,total=len(questions),review=review)
+                        for row,record in zip(rows,review):
+                            answer=SubmissionAnswer.objects.create(submission=submission,question=row['question']);answer.selected_options.set(record['selected'])
+                            detail=SubmissionDetail.objects.create(quiz=quiz,submission=submission,question=row['question'],student_name=submission.student_name,roll_no=submission.roll_no,email=submission.email,class_div=submission.class_div,score=int(record['selected']==record['correct']))
+                            detail.selected_options.set(record['selected'])
+                        notify([request.user],f'Quiz submitted: {quiz.title}','Your score is ready.',reverse('quiz_result',args=[pk]))
+                except IntegrityError:messages.info(request,'Your submission was already recorded.')
+                return redirect('quiz_result',pk=pk)
+    return render(request,'quiz_attempt.html',{'quiz':quiz,'rows':rows,'info':info,'error':error})
+
+@login_required
+def quiz_result(request,pk):
+    quiz=get_object_or_404(Quiz,pk=pk);role=request.user.profile.role
+    if role=='faculty' and quiz.creator_id!=request.user.pk:raise PermissionDenied
+    qs=quiz.submissions.select_related('student').order_by('student_name','id')
+    if role=='student':qs=qs.filter(student=request.user)
+    return render(request,'quiz_result.html',{'quiz':quiz,'submissions':qs,'show_answers':role!='student' or timezone.now()>=quiz.expiry_time})
+
+@login_required
+def leaderboard(request,pk):
+    quiz=get_object_or_404(Quiz,pk=pk);role=request.user.profile.role
+    if role=='faculty' and quiz.creator_id!=request.user.pk:raise PermissionDenied
+    if role=='student' and not quiz.is_active and not Submission.objects.filter(quiz=quiz,student=request.user).exists():raise PermissionDenied
+    # Keep ambiguous historical/anonymous records in staff reports, not a student leaderboard.
+    qs=quiz.submissions.filter(student__isnull=False).select_related('student')
+    return render(request,'leaderboard.html',{'quiz':quiz,'page_obj':paginated(request,qs)})
+
+def visible_complaints(user):
+    qs=Complaint.objects.select_related('student__user','teacher__user')
+    if user.profile.role=='student':return qs.filter(student__user=user)
+    if user.profile.role=='faculty':return qs.filter(teacher__user=user)
+    return qs
+
+@login_required
+def complaints(request):
+    qs = visible_complaints(request.user)
+    status = request.GET.get('status','')
     if status:
-        complaints = complaints.filter(status=status)
+        qs = qs.filter(status=status)
+    return render(request, 'complaints.html', {'page_obj':paginated(request,qs), 'statuses':Complaint.STATUSES, 'status':status})
 
-    if start_date and end_date:
-        complaints = complaints.filter(created_at__range=[start_date, end_date])
+@roles('student')
+def complaint_create(request):
+    form=ComplaintForm(request.POST or None)
+    if request.method=='POST' and form.is_valid():
+        with transaction.atomic():
+            ensure_legacy(request.user)
+            faculty=form.cleaned_data['faculty'];ensure_legacy(faculty.user)
+            item=Complaint.objects.create(student=AuthenticatedStudent.objects.get(user=request.user),teacher=Teacher.objects.get(user=faculty.user),title=form.cleaned_data['title'],text=form.cleaned_data['body'])
+            ComplaintEvent.objects.create(complaint=item,author=request.user,message='Complaint submitted.',status='pending')
+            notify(list(audience_users('director'))+[faculty.user],f'New complaint: {item.title}',link=reverse('complaint_detail',args=[item.pk]))
+        return redirect('complaint_detail',pk=item.pk)
+    return form_page(request,form,'Submit a complaint')
 
-    # 📦 grouping
-    teachers = Teacher.objects.all()
-
-    # 📊 stats
-    total = complaints.count()
-    pending = complaints.filter(status="Pending").count()
-    replied = complaints.filter(status="Replied").count()
-    teachers_involved = Teacher.objects.filter(complaint__in=complaints).distinct().count()
-
-    context = {
-        "complaints": complaints,
-        "teachers": teachers,
-        "total": total,
-        "pending": pending,
-        "replied": replied,
-        "teachers_involved": teachers_involved,
-    }
-
-    return render(request, "complaints.html", context)
-
-
-# ➕ ADD COMPLAINT (Student)
 @login_required
-@user_passes_test(is_student)
-def add_complaint(request):
+def complaint_detail(request,pk):
+    item=get_object_or_404(visible_complaints(request.user),pk=pk);role=request.user.profile.role
+    form=ReplyForm(request.POST or None)
+    if role!='director':form.fields.pop('status')
+    if request.method=='POST' and form.is_valid():
+        with transaction.atomic():
+            item=Complaint.objects.select_for_update().select_related('student__user','teacher__user').get(pk=pk)
+            status=form.cleaned_data.get('status') or item.status if role=='director' else 'in_progress' if role=='faculty' and item.status=='pending' else item.status
+            item.status=status;item.updated_at=timezone.now()
+            if role=='faculty':item.teacher_reply=form.cleaned_data['message'];item.reply_time=timezone.now()
+            item.save(update_fields=['status','updated_at','teacher_reply','reply_time'])
+            ComplaintEvent.objects.create(complaint=item,author=request.user,message=form.cleaned_data['message'],status=status)
+            recipients=[item.student.user,item.teacher.user]+list(audience_users('director'))
+            notify([u for u in recipients if u.pk!=request.user.pk],f'Complaint updated: {item.title}',item.get_status_display(),reverse('complaint_detail',args=[pk]))
+        return redirect('complaint_detail',pk=pk)
+    return render(request,'complaint_detail.html',{'item':item,'form':form,'events':item.events.select_related('author')})
 
-    student = request.user.student
-
-    if request.method == "POST":
-        teacher_id = request.POST.get("teacher")
-        text = request.POST.get("text")
-
-        teacher = Teacher.objects.get(id=teacher_id)
-
-        Complaint.objects.create(
-            student=student,
-            teacher=teacher,
-            text=text,
-            status="Pending"
-        )
-
-        return redirect("complaints_list")
-
-    teachers = Teacher.objects.all()
-    return render(request, "add_complaint.html", {"teachers": teachers})
-
-
-# 💬 TEACHER REPLY
 @login_required
-@user_passes_test(is_teacher)
-def teacher_reply(request, id):
+def doubts(request):
+    qs=Doubt.objects.select_related('student','faculty__user');role=request.user.profile.role
+    if role=='student':qs=qs.filter(student=request.user)
+    elif role=='faculty':qs=qs.filter(faculty__user=request.user)
+    return render(request,'doubts.html',{'page_obj':paginated(request,qs)})
 
-    complaint = get_object_or_404(Complaint, id=id, teacher=request.user.teacher)
+@roles('student')
+def doubt_create(request):
+    form=DoubtForm(request.POST or None,request.FILES or None)
+    if request.method=='POST' and form.is_valid():
+        with transaction.atomic():
+            item=form.save(commit=False);item.student=request.user;item.student_name=display_name(request.user);item.student_email=request.user.email;item.save()
+            notify([item.faculty.user],'A student has a doubt',item.subject,reverse('doubts'))
+        return redirect('doubts')
+    return form_page(request,form,'Ask a doubt')
 
-    if request.method == "POST":
-        complaint.teacher_reply = request.POST.get("reply")
-        complaint.status = "Replied"
-        complaint.reply_time = timezone.now()
-        complaint.save()
+@roles('faculty')
+def doubt_answer(request,pk):
+    item=get_object_or_404(Doubt,pk=pk,faculty__user=request.user)
+    form=AnswerForm(request.POST or None,initial={'answer':item.answer})
+    if request.method=='POST' and form.is_valid():
+        with transaction.atomic():
+            item.answer=form.cleaned_data['answer'];item.answered_at=timezone.now();item.save(update_fields=['answer','answered_at'])
+            if item.student_id:notify([item.student],'Your doubt has been answered',item.subject,reverse('doubts'))
+        return redirect('doubts')
+    return form_page(request,form,f'Answer: {item.subject}')
 
-        return redirect("complaints_list")
+@login_required
+def feedback(request):
+    role=request.user.profile.role;form=FeedbackForm(request.POST or None) if role=='student' else None
+    if request.method=='POST':
+        if role!='student':raise PermissionDenied
+        if form.is_valid():
+            Feedback.objects.update_or_create(student=request.user,faculty=form.cleaned_data['faculty'],defaults={'rating':form.cleaned_data['rating'],'comment':form.cleaned_data['comment'],'student_name':display_name(request.user),'student_email':request.user.email,'updated_at':timezone.now()})
+            messages.success(request,'Your feedback has been saved. Submitting again updates your rating.');return redirect('feedback')
+    stats=Faculty.objects.filter(user__is_active=True,user__profile__role='faculty')
+    if role=='faculty':stats=stats.filter(user=request.user)
+    stats=stats.annotate(average_rating=Avg('ratings__rating'),responses=Count('ratings')).order_by('fname','id')
+    comments=Feedback.objects.select_related('faculty')
+    if role=='student':comments=comments.filter(student=request.user)
+    elif role=='faculty':comments=comments.filter(faculty__user=request.user)
+    return render(request,'feedback.html',{'form':form,'faculty_stats':stats,'page_obj':paginated(request,comments)})
 
-    return render(request, "reply.html", {"complaint": complaint})
+@login_required
+def profile_edit(request):
+    form = ProfileForm(request.POST if request.method == 'POST' else None, instance=request.user)
+    if request.method == 'POST' and form.is_valid():
+        with transaction.atomic():
+            form.save()
+        messages.success(request, 'Your profile has been updated.')
+        return redirect('profile_edit')
+    return render(request, 'profile.html', {'form': form})
+
+
+@roles('director')
+def accounts(request):
+    users = get_user_model().objects.select_related('profile').order_by('first_name','username')
+    return render(request, 'accounts.html', {'page_obj':paginated(request,users)})
+
+@roles('director')
+def account_create(request, role=None):
+    selected_role = role or (request.POST.get('role') if request.method == 'POST' else request.GET.get('role', 'faculty'))
+    if selected_role not in Profile.Role.values:
+        raise Http404('Choose a valid account role.')
+    form = AccountForm(request.POST if request.method == 'POST' else None, role=selected_role)
+    if request.method == 'POST' and form.is_valid():
+        with transaction.atomic():
+            form.save()
+        messages.success(request, 'Account created. Share the initial password privately; the user can change it after login.')
+        return redirect('accounts')
+    return render(request, 'account_form.html', {'form':form, 'account_role':selected_role,
+        'role_choices':Profile.Role.choices, 'title':f'Create {Profile.Role(selected_role).label.lower()} account'})
+
+@roles('director')
+@require_POST
+def account_toggle(request, pk):
+    user = get_object_or_404(get_user_model(), pk=pk)
+    if user.pk == request.user.pk or user.is_superuser or user.profile.role == 'director':
+        messages.error(request, 'Director and administrator accounts cannot be deactivated here.')
+    else:
+        user.is_active = not user.is_active
+        user.save(update_fields=['is_active'])
+        messages.success(request, 'Account access updated.')
+    return redirect('accounts')
+
+@roles('director')
+def reports(request):
+    return render(request,'reports.html')
+
+def csv_value(value):
+    text = str(value if value is not None else '')
+    return "'"+text if text.lstrip().startswith(('=','+','-','@')) or text.startswith(('\t','\r','\n')) else text
+
+@roles('director')
+def report_export(request,kind):
+    if kind=='feedback':
+        header=['Faculty','Average rating','Responses'];qs=Faculty.objects.annotate(average_rating=Avg('ratings__rating'),responses=Count('ratings')).order_by('fname','id')
+        rows=[(f.fname,round(f.average_rating,2) if f.average_rating else '',f.responses) for f in qs]
+    elif kind=='quizzes':
+        header=['Quiz','Code','Faculty','Submissions','Active students','Participation %']
+        students=Profile.objects.filter(role='student',user__is_active=True).count()
+        rows=[(q.title,q.code,display_name(q.creator) if q.creator else str(q.faculty or 'Unassigned'),q.attempts,students,round(q.attempts*100/students,2) if students else 0) for q in Quiz.objects.select_related('creator','faculty').annotate(attempts=Count('submissions')).order_by('title','id')]
+    elif kind=='complaints':
+        header=['Title','Student','Faculty','Status','Created at']
+        rows=[(c.title,c.student.name,c.teacher.name,c.get_status_display(),c.created_at.isoformat()) for c in Complaint.objects.select_related('student','teacher').order_by('title','id')]
+    elif kind=='resources':
+        header=['Title','Subject','Category','Downloads','Uploader']
+        rows=[(r.title,r.subject,r.get_category_display(),r.download_count,display_name(r.uploaded_by)) for r in Resource.objects.select_related('uploaded_by').order_by('title','id')]
+    else:raise Http404
+    response=HttpResponse(content_type='text/csv; charset=utf-8');response['Content-Disposition']=f'attachment; filename="teachtrack-{kind}.csv"';response['Cache-Control']='private, no-store';response.write('\ufeff')
+    writer=csv.writer(response);writer.writerow(header);writer.writerows([[csv_value(v) for v in row] for row in rows]);return response
+
+def health(request):
+    return HttpResponse('ok',content_type='text/plain')
+
+def valid_quiz(quiz):
+    questions=list(quiz.questions.prefetch_related('options').all())
+    return bool(questions) and all(len(q.options.all())>=2 and sum(o.is_correct for o in q.options.all())>=1 and (q.is_multiple or sum(o.is_correct for o in q.options.all())==1) for q in questions)
+
+def index(request):
+    return render(request,'index.html',{'public_page':'home'})
+
+def campus_life(request):
+    return render(request,'campus_life.html',{'public_page':'campus'})
+
+def contact(request):
+    form=ContactForm(request.POST or None)
+    if request.method=='POST' and form.is_valid():
+        form.save();messages.success(request,'Your message has been received.');return redirect('index')
+    return render(request, 'contact.html', {'form': form, 'public_page': 'contact'})
+
+@login_required
+def question_image(request,pk):
+    question=get_object_or_404(Question.objects.select_related('quiz'),pk=pk)
+    quiz=question.quiz;role=request.user.profile.role
+    if role=='faculty' and quiz.creator_id!=request.user.pk:raise PermissionDenied
+    if role=='student' and not Submission.objects.filter(quiz=quiz,student=request.user).exists() and not (quiz.is_active and quiz.starts_at<=timezone.now()<quiz.expiry_time):raise PermissionDenied
+    if not question.image:raise Http404
+    response = blob_file_response(question.image)
+    if response is not None:return response
+    try:file=question.image.open('rb')
+    except FileNotFoundError:raise Http404
+    import mimetypes
+    content_type=mimetypes.guess_type(question.image.name)[0]
+    if content_type not in ['image/png','image/jpeg','image/gif','image/webp']:raise Http404
+    return FileResponse(file,content_type=content_type)
+
+@login_required
+@require_POST
+def attachment_download(request,kind,pk):
+    role=request.user.profile.role
+    if kind=='doubt':
+        qs=Doubt.objects.all()
+        if role=='student':qs=qs.filter(student=request.user)
+        elif role=='faculty':qs=qs.filter(faculty__user=request.user)
+        item=get_object_or_404(qs,pk=pk);field=item.attachment
+    elif kind=='announcement':
+        item=get_object_or_404(Announcement.objects.filter(Q(audience='all')|Q(audience=role)|Q(author=request.user)),pk=pk);field=item.document
+    else:raise Http404
+    if not field:raise Http404
+    response = blob_file_response(field, filename=Path(field.name).name)
+    if response is not None:return response
+    try:file=field.open('rb')
+    except FileNotFoundError:raise Http404
+    return FileResponse(file,as_attachment=True,filename=Path(field.name).name,content_type='application/octet-stream')
+
+@login_required
+def submission_detail_list(request):
+    qs=Submission.objects.select_related('student','quiz')
+    role=request.user.profile.role
+    if role=='student':qs=qs.filter(student=request.user)
+    elif role=='faculty':qs=qs.filter(quiz__creator=request.user)
+    return render(request,'submission_history.html',{'page_obj':paginated(request,qs.order_by('-submitted_at','-id'))})
+
+@login_required
+def legacy_score(request,submission_id):
+    item=get_object_or_404(Submission,pk=submission_id)
+    role=request.user.profile.role
+    if role=='student' and item.student_id!=request.user.pk:raise PermissionDenied
+    if role=='faculty' and item.quiz.creator_id!=request.user.pk:raise PermissionDenied
+    return render(request,'quiz_result.html',{'quiz':item.quiz,'submissions':[item],'show_answers':role!='student' or timezone.now()>=item.quiz.expiry_time})
+
+@roles('student')
+def student_dashboard(request):return dashboard(request)
+@roles('faculty')
+def faculty_dashboard(request):return dashboard(request)
+@roles('director')
+def Director_dashboard(request):return dashboard(request)

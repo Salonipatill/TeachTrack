@@ -1,0 +1,23 @@
+{
+  "sdk": "@vercel/blob@2.8.2",
+  "now": 1700000000000,
+  "material": {
+    "delegationToken": "eyJzdG9yZUlkIjoic3RvcmVfdGVzdHN0b3JlIiwib3duZXJJZCI6ImZpeHR1cmUtb3duZXIiLCJwYXRobmFtZSI6ImJsb2IvMTIzL2FhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhL0FJIG5vdGVzLnBuZyIsIm9wZXJhdGlvbnMiOlsicHV0IiwiZ2V0IiwiaGVhZCJdLCJ2YWxpZFVudGlsIjoxNzAwMDAwOTAwMDAwLCJpYXQiOjE3MDAwMDAwMDAwMDAsIm1heGltdW1TaXplSW5CeXRlcyI6MzE0NTcyODAsImFsbG93ZWRDb250ZW50VHlwZXMiOlsiaW1hZ2UvcG5nIl19.fixture-hmac",
+    "clientSigningToken": "offline-fixture-signing-key-only",
+    "validUntil": 1700000900000
+  },
+  "cases": [
+    {
+      "operation": "put",
+      "url": "https://vercel.com/api/blob/?pathname=blob%2F123%2Faaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%2FAI+notes.png&vercel-blob-allowed-content-types=image%2Fpng&vercel-blob-maximum-size-in-bytes=31457280&vercel-blob-add-random-suffix=false&vercel-blob-allow-overwrite=false&vercel-blob-delegation=eyJzdG9yZUlkIjoic3RvcmVfdGVzdHN0b3JlIiwib3duZXJJZCI6ImZpeHR1cmUtb3duZXIiLCJwYXRobmFtZSI6ImJsb2IvMTIzL2FhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhL0FJIG5vdGVzLnBuZyIsIm9wZXJhdGlvbnMiOlsicHV0IiwiZ2V0IiwiaGVhZCJdLCJ2YWxpZFVudGlsIjoxNzAwMDAwOTAwMDAwLCJpYXQiOjE3MDAwMDAwMDAwMDAsIm1heGltdW1TaXplSW5CeXRlcyI6MzE0NTcyODAsImFsbG93ZWRDb250ZW50VHlwZXMiOlsiaW1hZ2UvcG5nIl19.fixture-hmac&vercel-blob-signature=U7rS_zoOt5ISYw-LglaMT15wm7XTfQ2q4ZuO93V8OjA"
+    },
+    {
+      "operation": "get",
+      "url": "https://teststore.private.blob.vercel-storage.com/blob/123/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/AI%20notes.png?vercel-blob-delegation=eyJzdG9yZUlkIjoic3RvcmVfdGVzdHN0b3JlIiwib3duZXJJZCI6ImZpeHR1cmUtb3duZXIiLCJwYXRobmFtZSI6ImJsb2IvMTIzL2FhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhL0FJIG5vdGVzLnBuZyIsIm9wZXJhdGlvbnMiOlsicHV0IiwiZ2V0IiwiaGVhZCJdLCJ2YWxpZFVudGlsIjoxNzAwMDAwOTAwMDAwLCJpYXQiOjE3MDAwMDAwMDAwMDAsIm1heGltdW1TaXplSW5CeXRlcyI6MzE0NTcyODAsImFsbG93ZWRDb250ZW50VHlwZXMiOlsiaW1hZ2UvcG5nIl19.fixture-hmac&vercel-blob-signature=Vz0PEzGA5y5q869R1-_EpKN08G4olsjD1I7pZ6oppWI"
+    },
+    {
+      "operation": "head",
+      "url": "https://teststore.private.blob.vercel-storage.com/blob/123/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/AI%20notes.png?vercel-blob-delegation=eyJzdG9yZUlkIjoic3RvcmVfdGVzdHN0b3JlIiwib3duZXJJZCI6ImZpeHR1cmUtb3duZXIiLCJwYXRobmFtZSI6ImJsb2IvMTIzL2FhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhL0FJIG5vdGVzLnBuZyIsIm9wZXJhdGlvbnMiOlsicHV0IiwiZ2V0IiwiaGVhZCJdLCJ2YWxpZFVudGlsIjoxNzAwMDAwOTAwMDAwLCJpYXQiOjE3MDAwMDAwMDAwMDAsIm1heGltdW1TaXplSW5CeXRlcyI6MzE0NTcyODAsImFsbG93ZWRDb250ZW50VHlwZXMiOlsiaW1hZ2UvcG5nIl19.fixture-hmac&vercel-blob-signature=BPQQIcH5u8coPD49j-P-B3HEFxPG9MwiW9-wpBL9ITY"
+    }
+  ]
+}

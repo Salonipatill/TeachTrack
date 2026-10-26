@@ -1,108 +1,153 @@
-﻿# TeachTrack
+# TeachTrack
 
-## Overview
+TeachTrack is a Django academic workspace for **students, faculty and directors**.
+It brings quizzes, resources, announcements, notifications, doubts, feedback,
+complaints and director reporting into one campus website.
 
-TeachTrack is a Django-based academic management platform designed for three roles:
-- **Student**
-- **Faculty**
-- **Director**
+## Live Demo
 
-The project provides quiz management, announcements, doubts, faculty ratings, complaint tracking, and dashboard pages for each user role.
+[Visit TeachTrack](https://teachtrack-gamma.vercel.app/)
 
-## Current Status
+## Current features
 
-### Completed Features
-- Custom registration and login for Student, Faculty, and Director
-- Session-based authentication and separate dashboard views
-- Quiz creation and quiz listing for teachers
-- Active quiz listing and attempt flow for students
-- Quiz submission, scoring, submission details, and score viewing
-- Announcement posting and feature to display announcements
-- Doubt submission by students and doubt viewer for faculty
-- Faculty rating submission
-- Basic complaint model and views for complaint creation, listing, and teacher reply
-- Static and media configuration in `Classroom/settings.py`
+- Public home, campus and Contact pages with shared navigation/header/footer.
+- The TeachTrack logo opens Home. Signed-in users get a **WORKSPACE** dashboard
+  shortcut on Features (`/#features`), Campus life and Contact; it is hidden on
+  the main Home view. Campus life stays within TeachTrack and offers a Google
+  Maps location search for Sri Aurobindo Institute of Technology, Indore.
+- Separate role sign-in pages; login uses a **username**, not an email address.
+- **My profile**: click the name/role in the sidebar footer to correct your own
+  account details. Students also manage enrollment, year, semester, section and batch.
+- Quiz creation automatically applies publication/identity defaults. Student
+  attempts autofill account details and show academic fields separately.
+- Each quiz question supports **2–26 options** with Add option/Remove last option
+  controls and one or more correct answers. Selecting multiple correct answers
+  enables multiple-answer mode; grading requires the exact correct set.
+- Resource uploads accept PDF, TXT, DOCX, PPTX, JPG/JPEG and PNG up to **30 MB**
+  per file, within a **32 MB** total request limit. Staff can add custom resource
+  categories of up to 100 characters and reuse them in uploads and filters.
+- Explicit quiz launch/deadline and submission timestamps in IST, question numbers
+  inside cards, scoring, delayed answer reviews and responsive result details.
+- Persistent light/dark mode on shared pages, mobile navigation, keyboard skip
+  links, reduced-motion support and submit/search progress feedback.
+- Director account management/reporting and role/object authorization.
 
-### Partially Implemented / Needs Integration
-- Complaints are modelled and routed, but the complaint flow is partially coupled to Django `request.user` logic while the app currently uses custom session authentication
-- Director dashboard exists but lacks rich analytics, reporting, and visualization
-- The current authentication system stores plaintext passwords in `Student`, `Faculty`, and `Director` models
+**Current limits:** Public password reset, email/SMS OTP and SMTP sending are
+removed. Signed-in users can still change their password using the old password.
+Upload storage can be local, private Vercel Blob, GCS, disabled or chosen automatically; local files
+work with PC MySQL without Google Cloud. Contact submissions are stored in the database and visible in
+Django admin, with no automatic email or director-dashboard inbox.
 
-### Remaining Work
-- Implement secure authentication using Django's built-in `User` model and password hashing
-- Remove hardcoded secrets and database credentials from `Classroom/settings.py`
-- Add `.env` / environment variable support for secrets and deployment settings
-- Build a resource management module for uploads/downloads of notes, PYQs, and assignments
-- Add resource categories, download tracking, search, and filters
-- Implement a notification model, UI, badge system, and notification panel
-- Add dashboard analytics charts, quiz participation analytics, and leaderboards
-- Improve UI/UX across dashboards, report views, and complaint status tracking
-- Complete Google Cloud deployment support and production database configuration
-- Harden security, session handling, and role-based access control
+## Run locally on Windows
 
-## Installation
+From the folder containing manage.py, keep your existing private .env and environment:
 
-1. Install Python 3.x and create a virtual environment.
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Configure the database in `Classroom/settings.py` or load environment variables.
-4. Run migrations:
-   ```bash
-   python manage.py makemigrations
-   python manage.py migrate
-   ```
-5. Start the development server:
-   ```bash
-   python manage.py runserver
-   ```
+```powershell
+cd "C:\Users\Zamanuddin Khan\Downloads\Coding Area\TeachTrack"
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe manage.py runserver
+```
 
-## Deployment Notes
+Open http://127.0.0.1:8000/. Local runserver loads the selected environment file with override enabled. Set TEACHTRACK_ENV_FILE to choose a private file such as .env.local-mysql; it defaults to .env. Other
+commands and deployed entry points give process environment variables precedence.
+For a new setup, copy .env.example to .env and fill private values. Never commit
+.env, passwords, private keys or database dumps.
 
-- Current settings use `DEBUG = True`; switch to `False` for production.
-- Move `SECRET_KEY`, database credentials, and email settings into environment variables.
-- Configure `ALLOWED_HOSTS` for production domains.
-- Use `python manage.py collectstatic` before deploying static files.
-- In production, serve media files from a proper storage backend.
-- Consider using Google Cloud SQL, Google Cloud Storage, or another managed service for deployment.
+Blank DATABASE_URL selects local SQLite. PostgreSQL and MySQL Connector are in the
+main requirements. Both local MySQL and Aiven use mysql.connector.django. SSL is configurable: MYSQL_SSL_MODE=DISABLED for trusted local development, or VERIFY_IDENTITY (the default) for Aiven with MYSQL_SSL_CA=certs/aiven-ca.pem. See [database setup](docs/DATABASE_SETUP.md) for environment examples and isolated verification.
+requirements-mysql.txt is retained as a compatibility include of the main set.
+Before upgrading a populated original database, follow [UPGRADE.md](docs/UPGRADE.md).
+Migration 0010 adds batch and separate quiz academic snapshots; it does not guess
+missing historical values. Migration 0011 enables custom resource categories while
+retaining existing values. Schema migrations do not transfer data between engines.
 
-## Key Files
+## Accounts
 
-- `ClassApp/models.py` — main data models for users, quizzes, announcements, doubts, ratings, and complaints
-- `ClassApp/views.py` — application logic for registration, login, quizzes, announcements, doubts, ratings, and complaints
-- `ClassApp/Templates/` — HTML templates for all user-facing pages
-- `Classroom/settings.py` — Django settings and database configuration
-- `Classroom/urls.py` — URL routing
-- `requirements.txt` — Python dependencies
+Create the first director with a privately entered password:
 
-## Recommended Next Steps
+```powershell
+$env:DEBUG = 'True'
+.\.venv\Scripts\python.exe manage.py create_director --username director --email director@example.com --name "Campus Director"
+```
 
-1. Convert authentication to Django `User` model with hashed passwords.
-2. Add environment-based configuration using `python-dotenv` or `django-environ`.
-3. Implement the missing resource upload/download and notification features.
-4. Add analytics dashboards and complaint status visualization.
-5. Test the app end to end for Student, Faculty, and Director roles.
+There is no default password. Directors create faculty/additional directors through
+Manage accounts. Public registration creates students only. Application director
+access does not automatically grant Django admin access. A trusted administrator
+can use Django's interactive changepassword command for a forgotten password.
 
-## Current Completion Estimate
+## Verify safely
 
-- **Implemented:** ~40%
-- **Remaining:** ~60%
+Use a separate terminal for isolated tests; close it before resuming normal database work:
 
-The current codebase provides a strong functional foundation, but the most important improvements are security hardening, resource/notification systems, analytics, and production deployment readiness.
+```powershell
+$env:DEBUG = 'True'
+$env:DATABASE_URL = 'sqlite:///:memory:'
+$env:TEACHTRACK_ENV_FILE = '.env.isolated-tests-unused'
+$env:SECRET_KEY = 'test-only-isolated-suite-secret-22-October-2026'
+$env:UPLOAD_STORAGE = 'local'
+$env:GS_BUCKET_NAME = ''
+.\.venv\Scripts\python.exe manage.py test
+.\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
+.\.venv\Scripts\python.exe -m pip check
+```
 
+See [testing](docs/TESTING.md) for current verification results and the
+[test catalogue](docs/TEST_CATALOGUE.md) for all discovered test methods. Historical
+database checks are recorded in [database verification](docs/DATABASE_SETUP.md#historical-verification-record-21-october-2026).
+Earlier local Edge checks covered
+public mobile/tablet/desktop pages, role navigation, faculty creation, quiz attempts,
+result layouts, keyboard navigation and actual dark colours. This is not a claim
+of zero bugs or independent verification of protected Vercel deployments,
+Safari/Firefox, external content or production load.
 
-# TeachTrack Project – Final Work Allocation & Improvement Plan
+## Deploy
 
-## Objective
+See [Vercel + Aiven](docs/VERCEL_DEPLOYMENT.md) for current environment variables,
+certificate/migration requirements and deployed-commit troubleshooting. The
+[Google Cloud guide](docs/DEPLOYMENT.md) covers the optional container/GCS route.
+Set DEBUG=False and a private SECRET_KEY in production. For PC MySQL, set
+UPLOAD_STORAGE=local to save notes and attachments in media/ without Google Cloud.
+This explicitly selects local files independently of DEBUG and the database engine.
+Local resource uploads keep a private database copy as well as the file in
+media/, so another instance using the same database can download it. Apply
+migration 0012. Existing files can be preserved with
+`python manage.py preserve_resource_files --resource-id ID --apply` from the
+machine that holds the original file. Back up the database and media directory.
+For 30 MB Vercel uploads without Google Cloud, connect a **private Vercel Blob**
+store and set `UPLOAD_STORAGE=blob`; see [setup](docs/VERCEL_DEPLOYMENT.md#files-and-email).
+File bytes transfer directly through Blob with expiring scoped URLs; TeachTrack
+still verifies content and user permissions. `auto` selects Blob with credentials,
+otherwise GCS with GS_BUCKET_NAME, otherwise local with DEBUG=True or disabled
+with DEBUG=False. Local PC mode stays explicit.
 
-Enhance TeachTrack by improving security, resource management, analytics, UI/UX, and deployment readiness while ensuring an equal contribution from both team members.
- 
- 
+After pushing, verify Vercel's active commit and open that deployment's Visit URL.
+Test the actual site, theme assets, login, profile, quiz result and intended roles.
+Local .env edits do not configure Vercel. Email environment variables are unused.
 
- 
+## Documentation and tools
 
- 
+Start with the [documentation index](docs/README.md), [current changes](docs/RECENT_CHANGES.md)
+or [project handbook](docs/PROJECT_DOCUMENTATION.md). The [offline HTML handbook](docs/TEACHTRACK_DOCUMENTATION.html)
+and [PDF](docs/TEACHTRACK_DOCUMENTATION.pdf) include the current references and diagrams.
 
- 
- 
+```powershell
+.\.venv\Scripts\python.exe tools/build_documentation.py
+.\.venv\Scripts\python.exe tools/export_documentation_pdf.py
+.\.venv\Scripts\python.exe tools/check_documentation.py
+```
+
+The builder uses isolated metadata, not live account rows. PDF export needs the
+optional local Playwright/browser dependency. See [tools/README.md](tools/README.md)
+for installation and maintenance steps.
+
+## Source map
+
+- Classroom/: settings, routing and deployment entry points.
+- ClassApp/: models, forms, views, services, authorization, migrations and tests.
+- ClassApp/Templates/: current shared templates and retained historical pages.
+- ClassApp/static/ClassApp/: active app/theme CSS and JavaScript, favicon.
+- ClassApp/static/img/: campus images; staticfiles/ is generated output.
+- docs/: guides, generated references, diagrams and offline handbook.
+- tools/: documentation builder, PDF exporter, link checks and usage guide.
+
+Created for TeachTrack by **Zaman & Saloni**.
